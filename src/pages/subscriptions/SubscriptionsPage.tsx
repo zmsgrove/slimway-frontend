@@ -82,7 +82,7 @@ function ClientSearch({ value, onChange, placeholder = 'Поиск клиент�
     <div ref={ref} style={{ position: 'relative' }}>
       {value ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 36, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid #02BDB6', borderRadius: 8 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{value.fullName}</span>
+          <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{value.full_name}</span>
           <button onClick={clear} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }}><X size={13} /></button>
         </div>
       ) : (
@@ -95,7 +95,7 @@ function ClientSearch({ value, onChange, placeholder = 'Поиск клиент�
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden', marginTop: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
           {results.map(c => (
             <button key={c.id} onClick={() => select(c)} style={{ display: 'block', width: '100%', padding: '9px 13px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: 13 }}>
-              {c.fullName}
+              {c.full_name}
               {c.phone && <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 8 }}>{c.phone}</span>}
             </button>
           ))}

@@ -80,7 +80,7 @@ function ClientSearch({ value, onChange }: ClientSearchProps) {
   if (value) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 36, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid #02BDB6', borderRadius: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{value.fullName}</span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{value.full_name}</span>
         <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }}><X size={13} /></button>
       </div>
     )
@@ -94,7 +94,7 @@ function ClientSearch({ value, onChange }: ClientSearchProps) {
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden', marginTop: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
           {res.map(c => (
             <button key={c.id} onClick={() => { onChange(c); setQ(''); setOpen(false) }} style={{ display: 'block', width: '100%', padding: '8px 13px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: 13 }}>
-              {c.fullName}{c.phone && <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 8 }}>{c.phone}</span>}
+              {c.full_name}{c.phone && <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 8 }}>{c.phone}</span>}
             </button>
           ))}
         </div>

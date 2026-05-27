@@ -91,12 +91,17 @@ function DevicesSection() {
       .finally(() => setLoading(false))
   }, [])
 
+  const reload = async () => {
+    const list = await devicesApi.getAll()
+    setDevices(list)
+  }
+
   const handleAdd = async () => {
     if (!form.number.trim()) { setError('Введите номер тренажёра'); return }
     setSaving(true); setError(null)
     try {
-      const d = await devicesApi.create(form)
-      setDevices(prev => [...prev, d])
+      await devicesApi.create(form)
+      await reload()
       setForm({ type: 'vacuactiv', number: '', device_group: 'A' })
       setShowForm(false)
     } catch {
