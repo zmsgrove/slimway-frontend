@@ -213,8 +213,9 @@ export default function ClientsPage() {
     try {
       const data = await clientsApi.getAll(q)
       setClients(data)
-    } catch {
-      setError('Не удалось загрузить клиентов')
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Не удалось загрузить клиентов')
     } finally {
       setLoading(false)
     }
@@ -247,8 +248,9 @@ export default function ClientsPage() {
     try {
       await clientsApi.delete(id)
       setClients(prev => prev.filter(c => c.id !== id))
-    } catch {
-      setError('Не удалось удалить клиента')
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Не удалось удалить клиента')
     }
   }
 

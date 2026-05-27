@@ -101,14 +101,16 @@ function DevicesSection() {
     setSaving(true); setError(null)
     try {
       await devicesApi.create(form)
-      await reload()
-      setForm({ type: 'vacuactiv', number: '', device_group: 'A' })
-      setShowForm(false)
-    } catch {
-      setError('Не удалось добавить тренажёр')
-    } finally {
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Не удалось добавить тренажёр')
       setSaving(false)
+      return
     }
+    try { await reload() } catch { /* ignore reload errors after successful add */ }
+    setForm({ type: 'vacuactiv', number: '', device_group: 'A' })
+    setShowForm(false)
+    setSaving(false)
   }
 
   const handleStatusCycle = async (device: Device) => {
@@ -126,8 +128,9 @@ function DevicesSection() {
     try {
       await devicesApi.delete(id)
       setDevices(prev => prev.filter(d => d.id !== id))
-    } catch {
-      setError('Не удалось удалить тренажёр')
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Не удалось удалить тренажёр')
     }
   }
 
