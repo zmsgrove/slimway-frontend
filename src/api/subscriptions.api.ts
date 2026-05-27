@@ -1,0 +1,38 @@
+import { api } from '../lib/api'
+import type { Subscription, DeviceType } from '../types'
+
+export interface CreateSubscriptionPayload {
+  client_id: string
+  name: string
+  slot_1_type: DeviceType
+  slot_1_duration_min: number
+  slot_1_sessions_total: number
+  slot_2_type?: DeviceType | null
+  slot_2_duration_min?: number | null
+  slot_2_sessions_total?: number | null
+  date_start: string
+  date_end?: string | null
+  price?: number | null
+}
+
+export const subscriptionsApi = {
+  getAll: async (params?: { client_id?: string; status?: string }): Promise<Subscription[]> => {
+    const { data } = await api.get('/subscriptions', { params })
+    return data
+  },
+
+  getById: async (id: string): Promise<Subscription> => {
+    const { data } = await api.get(`/subscriptions/${id}`)
+    return data
+  },
+
+  create: async (payload: CreateSubscriptionPayload): Promise<Subscription> => {
+    const { data } = await api.post('/subscriptions', payload)
+    return data
+  },
+
+  patch: async (id: string, payload: Partial<Subscription>): Promise<Subscription> => {
+    const { data } = await api.patch(`/subscriptions/${id}`, payload)
+    return data
+  },
+}
