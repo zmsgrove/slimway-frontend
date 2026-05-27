@@ -1,11 +1,25 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, Users, Calendar, LogOut } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 const navItems = [
-  { to: '/dashboard', label: 'Дашборд', icon: '▦' },
-  { to: '/clients', label: 'Клиенты', icon: '◎' },
-  { to: '/schedule', label: 'Расписание', icon: '◫' },
+  { to: '/dashboard', label: 'Дашборд',   icon: LayoutDashboard },
+  { to: '/clients',   label: 'Клиенты',    icon: Users },
+  { to: '/schedule',  label: 'Расписание', icon: Calendar },
 ]
+
+const roleLabel: Record<string, string> = {
+  owner:      'Владелец',
+  franchisee: 'Франчайзи',
+  admin:      'Администратор',
+  trainer:    'Тренер',
+}
+
+const glassStyle: React.CSSProperties = {
+  background:           'var(--glass-bg)',
+  backdropFilter:       'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+}
 
 export default function AppLayout() {
   const { user, signOut } = useAuth()
@@ -17,66 +31,78 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex">
-      {/* Sidebar — фиксированный */}
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-base)' }}>
+      {/* Sidebar */}
       <aside
-        className="fixed top-0 left-0 h-screen w-56 flex flex-col py-6 px-3 z-20"
+        className="fixed top-0 left-0 h-screen flex flex-col py-fib-md px-fib-xs z-20"
         style={{
-          background: 'rgba(255,255,255,0.08)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRight: '1px solid rgba(255,255,255,0.12)'
+          width: '220px',
+          ...glassStyle,
+          borderRight: '1px solid var(--glass-border)',
         }}
       >
-        <div className="px-3 mb-8">
-          <span className="text-white font-semibold text-lg">Slimway</span>
-          <p className="text-zinc-500 text-xs mt-0.5">{user?.role}</p>
+        <div className="px-fib-xs mb-fib-lg">
+          <span className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+            Slimway
+          </span>
+          {user?.role && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              {roleLabel[user.role] ?? user.role}
+            </p>
+          )}
         </div>
 
-        <nav className="flex-1 space-y-1">
-          {navItems.map(item => (
+        <nav className="flex-1 flex flex-col gap-1">
+          {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
-              key={item.to}
-              to={item.to}
+              key={to}
+              to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                `flex items-center gap-fib-xs px-fib-xs py-2 rounded-md text-sm transition-colors ${
                   isActive
                     ? 'bg-white/10 text-white'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    : 'hover:bg-white/5'
                 }`
               }
+              style={({ isActive }) => ({
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+              })}
             >
-              <span>{item.icon}</span>
-              {item.label}
+              <Icon size={16} strokeWidth={1.75} />
+              {label}
             </NavLink>
           ))}
         </nav>
 
         <button
           onClick={handleSignOut}
-          className="px-3 py-2 text-zinc-500 hover:text-white text-sm text-left transition-colors"
+          className="flex items-center gap-fib-xs px-fib-xs py-2 rounded-md text-sm transition-colors hover:bg-white/5"
+          style={{ color: 'var(--text-muted)' }}
         >
+          <LogOut size={16} strokeWidth={1.75} />
           Выйти
         </button>
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 ml-56 flex flex-col min-h-screen">
-        {/* Header — фиксированный */}
+      {/* Main area */}
+      <div className="flex flex-col min-h-screen" style={{ marginLeft: '220px' }}>
+        {/* Header */}
         <header
-          className="fixed top-0 left-56 right-0 h-14 flex items-center px-6 z-10"
+          className="fixed top-0 right-0 flex items-center px-fib-md z-10"
           style={{
-            background: 'rgba(255,255,255,0.08)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderBottom: '1px solid rgba(255,255,255,0.12)'
+            left: '220px',
+            height: '56px',
+            ...glassStyle,
+            borderBottom: '1px solid var(--glass-border)',
           }}
         >
-          <span className="text-zinc-400 text-sm">{user?.fullName || user?.email}</span>
+          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {user?.fullName || user?.email}
+          </span>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 mt-14 p-6">
+        <main className="flex-1 p-fib-md" style={{ paddingTop: 'calc(56px + 21px)' }}>
           <Outlet />
         </main>
       </div>
