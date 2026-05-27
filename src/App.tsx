@@ -9,6 +9,12 @@ import DashboardPage from './pages/dashboard/DashboardPage'
 import ClientsPage from './pages/clients/ClientsPage'
 import SchedulePage from './pages/schedule/SchedulePage'
 import SettingsPage from './pages/settings/SettingsPage'
+import SubscriptionsPage from './pages/subscriptions/SubscriptionsPage'
+import LeadsPage from './pages/leads/LeadsPage'
+import TasksPage from './pages/tasks/TasksPage'
+import ChatPage from './pages/chat/ChatPage'
+import EmployeesPage from './pages/employees/EmployeesPage'
+import ScheduleWorkPage from './pages/schedule-work/SchedulePage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,10 +51,16 @@ function InnerApp() {
             element={user ? <AppLayout /> : <Navigate to="/login" replace />}
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="clients" element={<ClientsPage />} />
-            <Route path="schedule" element={<SchedulePage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="dashboard"     element={<DashboardPage />} />
+            <Route path="clients"       element={<ClientsPage />} />
+            <Route path="subscriptions" element={<SubscriptionsPage />} />
+            <Route path="schedule"      element={<SchedulePage />} />
+            <Route path="leads"         element={<LeadsPage />} />
+            <Route path="tasks"         element={<TasksPage />} />
+            <Route path="chat"          element={<ChatPage />} />
+            <Route path="employees"     element={<EmployeesPage />} />
+            <Route path="schedule-work" element={<ScheduleWorkPage />} />
+            <Route path="settings"      element={<SettingsPage />} />
           </Route>
           <Route
             path="*"

@@ -7,14 +7,26 @@ import {
   LogOut,
   Sun,
   Moon,
+  CreditCard,
+  Target,
+  CheckSquare,
+  MessageSquare,
+  UserCheck,
+  CalendarClock,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
 
 const navItems = [
-  { to: '/dashboard', label: 'Дашборд',   icon: LayoutDashboard },
-  { to: '/clients',   label: 'Клиенты',    icon: Users },
-  { to: '/schedule',  label: 'Расписание', icon: Calendar },
+  { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard },
+  { to: '/clients',       label: 'Клиенты',     icon: Users },
+  { to: '/subscriptions', label: 'Абонементы',  icon: CreditCard },
+  { to: '/schedule',      label: 'Расписание',  icon: Calendar },
+  { to: '/leads',         label: 'Лиды',        icon: Target },
+  { to: '/tasks',         label: 'Задачи',      icon: CheckSquare },
+  { to: '/chat',          label: 'Чат',         icon: MessageSquare },
+  { to: '/employees',     label: 'Сотрудники',  icon: UserCheck },
+  { to: '/schedule-work', label: 'График',      icon: CalendarClock },
 ]
 
 const roleLabel: Record<string, string> = {
