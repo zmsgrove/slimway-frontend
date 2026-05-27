@@ -41,20 +41,18 @@
   --text-secondary: #71717A;
   --text-muted:     #A1A1AA;
 
-  --glass-bg:     rgba(255, 255, 255, 0.6);
+  --glass-bg:     rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.08);
+
+  color-scheme: light;
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
 html {
   color-scheme: dark;
-}
-
-[data-theme="light"] {
-  color-scheme: light;
 }
 
 body {
@@ -67,8 +65,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+button {
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
 ::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -76,6 +83,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--glass-border);
   border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Login page — hide right panel on small screens */
+@media (max-width: 768px) {
+  .login-panel-right {
+    display: none !important;
+  }
 }
