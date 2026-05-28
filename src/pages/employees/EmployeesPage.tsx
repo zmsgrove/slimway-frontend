@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, X, Phone, Calendar, Briefcase, Building2, Pencil, Trash2, AlertCircle } from 'lucide-react'
+import { Plus, X, Phone, Calendar, Briefcase, Pencil, Trash2, AlertCircle, Clock, MapPin, CheckCircle } from 'lucide-react'
 import { employeesApi } from '../../api/employees.api'
+import { shiftsApi } from '../../api/shifts.api'
 import { useAuth } from '../../hooks/useAuth'
-import type { Employee } from '../../types'
+import type { Employee, Shift } from '../../types'
 
 const POSITIONS   = ['Управляющий', 'Менеджер', 'Технический специалист', 'Разработчик']
 const DEPARTMENTS = ['Управление', 'Менеджмент', 'Технический отдел', 'IT']
+
+const STATUS_COLOR: Record<string, string> = {
+  scheduled: '#71717A', active: '#10b981', completed: '#02BDB6',
+}
+const STATUS_LABEL: Record<string, string> = {
+  scheduled: 'По графику', active: 'На смене', completed: 'Завершена',
+}
 
 function avatarColor(name: string): string {
   const colors = ['#02BDB6', '#263CD9', '#8b5cf6', '#f59e0b', '#10b981', '#f97316', '#ec4899']
@@ -18,6 +26,16 @@ function formatDate(d: string | null): string {
   catch { return d }
 }
 
+function formatShiftDate(d: string): string {
+  return new Date(d).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function fmtTime(ts: string | null): string {
+  if (!ts) return '—'
+  const d = new Date(ts)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 const inputStyle: React.CSSProperties = {
   width: '100%', height: 36, padding: '0 13px',
   background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
@@ -25,7 +43,7 @@ const inputStyle: React.CSSProperties = {
   outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 }
 
-// ─── AddEmployeeModal ─────────────────────────────────────────
+// ─── AddEmployeeModal ──────────────────────────────────────────────────────────
 
 interface AddModalProps { onClose: () => void; onSaved: (emp: Employee) => void }
 
@@ -57,35 +75,40 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Добавить сотрудника</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Добавить сотрудника</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>Заполните данные нового сотрудника</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 21 }}>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Имя *</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Имя *</div>
             <input style={inputStyle} placeholder="Полное имя" value={form.full_name} onChange={e => set('full_name', e.target.value)} />
           </div>
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Телефон</div>
-            <input style={inputStyle} placeholder="+7 777 000 00 00" value={form.phone} onChange={e => set('phone', e.target.value)} />
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Дата рождения</div>
-            <input type="date" style={inputStyle} value={form.birth_date} onChange={e => set('birth_date', e.target.value)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Телефон</div>
+              <input style={inputStyle} placeholder="+7 777 000 00 00" value={form.phone} onChange={e => set('phone', e.target.value)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Дата рождения</div>
+              <input type="date" style={inputStyle} value={form.birth_date} onChange={e => set('birth_date', e.target.value)} />
+            </div>
           </div>
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Должность</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
               {POSITIONS.map(p => (
                 <button key={p} onClick={() => set('position', form.position === p ? '' : p)}
                   style={{ background: form.position === p ? 'rgba(2,189,182,0.12)' : 'transparent', border: `1px solid ${form.position === p ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 20, color: form.position === p ? '#02BDB6' : 'var(--text-muted)', fontSize: 11, padding: '3px 10px', cursor: 'pointer' }}>
@@ -97,7 +120,7 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
           </div>
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Отдел</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
               {DEPARTMENTS.map(d => (
                 <button key={d} onClick={() => set('department', form.department === d ? '' : d)}
                   style={{ background: form.department === d ? 'rgba(38,60,217,0.12)' : 'transparent', border: `1px solid ${form.department === d ? '#263CD9' : 'var(--glass-border)'}`, borderRadius: 20, color: form.department === d ? '#263CD9' : 'var(--text-muted)', fontSize: 11, padding: '3px 10px', cursor: 'pointer' }}>
@@ -109,19 +132,68 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 21 }}>
+        <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
           <button onClick={() => void handleSave()} disabled={saving}
             style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
             {saving ? 'Сохранение...' : 'Добавить'}
           </button>
-          <button onClick={onClose} style={{ height: 40, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
         </div>
       </div>
     </div>
   )
 }
 
-// ─── EmployeeCard ─────────────────────────────────────────────
+// ─── ShiftHistoryTab ───────────────────────────────────────────────────────────
+
+function ShiftHistoryTab({ empId }: { empId: string }) {
+  const [shifts, setShifts]   = useState<Shift[] | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    shiftsApi.getByEmployee(empId)
+      .then(data => setShifts(data.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30)))
+      .catch(() => setShifts([]))
+      .finally(() => setLoading(false))
+  }, [empId])
+
+  if (loading) return <div style={{ padding: '21px 18px', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+  if (!shifts || shifts.length === 0) return <div style={{ padding: '21px 18px', fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>Нет смен</div>
+
+  return (
+    <div style={{ padding: '12px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {shifts.map(shift => {
+        const checkin  = shift.shift_checkins?.find(c => c.checkin_at)
+        const sColor   = STATUS_COLOR[shift.status]
+        const isDone   = shift.status === 'completed'
+        return (
+          <div key={shift.id} style={{ padding: '8px 10px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${sColor}22` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{formatShiftDate(shift.date)}</div>
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 20, background: sColor + '18', color: sColor, border: `1px solid ${sColor}33` }}>{STATUS_LABEL[shift.status]}</span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Clock size={10} />{shift.time_start.slice(0, 5)} — {shift.time_end.slice(0, 5)}
+              {isDone && checkin && (
+                <span style={{ marginLeft: 6, color: '#02BDB6' }}>
+                  <CheckCircle size={10} style={{ verticalAlign: 'middle' }} /> {fmtTime(checkin.checkin_at)} → {fmtTime(checkin.checkout_at)}
+                </span>
+              )}
+            </div>
+            {checkin?.location && (
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
+                <MapPin size={9} />{checkin.location.slice(0, 55)}{checkin.location.length > 55 ? '…' : ''}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── EmployeeCard ─────────────────────────────────────────────────────────────
 
 interface CardProps {
   emp: Employee
@@ -131,6 +203,7 @@ interface CardProps {
 }
 
 function EmployeeCard({ emp, canEdit, onUpdated, onDeleted }: CardProps) {
+  const [tab, setTab]           = useState<'profile' | 'shifts'>('profile')
   const [editing, setEditing]   = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [saving, setSaving]     = useState(false)
@@ -138,7 +211,7 @@ function EmployeeCard({ emp, canEdit, onUpdated, onDeleted }: CardProps) {
   const [error, setError]       = useState<string | null>(null)
 
   const set = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }))
-  const color = avatarColor(emp.full_name)
+  const color    = avatarColor(emp.full_name)
   const initials = emp.full_name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
   const handleSave = async () => {
@@ -171,6 +244,16 @@ function EmployeeCard({ emp, canEdit, onUpdated, onDeleted }: CardProps) {
     }
   }
 
+  const tabBtn = (t: 'profile' | 'shifts', label: string) => (
+    <button
+      key={t}
+      onClick={() => setTab(t)}
+      style={{ flex: 1, height: 30, background: tab === t ? 'var(--bg-elevated)' : 'transparent', border: 'none', borderRadius: 6, color: tab === t ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: 12, fontWeight: tab === t ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}
+    >
+      {label}
+    </button>
+  )
+
   return (
     <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
       {/* Header */}
@@ -189,11 +272,11 @@ function EmployeeCard({ emp, canEdit, onUpdated, onDeleted }: CardProps) {
         </div>
         {canEdit && (
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-            <button onClick={() => { setEditing(e => !e); setError(null) }} title="Редактировать"
+            <button onClick={() => { setEditing(e => !e); setError(null) }}
               style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer' }}>
               <Pencil size={12} />
             </button>
-            <button onClick={() => void handleDelete()} disabled={deleting} title="Удалить"
+            <button onClick={() => void handleDelete()} disabled={deleting}
               style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}>
               <Trash2 size={12} />
             </button>
@@ -201,8 +284,14 @@ function EmployeeCard({ emp, canEdit, onUpdated, onDeleted }: CardProps) {
         )}
       </div>
 
-      {/* Info */}
-      {!editing && (
+      {/* Tabs */}
+      <div style={{ padding: '8px 18px', display: 'flex', gap: 4, background: 'var(--bg-surface)', borderBottom: '1px solid var(--glass-border)' }}>
+        {tabBtn('profile', 'Профиль')}
+        {tabBtn('shifts', 'Смены')}
+      </div>
+
+      {/* Tab content */}
+      {tab === 'profile' && !editing && (
         <div style={{ padding: '12px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {emp.phone ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -220,14 +309,9 @@ function EmployeeCard({ emp, canEdit, onUpdated, onDeleted }: CardProps) {
         </div>
       )}
 
-      {/* Edit form */}
-      {editing && (
-        <div style={{ padding: '14px 18px', borderTop: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {error && (
-            <div style={{ fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 5 }}>
-              <AlertCircle size={11} />{error}
-            </div>
-          )}
+      {tab === 'profile' && editing && (
+        <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {error && <div style={{ fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 5 }}><AlertCircle size={11} />{error}</div>}
           <input style={{ ...inputStyle, height: 32, fontSize: 12 }} placeholder="Имя *" value={form.full_name} onChange={e => set('full_name', e.target.value)} />
           <input style={{ ...inputStyle, height: 32, fontSize: 12 }} placeholder="Телефон" value={form.phone} onChange={e => set('phone', e.target.value)} />
           <input type="date" style={{ ...inputStyle, height: 32, fontSize: 12 }} value={form.birth_date} onChange={e => set('birth_date', e.target.value)} />
@@ -241,18 +325,20 @@ function EmployeeCard({ emp, canEdit, onUpdated, onDeleted }: CardProps) {
           </div>
         </div>
       )}
+
+      {tab === 'shifts' && <ShiftHistoryTab empId={emp.id} />}
     </div>
   )
 }
 
-// ─── EmployeesPage ────────────────────────────────────────────
+// ─── EmployeesPage ─────────────────────────────────────────────────────────────
 
 export default function EmployeesPage() {
-  const { user }                          = useAuth()
-  const [employees, setEmployees]         = useState<Employee[]>([])
-  const [loading, setLoading]             = useState(true)
-  const [error, setError]                 = useState<string | null>(null)
-  const [showAdd, setShowAdd]             = useState(false)
+  const { user }                  = useAuth()
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState<string | null>(null)
+  const [showAdd, setShowAdd]     = useState(false)
 
   const canEdit = user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin'
 
@@ -263,16 +349,12 @@ export default function EmployeesPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleAdded = (emp: Employee) => {
-    setEmployees(prev => [...prev, emp].sort((a, b) => a.full_name.localeCompare(b.full_name)))
-    setShowAdd(false)
-  }
+  const handleAdded   = (emp: Employee) => { setEmployees(prev => [...prev, emp].sort((a, b) => a.full_name.localeCompare(b.full_name))); setShowAdd(false) }
   const handleUpdated = (emp: Employee) => setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e))
-  const handleDeleted = (id: string)   => setEmployees(prev => prev.filter(e => e.id !== id))
+  const handleDeleted = (id: string)    => setEmployees(prev => prev.filter(e => e.id !== id))
 
   return (
     <div>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -300,9 +382,7 @@ export default function EmployeesPage() {
       )}
 
       {loading ? (
-        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
-          Загрузка...
-        </div>
+        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
       ) : employees.length === 0 ? (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 13, textAlign: 'center' }}>
           <Briefcase size={28} strokeWidth={1.5} color="var(--text-muted)" />

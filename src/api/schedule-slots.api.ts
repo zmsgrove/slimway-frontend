@@ -53,6 +53,11 @@ export const scheduleSlotsApi = {
     return data
   },
 
+  bulkCreate: async (slots: Array<{ device_id: string; date: string; time_start: string; time_end: string }>): Promise<ScheduleSlot[]> => {
+    const { data } = await api.post('/schedule-slots/bulk', { slots })
+    return data
+  },
+
   delete: async (id: string): Promise<void> => {
     await api.delete(`/schedule-slots/${id}`)
   },

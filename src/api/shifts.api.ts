@@ -7,6 +7,11 @@ export const shiftsApi = {
     return data
   },
 
+  getByEmployee: async (employee_id: string): Promise<Shift[]> => {
+    const { data } = await api.get('/shifts', { params: { employee_id } })
+    return data
+  },
+
   create: async (payload: {
     employee_id: string
     date: string

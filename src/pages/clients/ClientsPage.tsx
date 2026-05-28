@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react'
-import { Users, Search, Plus, X, AlertCircle, Phone, Mail, Calendar, Edit2, Trash2 } from 'lucide-react'
+import { Users, Search, Plus, X, AlertCircle, Phone, Mail, Calendar, Edit2, Trash2, Eye, CreditCard } from 'lucide-react'
 import { clientsApi } from '../../api/clients.api'
-import type { Client } from '../../types'
+import { subscriptionsApi } from '../../api/subscriptions.api'
+import type { Client, Subscription } from '../../types'
+
+const DEVICE_TYPE_LABELS: Record<string, string> = {
+  vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
+}
+const DEVICE_TYPE_COLORS: Record<string, string> = {
+  vacuactiv: '#02BDB6', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
+}
+const SUB_STATUS_COLOR: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A' }
+const SUB_STATUS_LABEL: Record<string, string> = { active: 'Активный', frozen: 'Заморожен', expired: 'Истёк' }
 
 // ─── styles ─────────────────────────────────────────────────────────────────
 
@@ -119,15 +129,160 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
   )
 }
 
+// ─── ClientDetailModal ────────────────────────────────────────────────────────
+
+interface ClientDetailModalProps { client: Client; onClose: () => void; onEdit: () => void }
+
+function ClientDetailModal({ client, onClose, onEdit }: ClientDetailModalProps) {
+  const [tab, setTab]             = useState<'profile' | 'history'>('profile')
+  const [subs, setSubs]           = useState<Subscription[] | null>(null)
+  const [loadingSubs, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (tab !== 'history' || subs !== null) return
+    setLoading(true)
+    subscriptionsApi.getAll({ client_id: client.id })
+      .then(data => setSubs(data.sort((a, b) => b.created_at.localeCompare(a.created_at))))
+      .catch(() => setSubs([]))
+      .finally(() => setLoading(false))
+  }, [tab, subs, client.id])
+
+  const initials = client.full_name.charAt(0).toUpperCase()
+
+  const tabBtn = (t: 'profile' | 'history', label: string) => (
+    <button onClick={() => setTab(t)} style={{ flex: 1, height: 34, background: tab === t ? 'rgba(2,189,182,0.10)' : 'transparent', border: 'none', borderRadius: 8, color: tab === t ? '#02BDB6' : 'var(--text-muted)', fontSize: 13, fontWeight: tab === t ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>{label}</button>
+  )
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 500, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        {/* Header */}
+        <div style={{ padding: 34, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 13 }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(2,189,182,0.12)', border: '2px solid rgba(2,189,182,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: '#02BDB6', flexShrink: 0 }}>
+              {initials}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{client.full_name}</div>
+              {client.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>{client.phone}</div>}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={onEdit} title="Редактировать" style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                <Edit2 size={12} />Изменить
+              </button>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+            </div>
+          </div>
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: 4, marginTop: 21, background: 'var(--bg-surface)', borderRadius: 10, padding: 4 }}>
+            {tabBtn('profile', 'Профиль')}
+            {tabBtn('history', 'История')}
+          </div>
+        </div>
+
+        {/* Profile tab */}
+        {tab === 'profile' && (
+          <div style={{ padding: 34, display: 'flex', flexDirection: 'column', gap: 21 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>
+              {client.phone && (
+                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Телефон</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={12} color="var(--text-muted)" />{client.phone}</div>
+                </div>
+              )}
+              {client.email && (
+                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Email</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}><Mail size={12} color="var(--text-muted)" />{client.email}</div>
+                </div>
+              )}
+              {client.birth_date && (
+                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Дата рождения</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Calendar size={12} color="var(--text-muted)" />
+                    {new Date(client.birth_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                </div>
+              )}
+              <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>В базе с</div>
+                <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>
+                  {new Date(client.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              </div>
+            </div>
+            {client.notes && (
+              <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, borderTop: '1px solid var(--glass-border)' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Заметки</div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{client.notes}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* History tab */}
+        {tab === 'history' && (
+          <div style={{ padding: 34, maxHeight: 400, overflowY: 'auto' }}>
+            {loadingSubs ? (
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Загрузка...</div>
+            ) : !subs || subs.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
+                <CreditCard size={24} strokeWidth={1.5} color="var(--text-muted)" />
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Абонементов нет</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {subs.map(sub => {
+                  const sc = SUB_STATUS_COLOR[sub.status]
+                  return (
+                    <div key={sub.id} style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${sc}22` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{sub.name}</div>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>{SUB_STATUS_LABEL[sub.status]}</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Слот 1</div>
+                          <div style={{ fontSize: 12, color: DEVICE_TYPE_COLORS[sub.slot_1_type] }}>{DEVICE_TYPE_LABELS[sub.slot_1_type]}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{sub.slot_1_sessions_left}/{sub.slot_1_sessions_total} сеансов</div>
+                        </div>
+                        {sub.slot_2_type && sub.slot_2_sessions_left !== null && (
+                          <div>
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Слот 2</div>
+                            <div style={{ fontSize: 12, color: DEVICE_TYPE_COLORS[sub.slot_2_type] }}>{DEVICE_TYPE_LABELS[sub.slot_2_type]}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{sub.slot_2_sessions_left}/{sub.slot_2_sessions_total} сеансов</div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 13, fontSize: 11, color: 'var(--text-muted)' }}>
+                        <span>С {new Date(sub.date_start).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
+                        {sub.date_end && <span>По {new Date(sub.date_end).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+                        {sub.price && <span>· {sub.price.toLocaleString('ru-RU')} ₸</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── ClientCard ────────────────────────────────────────────────────────────────
 
 interface ClientCardProps {
   client: Client
   onEdit: (c: Client) => void
   onDelete: (id: string) => void
+  onView: (c: Client) => void
 }
 
-function ClientCard({ client, onEdit, onDelete }: ClientCardProps) {
+function ClientCard({ client, onEdit, onDelete, onView }: ClientCardProps) {
   const activeSub = client.memberships?.find(m => m.status === 'active')
 
   return (
@@ -180,6 +335,13 @@ function ClientCard({ client, onEdit, onDelete }: ClientCardProps) {
       {/* Actions */}
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         <button
+          onClick={() => onView(client)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+          title="Просмотр"
+        >
+          <Eye size={13} strokeWidth={1.75} />
+        </button>
+        <button
           onClick={() => onEdit(client)}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
           title="Редактировать"
@@ -201,12 +363,13 @@ function ClientCard({ client, onEdit, onDelete }: ClientCardProps) {
 // ─── ClientsPage ──────────────────────────────────────────────────────────────
 
 export default function ClientsPage() {
-  const [clients,    setClients]    = useState<Client[]>([])
-  const [loading,    setLoading]    = useState(true)
-  const [error,      setError]      = useState<string | null>(null)
-  const [search,     setSearch]     = useState('')
-  const [showModal,  setShowModal]  = useState(false)
-  const [editTarget, setEditTarget] = useState<Client | null>(null)
+  const [clients,     setClients]    = useState<Client[]>([])
+  const [loading,     setLoading]    = useState(true)
+  const [error,       setError]      = useState<string | null>(null)
+  const [search,      setSearch]     = useState('')
+  const [showModal,   setShowModal]  = useState(false)
+  const [editTarget,  setEditTarget] = useState<Client | null>(null)
+  const [viewTarget,  setViewTarget] = useState<Client | null>(null)
 
   const load = async (q?: string) => {
     setLoading(true); setError(null)
@@ -238,7 +401,10 @@ export default function ClientsPage() {
     setEditTarget(null)
   }
 
+  const handleView = (c: Client) => setViewTarget(c)
+
   const handleEdit = (c: Client) => {
+    setViewTarget(null)
     setEditTarget(c)
     setShowModal(true)
   }
@@ -321,13 +487,20 @@ export default function ClientsPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {clients.map(c => (
-            <ClientCard key={c.id} client={c} onEdit={handleEdit} onDelete={id => void handleDelete(id)} />
+            <ClientCard key={c.id} client={c} onEdit={handleEdit} onDelete={id => void handleDelete(id)} onView={handleView} />
           ))}
         </div>
       )}
 
       {showModal && (
         <ClientModal initial={editTarget} onClose={handleCloseModal} onSave={handleSave} />
+      )}
+      {viewTarget && (
+        <ClientDetailModal
+          client={viewTarget}
+          onClose={() => setViewTarget(null)}
+          onEdit={() => handleEdit(viewTarget)}
+        />
       )}
     </div>
   )
