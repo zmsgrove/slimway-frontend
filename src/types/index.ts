@@ -128,6 +128,46 @@ export interface ScheduleSlot {
   devices?: Device
 }
 
+// ── v1.3.0 Employees & Shifts ────────────────────────────────
+export interface Employee {
+  id: string
+  branch_id: string
+  profile_id: string | null
+  full_name: string
+  phone: string | null
+  birth_date: string | null
+  position: string | null
+  department: string | null
+  created_at: string
+}
+
+export type ShiftStatus = 'scheduled' | 'active' | 'completed'
+
+export interface ShiftCheckin {
+  id: string
+  shift_id: string
+  employee_id: string
+  branch_id: string
+  checkin_at: string | null
+  checkout_at: string | null
+  is_own_shift: boolean
+  location: string | null
+  created_at: string
+}
+
+export interface Shift {
+  id: string
+  branch_id: string
+  employee_id: string
+  date: string
+  time_start: string
+  time_end: string
+  status: ShiftStatus
+  created_at: string
+  employees?: Employee
+  shift_checkins?: ShiftCheckin[]
+}
+
 // ── v1.2.1 ───────────────────────────────────────────────────
 export interface SubscriptionTemplate {
   id: string
