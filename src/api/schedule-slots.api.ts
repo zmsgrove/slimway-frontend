@@ -1,5 +1,5 @@
 import { api } from '../lib/api'
-import type { ScheduleSlot } from '../types'
+import type { Device, ScheduleSlot } from '../types'
 
 export interface BookingV2Result {
   id: string
@@ -19,6 +19,22 @@ export interface BookingV2Error {
   next_available?: { date: string; time_start: string } | null
   slot_2_type?: string
   required_time?: string
+}
+
+export interface BookingSlotDetail {
+  id: string
+  date: string
+  time_start: string
+  time_end: string
+  devices: Device | null
+}
+
+export interface BookingInfo {
+  booking: BookingV2Result
+  client: { id: string; full_name: string; phone: string | null }
+  subscription: { id: string; name: string }
+  slot_1: BookingSlotDetail
+  slot_2: BookingSlotDetail | null
 }
 
 export const scheduleSlotsApi = {
@@ -50,6 +66,11 @@ export const bookingsV2Api = {
     date: string
   }): Promise<BookingV2Result> => {
     const { data } = await api.post('/bookings-v2', payload)
+    return data
+  },
+
+  getById: async (id: string): Promise<BookingInfo> => {
+    const { data } = await api.get(`/bookings-v2/${id}`)
     return data
   },
 

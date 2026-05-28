@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar } from 'lucide-react'
-import { scheduleSlotsApi, bookingsV2Api, type BookingV2Error } from '../../api/schedule-slots.api'
+import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2 } from 'lucide-react'
+import { scheduleSlotsApi, bookingsV2Api, type BookingV2Error, type BookingInfo } from '../../api/schedule-slots.api'
 import { devicesApi } from '../../api/devices.api'
 import { clientsApi } from '../../api/clients.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
-import type { Device, ScheduleSlot, Client, Subscription } from '../../types'
+import { useAuth } from '../../hooks/useAuth'
+import type { Device, ScheduleSlot, Client, Subscription, Role } from '../../types'
 
 // ─── constants & helpers ────────────────────────────────────────────────────
 
@@ -46,6 +47,11 @@ function formatDate(d: Date) {
   return d.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
+function diffMinutes(timeStart: string, timeEnd: string): number {
+  const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+  return toMin(timeEnd) - toMin(timeStart)
+}
+
 const inputStyle: React.CSSProperties = {
   height: 36, padding: '0 13px', background: 'var(--bg-elevated)',
   border: '1px solid var(--glass-border)', borderRadius: 8,
@@ -53,15 +59,15 @@ const inputStyle: React.CSSProperties = {
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' }
 
-// ─── ClientSearch (inline) ───────────────────────────────────────────────────
+// ─── ClientSearch ─────────────────────────────────────────────────────────────
 
 interface ClientSearchProps { value: Client | null; onChange: (c: Client | null) => void }
 function ClientSearch({ value, onChange }: ClientSearchProps) {
-  const [q, setQ]           = useState('')
-  const [res, setRes]       = useState<Client[]>([])
-  const [open, setOpen]     = useState(false)
-  const timer               = useRef<ReturnType<typeof setTimeout>>()
-  const wrapRef             = useRef<HTMLDivElement>(null)
+  const [q, setQ]       = useState('')
+  const [res, setRes]   = useState<Client[]>([])
+  const [open, setOpen] = useState(false)
+  const timer           = useRef<ReturnType<typeof setTimeout>>()
+  const wrapRef         = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const close = (e: MouseEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false) }
@@ -103,7 +109,7 @@ function ClientSearch({ value, onChange }: ClientSearchProps) {
   )
 }
 
-// ─── CreateSlotModal ─────────────────────────────────────────────────────────
+// ─── CreateSlotModal ──────────────────────────────────────────────────────────
 
 interface CreateSlotTarget { device: Device; timeStart: string; date: string }
 interface CreateSlotModalProps { target: CreateSlotTarget; onClose: () => void; onCreate: (slot: ScheduleSlot) => void }
@@ -142,7 +148,6 @@ function CreateSlotModal({ target, onClose, onCreate }: CreateSlotModalProps) {
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Создать ячейку</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
         </div>
-
         <div style={{ padding: '13px', background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 13, border: `1px solid ${devColor}33` }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: devColor }}>
             {DEVICE_TYPE_LABELS[target.device.type]} #{target.device.number}
@@ -151,20 +156,17 @@ function CreateSlotModal({ target, onClose, onCreate }: CreateSlotModalProps) {
             {new Date(target.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} · {target.timeStart}
           </div>
         </div>
-
         {error && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
-
         <div style={{ marginBottom: 13 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Длительность</div>
           <select style={selectStyle} value={duration} onChange={e => setDuration(Number(e.target.value))}>
             {DURATIONS.map(d => <option key={d} value={d}>{d} мин → до {addMinutes(target.timeStart, d)}</option>)}
           </select>
         </div>
-
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 38, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
             {saving ? 'Создание...' : 'Создать'}
@@ -176,7 +178,7 @@ function CreateSlotModal({ target, onClose, onCreate }: CreateSlotModalProps) {
   )
 }
 
-// ─── BookingModal ────────────────────────────────────────────────────────────
+// ─── BookingModal (для свободных ячеек) ──────────────────────────────────────
 
 interface BookingModalProps { slot: ScheduleSlot; device: Device; onClose: () => void; onBooked: () => void }
 
@@ -232,8 +234,6 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Забронировать</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
         </div>
-
-        {/* Slot info */}
         <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 13, border: `1px solid ${devColor}33` }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: devColor }}>
             {DEVICE_TYPE_LABELS[device.type]} #{device.number}
@@ -242,19 +242,16 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
             {new Date(slot.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} · {ft(slot.time_start)} — {ft(slot.time_end)}
           </div>
         </div>
-
         {error && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444', lineHeight: 1.5 }}>
             <AlertCircle size={13} style={{ flexShrink: 0, marginTop: 1 }} />{error}
           </div>
         )}
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Клиент</div>
             <ClientSearch value={client} onChange={c => { setClient(c); setError(null) }} />
           </div>
-
           {client && (
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Абонемент</div>
@@ -287,13 +284,11 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
               )}
             </div>
           )}
-
           {selSub?.slot_2_type && (
             <div style={{ padding: '8px 13px', background: 'rgba(2,189,182,0.06)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
               Слот 2 ({DEVICE_TYPE_LABELS[selSub.slot_2_type]}) будет подобран автоматически — первый свободный тренажёр сразу после окончания этого слота.
             </div>
           )}
-
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button
               onClick={() => void handleBook()}
@@ -310,18 +305,215 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
   )
 }
 
+// ─── BookingInfoModal (для занятых ячеек) ────────────────────────────────────
+
+interface BookingInfoModalProps {
+  slot: ScheduleSlot
+  device: Device
+  userRole: Role
+  onClose: () => void
+  onCancelled: () => void
+}
+
+function BookingInfoModal({ slot, device, userRole, onClose, onCancelled }: BookingInfoModalProps) {
+  const [info,       setInfo]       = useState<BookingInfo | null>(null)
+  const [loading,    setLoading]    = useState(true)
+  const [cancelling, setCancelling] = useState(false)
+  const [error,      setError]      = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!slot.booking_id) { setLoading(false); return }
+    bookingsV2Api.getById(slot.booking_id)
+      .then(setInfo)
+      .catch(() => setError('Не удалось загрузить данные брони'))
+      .finally(() => setLoading(false))
+  }, [slot.booking_id])
+
+  const handleCancel = async () => {
+    if (!info) return
+    setCancelling(true); setError(null)
+    try {
+      await bookingsV2Api.cancel(info.booking.id)
+      onCancelled()
+    } catch {
+      setError('Ошибка при снятии брони')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#02BDB6'
+
+  let canCancel = false
+  let cancelHint: string | null = null
+  if (info) {
+    const slotStart = new Date(`${info.slot_1.date}T${info.slot_1.time_start}`)
+    const hoursLeft = (slotStart.getTime() - Date.now()) / (1000 * 60 * 60)
+    if (hoursLeft < 24) {
+      canCancel = ['owner', 'franchisee'].includes(userRole)
+      if (!canCancel) cancelHint = 'До сеанса менее 24 ч — снять бронь может только управляющий'
+    } else {
+      canCancel = ['owner', 'franchisee', 'admin'].includes(userRole)
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 460, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Информация о брони</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
+        </div>
+
+        {/* Ячейка */}
+        <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 13, border: `1px solid ${devColor}33` }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: devColor }}>
+            {DEVICE_TYPE_LABELS[device.type]} #{device.number}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
+            {new Date(slot.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} · {ft(slot.time_start)} — {ft(slot.time_end)}
+          </div>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: '34px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        ) : !info ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
+            <AlertCircle size={13} />{error ?? 'Данные о брони не найдены'}
+          </div>
+        ) : (
+          <>
+            {/* Клиент */}
+            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Клиент</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{info.client.full_name}</div>
+              {info.client.phone && (
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{info.client.phone}</div>
+              )}
+            </div>
+
+            {/* Абонемент */}
+            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Абонемент</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{info.subscription.name}</div>
+            </div>
+
+            {/* Слоты */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 13 }}>
+              {([info.slot_1, info.slot_2] as Array<typeof info.slot_1 | null>).map((s, i) => {
+                if (!s) return null
+                const dev = s.devices
+                const dColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#71717A') : '#71717A'
+                const dur = diffMinutes(ft(s.time_start), ft(s.time_end))
+                return (
+                  <div key={i} style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${dColor}22` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Слот {i + 1}</div>
+                      {dur > 0 && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{dur} мин</div>}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: dColor }}>
+                      {dev ? `${DEVICE_TYPE_LABELS[dev.type]} #${dev.number}` : '—'}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
+                      {ft(s.time_start)} — {ft(s.time_end)}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {error && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+                <AlertCircle size={13} />{error}
+              </div>
+            )}
+
+            {cancelHint && (
+              <div style={{ padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>
+                {cancelHint}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => void handleCancel()}
+                disabled={!canCancel || cancelling}
+                style={{ flex: 1, height: 40, background: canCancel ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface)', border: `1px solid ${canCancel ? 'rgba(239,68,68,0.35)' : 'var(--glass-border)'}`, borderRadius: 8, color: canCancel ? '#ef4444' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canCancel || cancelling) ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.6 : 1 }}
+              >
+                {cancelling ? 'Снятие...' : 'Снять бронь'}
+              </button>
+              <button onClick={onClose} style={{ height: 40, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── DeleteConfirmModal ───────────────────────────────────────────────────────
+
+interface DeleteConfirmModalProps {
+  slot: ScheduleSlot
+  device: Device
+  loading: boolean
+  onClose: () => void
+  onConfirm: () => void
+}
+
+function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: DeleteConfirmModalProps) {
+  const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#02BDB6'
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Удалить ячейку?</div>
+        <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 21, border: `1px solid ${devColor}33` }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: devColor }}>
+            {DEVICE_TYPE_LABELS[device.type]} #{device.number}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
+            {ft(slot.time_start)} — {ft(slot.time_end)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            style={{ flex: 1, height: 38, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
+          >
+            {loading ? 'Удаление...' : 'Удалить'}
+          </button>
+          <button onClick={onClose} style={{ height: 38, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── SchedulePage ─────────────────────────────────────────────────────────────
 
 export default function SchedulePage() {
-  const [date,         setDate]        = useState(() => toISO(new Date()))
-  const [devices,      setDevices]     = useState<Device[]>([])
-  const [slots,        setSlots]       = useState<ScheduleSlot[]>([])
-  const [loading,      setLoading]     = useState(true)
-  const [error,        setError]       = useState<string | null>(null)
-  const [createTarget, setCreateTarget] = useState<CreateSlotTarget | null>(null)
-  const [bookTarget,   setBookTarget]   = useState<{ slot: ScheduleSlot; device: Device } | null>(null)
+  const { user } = useAuth()
+  const [date,              setDate]             = useState(() => toISO(new Date()))
+  const [devices,           setDevices]          = useState<Device[]>([])
+  const [slots,             setSlots]            = useState<ScheduleSlot[]>([])
+  const [loading,           setLoading]          = useState(true)
+  const [error,             setError]            = useState<string | null>(null)
+  const [createTarget,      setCreateTarget]     = useState<CreateSlotTarget | null>(null)
+  const [bookTarget,        setBookTarget]       = useState<{ slot: ScheduleSlot; device: Device } | null>(null)
+  const [bookingInfoTarget, setBookingInfoTarget] = useState<{ slot: ScheduleSlot; device: Device } | null>(null)
+  const [deleteConfirm,     setDeleteConfirm]    = useState<{ slot: ScheduleSlot; device: Device } | null>(null)
+  const [deletingSlot,      setDeletingSlot]     = useState(false)
+  const [hoveredCell,       setHoveredCell]      = useState<string | null>(null)
+  const [notification,      setNotification]     = useState<string | null>(null)
+  const notifTimer = useRef<ReturnType<typeof setTimeout> | undefined>()
 
-  // Build slotMap: "device_id:HH:MM" → ScheduleSlot
+  const canManageSlots = user?.role === 'owner' || user?.role === 'franchisee'
+
+  useEffect(() => () => clearTimeout(notifTimer.current), [])
+
   const slotMap = useMemo(() => {
     const m = new Map<string, ScheduleSlot>()
     for (const s of slots) m.set(`${s.device_id}:${ft(s.time_start)}`, s)
@@ -343,31 +535,48 @@ export default function SchedulePage() {
 
   useEffect(() => { void loadData(date) }, [date])
 
-  const prevDay = () => {
-    const d = new Date(date); d.setDate(d.getDate() - 1); setDate(toISO(d))
+  const showNotification = (msg: string) => {
+    setNotification(msg)
+    clearTimeout(notifTimer.current)
+    notifTimer.current = setTimeout(() => setNotification(null), 3000)
   }
-  const nextDay = () => {
-    const d = new Date(date); d.setDate(d.getDate() + 1); setDate(toISO(d))
-  }
+
+  const prevDay = () => { const d = new Date(date); d.setDate(d.getDate() - 1); setDate(toISO(d)) }
+  const nextDay = () => { const d = new Date(date); d.setDate(d.getDate() + 1); setDate(toISO(d)) }
 
   const handleCellClick = (device: Device, time: string) => {
     const existing = slotMap.get(`${device.id}:${time}`)
     if (existing) {
       if (existing.status === 'free') setBookTarget({ slot: existing, device })
+      else if (existing.status === 'booked') setBookingInfoTarget({ slot: existing, device })
     } else {
       setCreateTarget({ device, timeStart: time, date })
     }
   }
 
-  const handleCreated = (slot: ScheduleSlot) => {
-    setSlots(prev => [...prev, slot])
-    setCreateTarget(null)
+  const handleTrashClick = (slot: ScheduleSlot, device: Device) => {
+    if (slot.status === 'booked') {
+      showNotification('Сначала снимите бронь, чтобы удалить ячейку')
+      return
+    }
+    setDeleteConfirm({ slot, device })
   }
 
-  const handleBooked = () => {
-    setBookTarget(null)
-    void loadData(date) // refresh to show updated statuses
+  const handleDeleteSlot = async () => {
+    if (!deleteConfirm) return
+    setDeletingSlot(true)
+    try {
+      await scheduleSlotsApi.delete(deleteConfirm.slot.id)
+      setSlots(prev => prev.filter(s => s.id !== deleteConfirm.slot.id))
+      setDeleteConfirm(null)
+    } catch {
+      setDeletingSlot(false)
+    }
   }
+
+  const handleCreated = (slot: ScheduleSlot) => { setSlots(prev => [...prev, slot]); setCreateTarget(null) }
+  const handleBooked  = () => { setBookTarget(null); void loadData(date) }
+  const handleCancelled = () => { setBookingInfoTarget(null); void loadData(date) }
 
   const dateLabel = new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -412,6 +621,13 @@ export default function SchedulePage() {
         </div>
       </div>
 
+      {/* Notification */}
+      {notification && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>
+          <AlertCircle size={13} />{notification}
+        </div>
+      )}
+
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
           <AlertCircle size={13} />{error}
@@ -429,12 +645,11 @@ export default function SchedulePage() {
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>Добавьте оборудование в Настройках</div>
         </div>
       ) : (
-        /* Scrollable grid */
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: devices.length * 100 + 160 }}>
 
-              {/* Header row: Time + Device columns */}
+              {/* Header row */}
               <div style={{ display: 'grid', gridTemplateColumns: `160px repeat(${TIME_SLOTS.length}, 60px)`, borderBottom: '1px solid var(--glass-border)' }}>
                 <div style={{ padding: '10px 13px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Тренажёр</div>
                 {TIME_SLOTS.map(t => (
@@ -447,30 +662,40 @@ export default function SchedulePage() {
                 const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#71717A'
                 return (
                   <div key={device.id} style={{ display: 'grid', gridTemplateColumns: `160px repeat(${TIME_SLOTS.length}, 60px)`, borderBottom: '1px solid var(--glass-border)' }}>
-                    {/* Device label */}
                     <div style={{ padding: '10px 13px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--glass-border)' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: devColor }}>
-                        {DEVICE_TYPE_LABELS[device.type]}
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-                        #{device.number} · Гр. {device.device_group}
-                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: devColor }}>{DEVICE_TYPE_LABELS[device.type]}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>#{device.number} · Гр. {device.device_group}</div>
                     </div>
 
-                    {/* Time cells */}
                     {TIME_SLOTS.map(time => {
-                      const slot = slotMap.get(`${device.id}:${time}`)
-                      const sc   = slot ? STATUS_COLORS[slot.status] : null
+                      const cellKey = `${device.id}:${time}`
+                      const slot    = slotMap.get(cellKey)
+                      const sc      = slot ? STATUS_COLORS[slot.status] : null
+                      const isHovered = hoveredCell === cellKey
 
                       return (
                         <div
                           key={time}
                           onClick={() => handleCellClick(device, time)}
-                          title={slot ? `${STATUS_LABELS[slot.status]}: ${ft(slot.time_start)}–${ft(slot.time_end)}` : `Создать ячейку ${time}`}
+                          onMouseEnter={e => {
+                            setHoveredCell(cellKey)
+                            if (!slot) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.04)'
+                          }}
+                          onMouseLeave={e => {
+                            setHoveredCell(null)
+                            if (!slot) (e.currentTarget as HTMLDivElement).style.background = 'transparent'
+                          }}
+                          title={
+                            slot
+                              ? slot.status === 'booked'
+                                ? `Занято: ${ft(slot.time_start)}–${ft(slot.time_end)} — нажмите для деталей`
+                                : `${STATUS_LABELS[slot.status]}: ${ft(slot.time_start)}–${ft(slot.time_end)}`
+                              : `Создать ячейку ${time}`
+                          }
                           style={{
                             height: 48,
                             borderLeft: '1px solid var(--glass-border)',
-                            cursor: slot ? (slot.status === 'free' ? 'pointer' : 'default') : 'pointer',
+                            cursor: slot ? (['free', 'booked'].includes(slot.status) ? 'pointer' : 'default') : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -478,20 +703,25 @@ export default function SchedulePage() {
                             background: sc ? sc.bg : 'transparent',
                             position: 'relative',
                           }}
-                          onMouseEnter={e => {
-                            if (!slot) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.04)'
-                          }}
-                          onMouseLeave={e => {
-                            if (!slot) (e.currentTarget as HTMLDivElement).style.background = 'transparent'
-                          }}
                         >
                           {slot ? (
-                            <div style={{ width: 36, height: 28, borderRadius: 6, background: sc!.bg, border: `1px solid ${sc!.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              {slot.status === 'free' && <Plus size={11} strokeWidth={2.5} color={sc!.text} />}
-                              {slot.status === 'booked' && <div style={{ width: 6, height: 6, borderRadius: '50%', background: sc!.text }} />}
-                              {slot.status === 'maintenance' && <span style={{ fontSize: 9, color: sc!.text }}>~</span>}
-                              {slot.status === 'blocked' && <span style={{ fontSize: 9, color: sc!.text }}>✕</span>}
-                            </div>
+                            <>
+                              <div style={{ width: 36, height: 28, borderRadius: 6, background: sc!.bg, border: `1px solid ${sc!.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {slot.status === 'free'        && <Plus size={11} strokeWidth={2.5} color={sc!.text} />}
+                                {slot.status === 'booked'      && <div style={{ width: 6, height: 6, borderRadius: '50%', background: sc!.text }} />}
+                                {slot.status === 'maintenance' && <span style={{ fontSize: 9, color: sc!.text }}>~</span>}
+                                {slot.status === 'blocked'     && <span style={{ fontSize: 9, color: sc!.text }}>✕</span>}
+                              </div>
+                              {isHovered && canManageSlots && (
+                                <button
+                                  onClick={e => { e.stopPropagation(); handleTrashClick(slot, device) }}
+                                  title="Удалить ячейку"
+                                  style={{ position: 'absolute', top: 3, right: 3, width: 16, height: 16, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, zIndex: 2 }}
+                                >
+                                  <Trash2 size={9} color="#ef4444" />
+                                </button>
+                              )}
+                            </>
                           ) : (
                             <div style={{ width: 36, height: 28, borderRadius: 6, border: '1px dashed rgba(255,255,255,0.1)', opacity: 0.4 }} />
                           )}
@@ -508,18 +738,27 @@ export default function SchedulePage() {
 
       {/* Modals */}
       {createTarget && (
-        <CreateSlotModal
-          target={createTarget}
-          onClose={() => setCreateTarget(null)}
-          onCreate={handleCreated}
-        />
+        <CreateSlotModal target={createTarget} onClose={() => setCreateTarget(null)} onCreate={handleCreated} />
       )}
       {bookTarget && (
-        <BookingModal
-          slot={bookTarget.slot}
-          device={bookTarget.device}
-          onClose={() => setBookTarget(null)}
-          onBooked={handleBooked}
+        <BookingModal slot={bookTarget.slot} device={bookTarget.device} onClose={() => setBookTarget(null)} onBooked={handleBooked} />
+      )}
+      {bookingInfoTarget && (
+        <BookingInfoModal
+          slot={bookingInfoTarget.slot}
+          device={bookingInfoTarget.device}
+          userRole={user?.role ?? 'admin'}
+          onClose={() => setBookingInfoTarget(null)}
+          onCancelled={handleCancelled}
+        />
+      )}
+      {deleteConfirm && (
+        <DeleteConfirmModal
+          slot={deleteConfirm.slot}
+          device={deleteConfirm.device}
+          loading={deletingSlot}
+          onClose={() => setDeleteConfirm(null)}
+          onConfirm={() => void handleDeleteSlot()}
         />
       )}
     </div>
