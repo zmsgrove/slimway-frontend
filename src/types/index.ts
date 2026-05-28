@@ -1,4 +1,4 @@
-export type Role = 'owner' | 'franchisee' | 'admin' | 'trainer' | 'staff' | 'technical'
+export type Role = 'developer' | 'owner' | 'franchisee' | 'admin' | 'trainer' | 'staff' | 'technical'
 
 // ── Auth ────────────────────────────────────────────────────
 export interface User {
@@ -170,6 +170,36 @@ export interface Shift {
   created_at: string
   employees?: Employee
   shift_checkins?: ShiftCheckin[]
+}
+
+// ── v1.4.0 Leads ─────────────────────────────────────────────
+export type LeadStatus = 'new' | 'in_work' | 'waiting' | 'success' | 'fail'
+export type LeadSource = 'manual' | 'whatsapp'
+
+export interface LeadComment {
+  id: string
+  lead_id: string
+  author_id: string | null
+  text: string
+  created_at: string
+  profiles?: { full_name: string } | null
+}
+
+export interface Lead {
+  id: string
+  branch_id: string
+  full_name: string
+  phone: string | null
+  source: LeadSource
+  status: LeadStatus
+  assigned_to: string | null
+  notes: string | null
+  client_id: string | null
+  created_by: string | null
+  archived_at: string | null
+  created_at: string
+  updated_at: string
+  lead_comments?: LeadComment[]
 }
 
 // ── v1.2.1 ───────────────────────────────────────────────────

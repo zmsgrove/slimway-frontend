@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { VERSION } from '../../version'
 
 const FEATURES = [
   {
@@ -242,7 +243,7 @@ export default function LoginPage() {
               fontSize: 11,
             }}
           >
-            Slimway CRM · <span style={{ color: '#02BDB6' }}>v1.0</span> · 2026
+            Slimway CRM · <span style={{ color: '#02BDB6' }}>v{VERSION}</span> · 2026
           </div>
         </div>
       </div>

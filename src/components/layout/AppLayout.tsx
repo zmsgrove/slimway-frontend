@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
+import { VERSION } from '../../version'
 
 const navItems = [
   { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard },
@@ -32,10 +33,13 @@ const navItems = [
 ]
 
 const roleLabel: Record<string, string> = {
+  developer:  'Разработчик',
   owner:      'Владелец',
   franchisee: 'Франчайзи',
   admin:      'Администратор',
   trainer:    'Тренер',
+  staff:      'Менеджер',
+  technical:  'Тех. персонал',
 }
 
 const sidebarStyle: React.CSSProperties = {
@@ -123,11 +127,14 @@ export default function AppLayout() {
               CRM
             </span>
           </div>
-          {user?.role && (
-            <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0 }}>
-              {roleLabel[user.role] ?? user.role}
-            </p>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {user?.role && (
+              <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0 }}>
+                {roleLabel[user.role] ?? user.role}
+              </p>
+            )}
+            <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>v{VERSION}</span>
+          </div>
         </div>
 
         {/* Nav */}
@@ -260,6 +267,23 @@ export default function AppLayout() {
               : <Moon size={15} strokeWidth={1.75} />
             }
           </button>
+
+          {/* DEV badge */}
+          {user?.role === 'developer' && (
+            <span style={{
+              background: 'rgba(38,60,217,0.15)',
+              color: '#263CD9',
+              border: '1px solid rgba(38,60,217,0.35)',
+              fontSize: 10,
+              fontWeight: 700,
+              padding: '3px 8px',
+              borderRadius: 6,
+              letterSpacing: 1,
+              flexShrink: 0,
+            }}>
+              DEV
+            </span>
+          )}
 
           {/* User */}
           <div style={{ textAlign: 'right' }}>
