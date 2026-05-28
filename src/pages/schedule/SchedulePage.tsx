@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2, Layers } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2, Layers, Lock, Unlock, Eye } from 'lucide-react'
 import { scheduleSlotsApi, bookingsV2Api, type BookingV2Error, type BookingInfo } from '../../api/schedule-slots.api'
+import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { devicesApi } from '../../api/devices.api'
 import { clientsApi } from '../../api/clients.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
@@ -554,6 +555,7 @@ export default function SchedulePage() {
   const [deleteConfirm,     setDeleteConfirm]    = useState<{ slot: ScheduleSlot; device: Device } | null>(null)
   const [deletingSlot,      setDeletingSlot]     = useState(false)
   const [hoveredCell,       setHoveredCell]      = useState<string | null>(null)
+  const [ctxMenu,           setCtxMenu]          = useState<{ x: number; y: number; device: Device; time: string; slot: ScheduleSlot | null } | null>(null)
   const [notification,      setNotification]     = useState<string | null>(null)
   const [dragSelection,     setDragSelection]    = useState<Set<string>>(new Set())
   const [showBulkModal,     setShowBulkModal]    = useState(false)
@@ -660,6 +662,16 @@ export default function SchedulePage() {
       setDeleteConfirm(null)
     } catch {
       setDeletingSlot(false)
+    }
+  }
+
+  const handleBlockSlot = async (slot: ScheduleSlot) => {
+    const newStatus = slot.status === 'blocked' ? 'free' : 'blocked'
+    try {
+      const updated = await scheduleSlotsApi.patch(slot.id, { status: newStatus })
+      setSlots(prev => prev.map(s => s.id === slot.id ? { ...s, status: updated.status } : s))
+    } catch {
+      showNotification('Не удалось изменить статус ячейки')
     }
   }
 
@@ -777,6 +789,7 @@ export default function SchedulePage() {
                           key={time}
                           className={isSelec ? 'cell-selected' : undefined}
                           onClick={() => handleCellClick(device, time)}
+                          onContextMenu={e => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, device, time, slot: slot ?? null }) }}
                           onMouseDown={() => handleCellMouseDown(device, time)}
                           onMouseEnter={e => {
                             handleCellMouseEnter(device, time)
@@ -851,6 +864,34 @@ export default function SchedulePage() {
       {bookTarget && <BookingModal slot={bookTarget.slot} device={bookTarget.device} onClose={() => setBookTarget(null)} onBooked={handleBooked} />}
       {bookingInfoTarget && <BookingInfoModal slot={bookingInfoTarget.slot} device={bookingInfoTarget.device} userRole={user?.role ?? 'admin'} onClose={() => setBookingInfoTarget(null)} onCancelled={handleCancelled} />}
       {deleteConfirm && <DeleteConfirmModal slot={deleteConfirm.slot} device={deleteConfirm.device} loading={deletingSlot} onClose={() => setDeleteConfirm(null)} onConfirm={() => void handleDeleteSlot()} />}
+
+      {ctxMenu && (() => {
+        const { x, y, device, time, slot } = ctxMenu
+        const items: ContextMenuEntry[] = []
+        if (!slot) {
+          if (canManageSlots) {
+            items.push({ label: 'Создать ячейку', icon: <Plus size={13} />, onClick: () => setCreateTarget({ device, timeStart: time, date }) })
+          }
+        } else if (slot.status === 'free') {
+          items.push({ label: 'Забронировать', icon: <Calendar size={13} />, onClick: () => setBookTarget({ slot, device }) })
+          if (canManageSlots) {
+            items.push({ separator: true } as ContextMenuEntry)
+            items.push({ label: 'Заблокировать', icon: <Lock size={13} />, onClick: () => void handleBlockSlot(slot) })
+            items.push({ separator: true } as ContextMenuEntry)
+            items.push({ label: 'Удалить ячейку', icon: <Trash2 size={13} />, onClick: () => handleTrashClick(slot, device), danger: true })
+          }
+        } else if (slot.status === 'booked') {
+          items.push({ label: 'Открыть бронь', icon: <Eye size={13} />, onClick: () => setBookingInfoTarget({ slot, device }) })
+        } else if (slot.status === 'blocked' || slot.status === 'maintenance') {
+          if (canManageSlots) {
+            items.push({ label: 'Разблокировать', icon: <Unlock size={13} />, onClick: () => void handleBlockSlot(slot) })
+            items.push({ separator: true } as ContextMenuEntry)
+            items.push({ label: 'Удалить ячейку', icon: <Trash2 size={13} />, onClick: () => handleTrashClick(slot, device), danger: true })
+          }
+        }
+        if (items.length === 0) return null
+        return <ContextMenu x={x} y={y} items={items} onClose={() => setCtxMenu(null)} />
+      })()}
     </div>
   )
 }

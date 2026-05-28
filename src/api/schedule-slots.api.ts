@@ -58,6 +58,11 @@ export const scheduleSlotsApi = {
     return data
   },
 
+  patch: async (id: string, payload: { status: 'free' | 'blocked' | 'maintenance' }): Promise<ScheduleSlot> => {
+    const { data } = await api.patch(`/schedule-slots/${id}`, payload)
+    return data
+  },
+
   delete: async (id: string): Promise<void> => {
     await api.delete(`/schedule-slots/${id}`)
   },

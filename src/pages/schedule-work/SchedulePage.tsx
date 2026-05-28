@@ -657,6 +657,9 @@ export default function ScheduleWorkPage() {
                         <div style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? '#02BDB6' : wknd ? 'var(--text-muted)' : 'var(--text-primary)', lineHeight: 1.3 }}>
                           {d.getDate()}
                         </div>
+                        <div style={{ fontSize: 9, color: isToday ? 'rgba(2,189,182,0.7)' : 'var(--text-muted)', lineHeight: 1.2, opacity: 0.8 }}>
+                          {d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '')}
+                        </div>
                       </th>
                     )
                   })}
@@ -695,7 +698,7 @@ export default function ScheduleWorkPage() {
                           onMouseLeave={e => { (e.currentTarget as HTMLTableCellElement).style.background = isToday ? 'rgba(2,189,182,0.05)' : wknd ? 'rgba(255,255,255,0.01)' : 'transparent' }}
                         >
                           {dayOff ? (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(63,63,70,0.45)', borderRadius: 6, width: 42, height: 36, fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 0.4 }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, width: 42, height: 36, fontSize: 9, fontWeight: 700, color: '#EF4444', letterSpacing: 0.4 }}>
                               ВЫХ
                             </div>
                           ) : shift ? (
@@ -735,7 +738,7 @@ export default function ScheduleWorkPage() {
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>На смене</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 26, height: 14, borderRadius: 4, background: 'rgba(63,63,70,0.45)' }} />
+          <div style={{ width: 26, height: 14, borderRadius: 4, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }} />
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Выходной</span>
         </div>
       </div>

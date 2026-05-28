@@ -7,6 +7,7 @@ import {
 import { employeesApi } from '../../api/employees.api'
 import { shiftsApi } from '../../api/shifts.api'
 import { useAuth } from '../../hooks/useAuth'
+import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { Employee, Shift } from '../../types'
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -357,9 +358,10 @@ interface CardProps {
   isOnDuty: boolean
   onUpdated: (emp: Employee) => void
   onDeleted: (id: string) => void
+  onContextMenu: (e: React.MouseEvent) => void
 }
 
-function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted }: CardProps) {
+function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextMenu }: CardProps) {
   const [tab, setTab]           = useState<'profile' | 'shifts'>('profile')
   const [editing, setEditing]   = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -417,9 +419,9 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted }: CardProp
   )
 
   return (
-    <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+    <div onContextMenu={onContextMenu} style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '16px 16px 12px', display: 'flex', gap: 12, alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)' }}>
+      <div style={{ padding: '16px 16px 12px', display: 'flex', gap: 12, alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', cursor: 'default' }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: color + '20', border: `2px solid ${color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color }}>
             {initials}
@@ -522,6 +524,8 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted }: CardProp
 
 // ─── EmployeesPage ─────────────────────────────────────────────────────────────
 
+interface EmpCtxMenu { x: number; y: number; emp: Employee }
+
 export default function EmployeesPage() {
   const { user }                  = useAuth()
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -530,6 +534,7 @@ export default function EmployeesPage() {
   const [error, setError]         = useState<string | null>(null)
   const [showAdd, setShowAdd]     = useState(false)
   const [successInfo, setSuccessInfo] = useState<{ emp: Employee; email: string; password: string } | null>(null)
+  const [ctxMenu, setCtxMenu]     = useState<EmpCtxMenu | null>(null)
 
   const canEdit = user?.role === 'owner' || user?.role === 'franchisee'
   const today   = new Date().toISOString().slice(0, 10)
@@ -553,6 +558,28 @@ export default function EmployeesPage() {
   }, [today])
 
   const onDutyIds = new Set(todayShifts.filter(s => s.status === 'active').map(s => s.employee_id))
+
+  const handleDeleteEmp = async (id: string) => {
+    if (!confirm('Удалить сотрудника и его аккаунт?')) return
+    try {
+      await employeesApi.delete(id)
+      setEmployees(prev => prev.filter(e => e.id !== id))
+    } catch {
+      setError('Не удалось удалить сотрудника')
+    }
+  }
+
+  const buildCtxItems = (emp: Employee): ContextMenuEntry[] => {
+    const items: ContextMenuEntry[] = [
+      { label: 'Открыть карточку', icon: <Eye size={13} />, onClick: () => { /* card already visible as grid item */ } },
+      { label: 'Редактировать', icon: <Pencil size={13} />, onClick: () => { /* handled inline */ } },
+    ]
+    if (canEdit) {
+      items.push({ separator: true })
+      items.push({ label: 'Удалить', icon: <Trash2 size={13} />, onClick: () => void handleDeleteEmp(emp.id), danger: true })
+    }
+    return items
+  }
 
   const handleAdded = (emp: Employee, email: string, password: string) => {
     setEmployees(prev => [...prev, emp].sort((a, b) => a.full_name.localeCompare(b.full_name)))
@@ -605,7 +632,13 @@ export default function EmployeesPage() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 13 }}>
           {employees.map(emp => (
-            <EmployeeCard key={emp.id} emp={emp} canEdit={canEdit} isOnDuty={onDutyIds.has(emp.id)} onUpdated={handleUpdated} onDeleted={handleDeleted} />
+            <EmployeeCard
+              key={emp.id} emp={emp} canEdit={canEdit}
+              isOnDuty={onDutyIds.has(emp.id)}
+              onUpdated={handleUpdated}
+              onDeleted={handleDeleted}
+              onContextMenu={e => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, emp }) }}
+            />
           ))}
         </div>
       )}
@@ -617,6 +650,14 @@ export default function EmployeesPage() {
           password={successInfo.password}
           name={successInfo.emp.full_name}
           onClose={() => setSuccessInfo(null)}
+        />
+      )}
+      {ctxMenu && (
+        <ContextMenu
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          items={buildCtxItems(ctxMenu.emp)}
+          onClose={() => setCtxMenu(null)}
         />
       )}
     </div>

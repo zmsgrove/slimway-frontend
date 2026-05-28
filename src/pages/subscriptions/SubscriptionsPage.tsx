@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { CreditCard, Plus, Search, X, AlertCircle, ChevronDown, Trash2 } from 'lucide-react'
+import { CreditCard, Plus, Search, X, AlertCircle, ChevronDown, Trash2, Eye, ToggleLeft, ToggleRight } from 'lucide-react'
 import { subscriptionTemplatesApi } from '../../api/subscription-templates.api'
+import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { SubscriptionTemplate, DeviceType } from '../../types'
 
 // ─── constants ─────────────────────────────────────────────────────────────
@@ -193,12 +194,36 @@ function CreateModal({ onClose, onCreate }: CreateModalProps) {
 
 // ─── TemplateCard ─────────────────────────────────────────────────────────────
 
-function TemplateCard({ tpl, onDelete }: { tpl: SubscriptionTemplate; onDelete: (id: string) => void }) {
+interface TemplateCardProps {
+  tpl: SubscriptionTemplate
+  onDelete: (id: string) => void
+  onToggle: (id: string, active: boolean) => void
+  onContextMenu: (e: React.MouseEvent) => void
+  onClick: () => void
+}
+
+function TemplateCard({ tpl, onDelete, onToggle, onContextMenu, onClick }: TemplateCardProps) {
+  const [hovered, setHovered] = useState(false)
   return (
-    <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 21 }}>
+    <div
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? 'rgba(255,255,255,0.04)' : 'var(--glass-bg)',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        border: `1px solid ${tpl.is_active ? 'var(--glass-border)' : 'rgba(255,255,255,0.05)'}`,
+        borderRadius: 13, padding: 21, cursor: 'pointer', transition: 'background 0.15s',
+        opacity: tpl.is_active ? 1 : 0.55,
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 13 }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{tpl.name}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.name}</div>
+            {!tpl.is_active && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(113,113,122,0.15)', color: 'var(--text-muted)', border: '1px solid rgba(113,113,122,0.25)' }}>Неактивен</span>}
+          </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Срок: {tpl.validity_days} дней</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -208,7 +233,14 @@ function TemplateCard({ tpl, onDelete }: { tpl: SubscriptionTemplate; onDelete: 
             </span>
           )}
           <button
-            onClick={() => onDelete(tpl.id)}
+            onClick={e => { e.stopPropagation(); onToggle(tpl.id, !tpl.is_active) }}
+            title={tpl.is_active ? 'Деактивировать' : 'Активировать'}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: tpl.is_active ? '#02BDB6' : 'var(--text-muted)', cursor: 'pointer' }}
+          >
+            {tpl.is_active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(tpl.id) }}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
             title="Удалить шаблон"
           >
@@ -223,9 +255,7 @@ function TemplateCard({ tpl, onDelete }: { tpl: SubscriptionTemplate; onDelete: 
             <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_1_type) }}>{typeLabel(tpl.slot_1_type)}</span>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_1_duration_min} мин</span>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-            {tpl.slot_1_sessions_total} сеансов
-          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_1_sessions_total} сеансов</div>
         </div>
 
         {tpl.slot_2_type !== null && tpl.slot_2_sessions_total !== null && (
@@ -234,9 +264,7 @@ function TemplateCard({ tpl, onDelete }: { tpl: SubscriptionTemplate; onDelete: 
               <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_2_type!) }}>{typeLabel(tpl.slot_2_type!)}</span>
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_2_duration_min} мин</span>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-              {tpl.slot_2_sessions_total} сеансов
-            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_2_sessions_total} сеансов</div>
           </div>
         )}
       </div>
@@ -246,18 +274,21 @@ function TemplateCard({ tpl, onDelete }: { tpl: SubscriptionTemplate; onDelete: 
 
 // ─── SubscriptionsPage ────────────────────────────────────────────────────────
 
+interface CtxMenu { x: number; y: number; tpl: SubscriptionTemplate }
+
 export default function SubscriptionsPage() {
   const [templates,  setTemplates]  = useState<SubscriptionTemplate[]>([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState<string | null>(null)
   const [search,     setSearch]     = useState('')
   const [showCreate, setShowCreate] = useState(false)
+  const [viewTpl,    setViewTpl]    = useState<SubscriptionTemplate | null>(null)
+  const [ctxMenu,    setCtxMenu]    = useState<CtxMenu | null>(null)
 
   const load = async () => {
     setLoading(true); setError(null)
     try {
-      const data = await subscriptionTemplatesApi.getAll()
-      setTemplates(data)
+      setTemplates(await subscriptionTemplatesApi.getAll())
     } catch (e: unknown) {
       setError(getServerError(e) ?? 'Не удалось загрузить шаблоны абонементов')
     } finally {
@@ -271,10 +302,7 @@ export default function SubscriptionsPage() {
     ? templates.filter(t => t.name.toLowerCase().includes(search.toLowerCase()))
     : templates
 
-  const handleCreate = (tpl: SubscriptionTemplate) => {
-    setTemplates(prev => [tpl, ...prev])
-    setShowCreate(false)
-  }
+  const handleCreate = (tpl: SubscriptionTemplate) => { setTemplates(prev => [tpl, ...prev]); setShowCreate(false) }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить шаблон абонемента?')) return
@@ -285,6 +313,24 @@ export default function SubscriptionsPage() {
       setError(getServerError(e) ?? 'Не удалось удалить шаблон')
     }
   }
+
+  const handleToggle = async (id: string, active: boolean) => {
+    try {
+      const updated = await subscriptionTemplatesApi.update(id, { is_active: active })
+      setTemplates(prev => prev.map(t => t.id === id ? updated : t))
+    } catch (e: unknown) {
+      setError(getServerError(e) ?? 'Не удалось обновить шаблон')
+    }
+  }
+
+  const buildCtxItems = (tpl: SubscriptionTemplate): ContextMenuEntry[] => [
+    { label: 'Открыть карточку',       icon: <Eye size={13} />,          onClick: () => setViewTpl(tpl) },
+    { label: tpl.is_active ? 'Деактивировать' : 'Активировать',
+      icon: tpl.is_active ? <ToggleLeft size={13} /> : <ToggleRight size={13} />,
+      onClick: () => void handleToggle(tpl.id, !tpl.is_active) },
+    { separator: true },
+    { label: 'Удалить', icon: <Trash2 size={13} />, onClick: () => void handleDelete(tpl.id), danger: true },
+  ]
 
   return (
     <div>
@@ -336,11 +382,77 @@ export default function SubscriptionsPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filtered.map(t => <TemplateCard key={t.id} tpl={t} onDelete={id => void handleDelete(id)} />)}
+          {filtered.map(t => (
+            <TemplateCard
+              key={t.id}
+              tpl={t}
+              onClick={() => setViewTpl(t)}
+              onDelete={id => void handleDelete(id)}
+              onToggle={(id, active) => void handleToggle(id, active)}
+              onContextMenu={e => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, tpl: t }) }}
+            />
+          ))}
         </div>
       )}
 
       {showCreate && <CreateModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />}
+
+      {/* Template detail modal */}
+      {viewTpl && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+          <div onClick={() => setViewTpl(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+          <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 460, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCard size={20} color="#02BDB6" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{viewTpl.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                  Срок: {viewTpl.validity_days} дней
+                  {viewTpl.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(viewTpl.price)} ₸`}
+                </div>
+              </div>
+              <button onClick={() => setViewTpl(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 160px', padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${typeColor(viewTpl.slot_1_type)}33` }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Слот 1</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: typeColor(viewTpl.slot_1_type) }}>{typeLabel(viewTpl.slot_1_type)}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{viewTpl.slot_1_duration_min} мин · {viewTpl.slot_1_sessions_total} сеансов</div>
+              </div>
+              {viewTpl.slot_2_type && (
+                <div style={{ flex: '1 1 160px', padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${typeColor(viewTpl.slot_2_type!)}33` }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Слот 2</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: typeColor(viewTpl.slot_2_type!) }}>{typeLabel(viewTpl.slot_2_type!)}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{viewTpl.slot_2_duration_min} мин · {viewTpl.slot_2_sessions_total} сеансов</div>
+                </div>
+              )}
+            </div>
+            <div style={{ marginTop: 21, display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => { void handleToggle(viewTpl.id, !viewTpl.is_active); setViewTpl(null) }}
+                style={{ flex: 1, height: 36, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                {viewTpl.is_active ? 'Деактивировать' : 'Активировать'}
+              </button>
+              <button
+                onClick={() => { void handleDelete(viewTpl.id); setViewTpl(null) }}
+                style={{ height: 36, padding: '0 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 13, cursor: 'pointer' }}>
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {ctxMenu && (
+        <ContextMenu
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          items={buildCtxItems(ctxMenu.tpl)}
+          onClose={() => setCtxMenu(null)}
+        />
+      )}
     </div>
   )
 }
