@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2, Layers, Lock, Unlock, Eye } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2, Layers, Lock, Unlock, Eye, Zap, CalendarDays, RefreshCw } from 'lucide-react'
 import { scheduleSlotsApi, bookingsV2Api, type BookingV2Error, type BookingInfo } from '../../api/schedule-slots.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { devicesApi } from '../../api/devices.api'
@@ -216,7 +216,7 @@ interface BulkCreateModalProps {
   devices: Device[]
   date: string
   onClose: () => void
-  onCreated: (slots: ScheduleSlot[]) => void
+  onCreated: (count: number) => void
 }
 
 function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkCreateModalProps) {
@@ -237,8 +237,8 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
         const { deviceId, time } = parseCellKey(key)
         return { device_id: deviceId, date, time_start: time, time_end: addMinutes(time, duration) }
       })
-      const created = await scheduleSlotsApi.bulkCreate(slots)
-      onCreated(created)
+      const result = await scheduleSlotsApi.bulkCreate(slots)
+      onCreated(result.created ?? 0)
     } catch {
       setError('Не удалось создать ячейки')
     } finally {
@@ -412,9 +412,9 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
 
 // ─── BookingInfoModal ─────────────────────────────────────────────────────────
 
-interface BookingInfoModalProps { slot: ScheduleSlot; device: Device; userRole: Role; onClose: () => void; onCancelled: () => void }
+interface BookingInfoModalProps { slot: ScheduleSlot; device: Device; userRole: Role; onClose: () => void; onCancelled: () => void; onReschedule?: (info: BookingInfo) => void }
 
-function BookingInfoModal({ slot, device, userRole, onClose, onCancelled }: BookingInfoModalProps) {
+function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onReschedule }: BookingInfoModalProps) {
   const [info,       setInfo]       = useState<BookingInfo | null>(null)
   const [loading,    setLoading]    = useState(true)
   const [cancelling, setCancelling] = useState(false)
@@ -505,8 +505,14 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled }: Book
           {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
           {cancelHint && <div style={{ padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>{cancelHint}</div>}
 
-          <div style={{ display: 'flex', gap: 13, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
-            <button onClick={() => void handleCancel()} disabled={!canCancel || cancelling} style={{ flex: 1, height: 40, background: canCancel ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface)', border: `1px solid ${canCancel ? 'rgba(239,68,68,0.35)' : 'var(--glass-border)'}`, borderRadius: 8, color: canCancel ? '#ef4444' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canCancel || cancelling) ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.6 : 1 }}>
+          <div style={{ display: 'flex', gap: 8, paddingTop: 21, borderTop: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+            {onReschedule && info && (
+              <button onClick={() => { onReschedule(info); onClose() }}
+                style={{ flex: 1, minWidth: 120, height: 40, background: 'rgba(38,60,217,0.10)', border: '1px solid rgba(38,60,217,0.3)', borderRadius: 8, color: '#263CD9', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <RefreshCw size={13} />Перенести
+              </button>
+            )}
+            <button onClick={() => void handleCancel()} disabled={!canCancel || cancelling} style={{ flex: 1, minWidth: 120, height: 40, background: canCancel ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface)', border: `1px solid ${canCancel ? 'rgba(239,68,68,0.35)' : 'var(--glass-border)'}`, borderRadius: 8, color: canCancel ? '#ef4444' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canCancel || cancelling) ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.6 : 1 }}>
               {cancelling ? 'Снятие...' : 'Снять бронь'}
             </button>
             <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
@@ -540,6 +546,280 @@ function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: Delet
   )
 }
 
+// ─── QuickCreateModal ─────────────────────────────────────────────────────────
+
+type RepeatMode = 'every_day' | 'weekdays' | 'every_n'
+
+interface QuickCreateModalProps {
+  devices: Device[]
+  onClose: () => void
+  onCreated: (count: number) => void
+}
+
+function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps) {
+  const [deviceId,   setDeviceId]   = useState(devices[0]?.id ?? '')
+  const [dateStart,  setDateStart]  = useState(() => toISO(new Date()))
+  const [dateEnd,    setDateEnd]    = useState(() => toISO(new Date()))
+  const [timeStart,  setTimeStart]  = useState('09:00')
+  const [timeEnd,    setTimeEnd]    = useState('09:30')
+  const [repeat,     setRepeat]     = useState<RepeatMode>('every_day')
+  const [everyN,     setEveryN]     = useState(2)
+  const [saving,     setSaving]     = useState(false)
+  const [error,      setError]      = useState<string | null>(null)
+
+  const generateDates = (): string[] => {
+    const dates: string[] = []
+    const start = new Date(dateStart + 'T00:00:00')
+    const end   = new Date(dateEnd   + 'T00:00:00')
+    let cur = new Date(start)
+    let nIdx = 0
+    while (cur <= end) {
+      const dow = cur.getDay()
+      if (repeat === 'every_day') {
+        dates.push(toISO(cur))
+      } else if (repeat === 'weekdays') {
+        if (dow >= 1 && dow <= 5) dates.push(toISO(cur))
+      } else if (repeat === 'every_n') {
+        if (nIdx % everyN === 0) dates.push(toISO(cur))
+        nIdx++
+      }
+      cur = new Date(cur.getTime() + 86400000)
+    }
+    return dates
+  }
+
+  const handleCreate = async () => {
+    if (!deviceId) { setError('Выберите тренажёр'); return }
+    if (timeStart >= timeEnd) { setError('Время начала должно быть меньше времени конца'); return }
+    if (dateStart > dateEnd) { setError('Дата начала должна быть меньше или равна дате конца'); return }
+
+    setSaving(true); setError(null)
+    try {
+      const dates = generateDates()
+      if (dates.length === 0) { setError('Нет дат для создания'); setSaving(false); return }
+      const slots = dates.map(date => ({ device_id: deviceId, date, time_start: timeStart, time_end: timeEnd }))
+      const result = await scheduleSlotsApi.bulkCreate(slots)
+      onCreated((result as unknown as { created: number }).created ?? slots.length)
+    } catch {
+      setError('Не удалось создать ячейки')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const selectedDevice = devices.find(d => d.id === deviceId)
+  const devColor = selectedDevice ? (DEVICE_TYPE_COLORS[selectedDevice.type] ?? '#02BDB6') : '#02BDB6'
+  const previewCount = generateDates().length
+
+  return (
+    <ModalWrap onClose={onClose} maxWidth={500}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Zap size={20} color="#02BDB6" />
+        </div>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Быстрое создание</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>Массовое расписание по диапазону дат</div>
+        </div>
+        <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+      </div>
+
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Тренажёр</div>
+          <select style={selectStyle} value={deviceId} onChange={e => setDeviceId(e.target.value)}>
+            {devices.map(d => (
+              <option key={d.id} value={d.id}>{DEVICE_TYPE_LABELS[d.type]} #{d.number} (Гр. {d.device_group})</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Дата начала</div>
+            <input type="date" style={inputStyle} value={dateStart} onChange={e => setDateStart(e.target.value)} />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Дата конца</div>
+            <input type="date" style={inputStyle} value={dateEnd} onChange={e => setDateEnd(e.target.value)} />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Время начала</div>
+            <input type="time" style={inputStyle} value={timeStart} onChange={e => setTimeStart(e.target.value)} />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Время конца</div>
+            <input type="time" style={inputStyle} value={timeEnd} onChange={e => setTimeEnd(e.target.value)} />
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Повторение</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {([
+              { value: 'every_day', label: 'Каждый день' },
+              { value: 'weekdays',  label: 'Будние' },
+              { value: 'every_n',   label: `Каждые N` },
+            ] as { value: RepeatMode; label: string }[]).map(opt => (
+              <button key={opt.value} onClick={() => setRepeat(opt.value)}
+                style={{ flex: 1, height: 34, background: repeat === opt.value ? 'rgba(2,189,182,0.12)' : 'transparent', border: `1px solid ${repeat === opt.value ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: repeat === opt.value ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, fontWeight: repeat === opt.value ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {repeat === 'every_n' && (
+            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Каждые</span>
+              <input type="number" min={2} max={30} style={{ ...inputStyle, width: 60 }} value={everyN} onChange={e => setEveryN(Math.max(2, Number(e.target.value)))} />
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>дней</span>
+            </div>
+          )}
+        </div>
+
+        {previewCount > 0 && (
+          <div style={{ padding: '10px 13px', background: `${devColor}08`, border: `1px solid ${devColor}22`, borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+            Будет создано <strong style={{ color: devColor }}>{previewCount}</strong> ячеек
+            {selectedDevice && ` для ${DEVICE_TYPE_LABELS[selectedDevice.type]} #${selectedDevice.number}`}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
+        <button onClick={() => void handleCreate()} disabled={saving || previewCount === 0}
+          style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || previewCount === 0) ? 'not-allowed' : 'pointer', opacity: (saving || previewCount === 0) ? 0.5 : 1 }}>
+          {saving ? 'Создание...' : `Создать ${previewCount} ячеек`}
+        </button>
+        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+      </div>
+    </ModalWrap>
+  )
+}
+
+// ─── RescheduleModal ──────────────────────────────────────────────────────────
+
+interface RescheduleModalProps {
+  bookingInfo: BookingInfo
+  userRole: string
+  onClose: () => void
+  onRescheduled: () => void
+}
+
+function RescheduleModal({ bookingInfo, userRole, onClose, onRescheduled }: RescheduleModalProps) {
+  const [date,        setDate]        = useState(() => toISO(new Date()))
+  const [freeSlots,   setFreeSlots]   = useState<ScheduleSlot[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [selectedId,  setSelectedId]  = useState<string | null>(null)
+  const [saving,      setSaving]      = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+
+  const slot1DeviceType = bookingInfo.slot_1.devices?.type ?? null
+  const origDate = bookingInfo.slot_1.date
+  const hoursLeft = (new Date(`${origDate}T${bookingInfo.slot_1.time_start}`).getTime() - Date.now()) / (1000 * 60 * 60)
+  const isWithin24h = hoursLeft < 24
+  const canReschedule = !isWithin24h || ['developer', 'owner', 'franchisee'].includes(userRole)
+
+  useEffect(() => {
+    setSelectedId(null)
+    setLoadingSlots(true)
+    scheduleSlotsApi.getByDate(date)
+      .then(slots => {
+        const free = slots.filter(s =>
+          s.status === 'free' &&
+          (!slot1DeviceType || s.devices?.type === slot1DeviceType)
+        )
+        setFreeSlots(free)
+      })
+      .catch(() => { /* ignore */ })
+      .finally(() => setLoadingSlots(false))
+  }, [date, slot1DeviceType])
+
+  const handleReschedule = async () => {
+    if (!selectedId) return
+    setSaving(true); setError(null)
+    try {
+      await bookingsV2Api.reschedule(bookingInfo.booking.id, { new_slot_1_id: selectedId })
+      onRescheduled()
+    } catch (e: unknown) {
+      const resp = (e as { response?: { data?: { error?: string; code?: string } } })?.response?.data
+      if (resp?.code === 'NO_SLOT2') setError('Нет свободного слота 2 сразу после выбранного')
+      else if (resp?.code === 'TOO_LATE') setError('Менее 24 ч до сеанса — перенос запрещён для вашей роли')
+      else setError(resp?.error ?? 'Ошибка переноса брони')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <ModalWrap onClose={onClose} maxWidth={460}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(38,60,217,0.12)', border: '1px solid rgba(38,60,217,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <RefreshCw size={20} color="#263CD9" />
+        </div>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Перенести бронь</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{bookingInfo.client.full_name}</div>
+        </div>
+        <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+      </div>
+
+      {isWithin24h && (
+        <div style={{ padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>
+          ⚠ До сеанса менее 24 ч. {canReschedule ? 'Перенос разрешён для вашей роли.' : 'Перенос запрещён для вашей роли.'}
+        </div>
+      )}
+
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+
+      <div style={{ marginBottom: 13 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Новая дата</div>
+        <input type="date" style={inputStyle} value={date} onChange={e => setDate(e.target.value)} />
+      </div>
+
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>
+          Свободные ячейки{slot1DeviceType ? ` (${DEVICE_TYPE_LABELS[slot1DeviceType]})` : ''}
+        </div>
+        {loadingSlots ? (
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '13px 0' }}>Загрузка...</div>
+        ) : freeSlots.length === 0 ? (
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '13px 0' }}>Нет свободных ячеек на выбранную дату</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
+            {freeSlots.map(s => {
+              const dev = s.devices
+              const dColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#02BDB6') : '#02BDB6'
+              return (
+                <button key={s.id} onClick={() => setSelectedId(s.id)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: selectedId === s.id ? `${dColor}12` : 'var(--bg-surface)', border: `1px solid ${selectedId === s.id ? dColor : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: selectedId === s.id ? dColor : 'var(--text-primary)' }}>
+                      {ft(s.time_start)} — {ft(s.time_end)}
+                    </div>
+                    {dev && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{DEVICE_TYPE_LABELS[dev.type]} #{dev.number}</div>}
+                  </div>
+                  {selectedId === s.id && <div style={{ width: 8, height: 8, borderRadius: '50%', background: dColor }} />}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
+        <button
+          onClick={() => void handleReschedule()}
+          disabled={!canReschedule || !selectedId || saving}
+          style={{ flex: 1, height: 40, background: canReschedule && selectedId ? '#263CD9' : 'var(--bg-surface)', border: `1px solid ${canReschedule && selectedId ? '#263CD9' : 'var(--glass-border)'}`, borderRadius: 8, color: canReschedule && selectedId ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canReschedule || !selectedId || saving) ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+          {saving ? 'Перенос...' : 'Перенести'}
+        </button>
+        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+      </div>
+    </ModalWrap>
+  )
+}
+
 // ─── SchedulePage ─────────────────────────────────────────────────────────────
 
 export default function SchedulePage() {
@@ -559,6 +839,8 @@ export default function SchedulePage() {
   const [notification,      setNotification]     = useState<string | null>(null)
   const [dragSelection,     setDragSelection]    = useState<Set<string>>(new Set())
   const [showBulkModal,     setShowBulkModal]    = useState(false)
+  const [showQuickCreate,   setShowQuickCreate]  = useState(false)
+  const [rescheduleTarget,  setRescheduleTarget] = useState<BookingInfo | null>(null)
   const [timeLeft,          setTimeLeft]         = useState<number | null>(currentTimeLeft)
   const notifTimer  = useRef<ReturnType<typeof setTimeout> | undefined>()
   const isDragging  = useRef(false)
@@ -678,10 +960,11 @@ export default function SchedulePage() {
   const handleCreated = (slot: ScheduleSlot) => { setSlots(prev => [...prev, slot]); setCreateTarget(null) }
   const handleBooked  = () => { setBookTarget(null); void loadData(date) }
   const handleCancelled = () => { setBookingInfoTarget(null); void loadData(date) }
-  const handleBulkCreated = (newSlots: ScheduleSlot[]) => {
-    setSlots(prev => [...prev, ...newSlots])
+  const handleBulkCreated = (count: number) => {
     setShowBulkModal(false)
     setDragSelection(new Set())
+    showNotification(`Создано ${count} ячеек`)
+    void loadData(date)
   }
 
   const dateLabel = new Date(date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -695,8 +978,18 @@ export default function SchedulePage() {
           <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Расписание</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, textTransform: 'capitalize' }}>{dateLabel}</p>
         </div>
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          style={{ height: 36, padding: '0 13px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer', outline: 'none' }} />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {canManageSlots && (
+            <button
+              onClick={() => setShowQuickCreate(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.3)', borderRadius: 8, color: '#02BDB6', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              <Zap size={14} strokeWidth={2} />Быстрое создание
+            </button>
+          )}
+          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            style={{ height: 36, padding: '0 13px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer', outline: 'none' }} />
+        </div>
       </div>
 
       {/* Date navigation */}
@@ -862,8 +1155,10 @@ export default function SchedulePage() {
       {createTarget && <CreateSlotModal target={createTarget} onClose={() => setCreateTarget(null)} onCreate={handleCreated} />}
       {showBulkModal && <BulkCreateModal selection={dragSelection} devices={devices} date={date} onClose={() => { setShowBulkModal(false); setDragSelection(new Set()) }} onCreated={handleBulkCreated} />}
       {bookTarget && <BookingModal slot={bookTarget.slot} device={bookTarget.device} onClose={() => setBookTarget(null)} onBooked={handleBooked} />}
-      {bookingInfoTarget && <BookingInfoModal slot={bookingInfoTarget.slot} device={bookingInfoTarget.device} userRole={user?.role ?? 'admin'} onClose={() => setBookingInfoTarget(null)} onCancelled={handleCancelled} />}
+      {bookingInfoTarget && <BookingInfoModal slot={bookingInfoTarget.slot} device={bookingInfoTarget.device} userRole={user?.role ?? 'admin'} onClose={() => setBookingInfoTarget(null)} onCancelled={handleCancelled} onReschedule={info => setRescheduleTarget(info)} />}
       {deleteConfirm && <DeleteConfirmModal slot={deleteConfirm.slot} device={deleteConfirm.device} loading={deletingSlot} onClose={() => setDeleteConfirm(null)} onConfirm={() => void handleDeleteSlot()} />}
+      {showQuickCreate && <QuickCreateModal devices={devices} onClose={() => setShowQuickCreate(false)} onCreated={count => { setShowQuickCreate(false); showNotification(`Создано ${count} ячеек`); void loadData(date) }} />}
+      {rescheduleTarget && <RescheduleModal bookingInfo={rescheduleTarget} userRole={user?.role ?? 'admin'} onClose={() => setRescheduleTarget(null)} onRescheduled={() => { setRescheduleTarget(null); void loadData(date) }} />}
 
       {ctxMenu && (() => {
         const { x, y, device, time, slot } = ctxMenu

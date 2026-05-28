@@ -35,4 +35,8 @@ export const subscriptionsApi = {
     const { data } = await api.patch(`/subscriptions/${id}`, payload)
     return data
   },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/subscriptions/${id}`)
+  },
 }

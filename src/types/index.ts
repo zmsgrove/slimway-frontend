@@ -110,7 +110,7 @@ export interface Subscription {
   date_start: string
   date_end: string | null
   price: number | null
-  status: 'active' | 'frozen' | 'expired'
+  status: 'active' | 'frozen' | 'expired' | 'cancelled'
   created_at: string
   clients?: { full_name: string; phone: string | null }
 }
@@ -200,6 +200,19 @@ export interface Lead {
   created_at: string
   updated_at: string
   lead_comments?: LeadComment[]
+}
+
+// ── Audit Log ────────────────────────────────────────────────
+export interface AuditLogEntry {
+  id: string
+  branch_id: string | null
+  entity_type: string
+  entity_id: string
+  action: string
+  actor_id: string | null
+  actor_name: string | null
+  details: Record<string, unknown> | null
+  created_at: string
 }
 
 // ── v1.2.1 ───────────────────────────────────────────────────

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { User, Palette, Sun, Moon, Cpu, Plus, Trash2, AlertCircle } from 'lucide-react'
+import { User, Palette, Sun, Moon, Cpu, Plus, Trash2, AlertCircle, Building2 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
 import type { Theme } from '../../lib/theme'
 import type { Device, DeviceType, DeviceGroup, DeviceStatus } from '../../types'
 import { devicesApi } from '../../api/devices.api'
+import { branchesApi, type BranchRaw } from '../../api/branches.api'
+import { VERSION } from '../../version'
 
 // ─── shared components ─────────────────────────────────────────────────────
 
@@ -238,11 +240,112 @@ function DevicesSection() {
   )
 }
 
+// ─── Branches section ───────────────────────────────────────────────────────
+
+function BranchesSection() {
+  const [branches,  setBranches]  = useState<BranchRaw[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [saving,    setSaving]    = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
+  const [showForm,  setShowForm]  = useState(false)
+  const [name,      setName]      = useState('')
+  const [city,      setCity]      = useState('')
+  const [franchise, setFranchise] = useState(false)
+
+  useEffect(() => {
+    branchesApi.getAll()
+      .then(setBranches)
+      .catch(() => setError('Не удалось загрузить филиалы'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleAdd = async () => {
+    if (!name.trim()) { setError('Введите название филиала'); return }
+    setSaving(true); setError(null)
+    try {
+      const created = await branchesApi.create({ name: name.trim(), city: city.trim() || undefined, is_franchise: franchise })
+      setBranches(prev => [...prev, created])
+      setName(''); setCity(''); setFranchise(false); setShowForm(false)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Не удалось добавить филиал')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Section title="Филиалы" icon={<Building2 size={15} strokeWidth={1.75} color="#02BDB6" />}>
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+          <AlertCircle size={13} />{error}
+        </div>
+      )}
+      {loading ? (
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Загрузка...</div>
+      ) : (
+        <>
+          {branches.map(b => (
+            <div key={b.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{b.name}</div>
+                {b.city && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{b.city}</div>}
+              </div>
+              {b.is_franchise && (
+                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'rgba(38,60,217,0.10)', color: '#263CD9', border: '1px solid rgba(38,60,217,0.25)', fontWeight: 600 }}>Франшиза</span>
+              )}
+            </div>
+          ))}
+          {branches.length === 0 && !showForm && (
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Филиалов нет</div>
+          )}
+          {showForm && (
+            <div style={{ marginTop: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Название *</div>
+                <input style={inputStyle} placeholder="Главный офис" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Город</div>
+                <input style={inputStyle} placeholder="Алматы" value={city} onChange={e => setCity(e.target.value)} />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={franchise} onChange={e => setFranchise(e.target.checked)} />
+                Франшиза
+              </label>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
+            {showForm ? (
+              <>
+                <button onClick={() => void handleAdd()} disabled={saving}
+                  style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                  {saving ? 'Сохранение...' : 'Добавить'}
+                </button>
+                <button onClick={() => { setShowForm(false); setError(null) }}
+                  style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                  Отмена
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setShowForm(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                <Plus size={14} strokeWidth={2} />Добавить филиал
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </Section>
+  )
+}
+
 // ─── Main page ──────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const { user } = useAuth()
   const { theme, setTheme } = useTheme()
+  const isDeveloperOrOwner = user?.role === 'developer' || user?.role === 'owner'
 
   const handleTheme = (t: Theme) => {
     if (!user) return
@@ -295,9 +398,11 @@ export default function SettingsPage() {
 
       <DevicesSection />
 
+      {isDeveloperOrOwner && <BranchesSection />}
+
       <div style={{ padding: '13px 21px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Slimway CRM</span>
-        <span style={{ fontSize: 11, color: '#02BDB6', background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.15)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>v1.2.0</span>
+        <span style={{ fontSize: 11, color: '#02BDB6', background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.15)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>v{VERSION}</span>
       </div>
     </div>
   )

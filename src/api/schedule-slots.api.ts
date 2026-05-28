@@ -53,7 +53,7 @@ export const scheduleSlotsApi = {
     return data
   },
 
-  bulkCreate: async (slots: Array<{ device_id: string; date: string; time_start: string; time_end: string }>): Promise<ScheduleSlot[]> => {
+  bulkCreate: async (slots: Array<{ device_id: string; date: string; time_start: string; time_end: string }>): Promise<{ created: number }> => {
     const { data } = await api.post('/schedule-slots/bulk', { slots })
     return data
   },
@@ -86,5 +86,10 @@ export const bookingsV2Api = {
 
   cancel: async (id: string): Promise<void> => {
     await api.delete(`/bookings-v2/${id}`)
+  },
+
+  reschedule: async (id: string, payload: { new_slot_1_id: string; new_slot_2_id?: string }): Promise<BookingV2Result> => {
+    const { data } = await api.patch(`/bookings-v2/${id}/reschedule`, payload)
+    return data
   },
 }

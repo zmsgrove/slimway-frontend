@@ -14,10 +14,12 @@ import {
   MessageSquare,
   UserCheck,
   CalendarClock,
+  ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
-import { VERSION } from '../../version'
+import { useEffect, useState } from 'react'
+import { branchesApi, type BranchRaw } from '../../api/branches.api'
 
 const navItems = [
   { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard },
@@ -75,6 +77,91 @@ const headerStyle: React.CSSProperties = {
   zIndex: 10,
 }
 
+// ─── BranchSwitcher ────────────────────────────────────────────────────────────
+
+function BranchSwitcher({ role }: { role: string }) {
+  const [branches,  setBranches]  = useState<BranchRaw[]>([])
+  const [active,    setActive]    = useState<string | null>(null)
+  const [open,      setOpen]      = useState(false)
+
+  const canSwitch = role === 'developer' || role === 'owner'
+
+  useEffect(() => {
+    setActive(localStorage.getItem('activeBranchId'))
+    if (canSwitch) {
+      branchesApi.getAll()
+        .then(setBranches)
+        .catch(() => { /* ignore */ })
+    } else {
+      branchesApi.getAll()
+        .then(data => { if (data.length) { setBranches(data) } })
+        .catch(() => { /* ignore */ })
+    }
+  }, [canSwitch])
+
+  const activeBranch = branches.find(b => b.id === active) ?? branches[0] ?? null
+
+  const handleSelect = (id: string) => {
+    localStorage.setItem('activeBranchId', id)
+    setActive(id)
+    setOpen(false)
+    window.location.reload()
+  }
+
+  if (!activeBranch) return null
+
+  if (!canSwitch) {
+    return (
+      <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)' }}>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Филиал</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{activeBranch.name}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)', position: 'relative' }}>
+      <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Филиал</div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', padding: '4px 0', background: 'transparent', border: 'none',
+          cursor: 'pointer', color: 'var(--text-primary)', fontSize: 12, fontWeight: 600,
+        }}
+      >
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeBranch.name}</span>
+        <ChevronDown size={12} color="var(--text-muted)" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+      </button>
+
+      {open && branches.length > 1 && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
+          background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
+          borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+        }}>
+          {branches.map(b => (
+            <button
+              key={b.id}
+              onClick={() => handleSelect(b.id)}
+              style={{
+                display: 'block', width: '100%', padding: '8px 13px', textAlign: 'left',
+                background: b.id === active ? 'rgba(2,189,182,0.08)' : 'transparent',
+                border: 'none', cursor: 'pointer',
+                color: b.id === active ? '#02BDB6' : 'var(--text-primary)', fontSize: 12,
+                borderBottom: '1px solid var(--glass-border)',
+              }}
+            >
+              {b.name}
+              {b.city && <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>{b.city}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AppLayout() {
   const { user, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
@@ -102,40 +189,27 @@ export default function AppLayout() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: '#02BDB6',
-                letterSpacing: 0.5,
-              }}
-            >
+            <span style={{ fontSize: 18, fontWeight: 700, color: '#02BDB6', letterSpacing: 0.5 }}>
               Slimway
             </span>
-            <span
-              style={{
-                background: 'rgba(2,189,182,0.12)',
-                color: '#02BDB6',
-                border: '1px solid rgba(2,189,182,0.25)',
-                fontSize: 9,
-                fontWeight: 700,
-                padding: '2px 6px',
-                borderRadius: 6,
-                letterSpacing: 1,
-              }}
-            >
+            <span style={{
+              background: 'rgba(2,189,182,0.12)',
+              color: '#02BDB6',
+              border: '1px solid rgba(2,189,182,0.25)',
+              fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, letterSpacing: 1,
+            }}>
               CRM
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {user?.role && (
-              <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0 }}>
-                {roleLabel[user.role] ?? user.role}
-              </p>
-            )}
-            <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>v{VERSION}</span>
-          </div>
+          {user?.role && (
+            <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0 }}>
+              {roleLabel[user.role] ?? user.role}
+            </p>
+          )}
         </div>
+
+        {/* Branch switcher */}
+        {user?.role && <BranchSwitcher role={user.role} />}
 
         {/* Nav */}
         <nav
@@ -233,78 +307,38 @@ export default function AppLayout() {
       </aside>
 
       {/* ── Main area ── */}
-      <div
-        style={{
-          marginLeft: 220,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '100vh',
-        }}
-      >
+      <div style={{ marginLeft: 220, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         {/* Header */}
         <header style={headerStyle}>
-          {/* Theme toggle */}
           <button
             onClick={handleThemeToggle}
             title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              border: '1px solid var(--glass-border)',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 34, height: 34, borderRadius: 8,
+              border: '1px solid var(--glass-border)', background: 'transparent',
+              color: 'var(--text-secondary)', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
             }}
           >
-            {theme === 'dark'
-              ? <Sun size={15} strokeWidth={1.75} />
-              : <Moon size={15} strokeWidth={1.75} />
-            }
+            {theme === 'dark' ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
           </button>
 
-          {/* DEV badge */}
           {user?.role === 'developer' && (
             <span style={{
-              background: 'rgba(38,60,217,0.15)',
-              color: '#263CD9',
+              background: 'rgba(38,60,217,0.15)', color: '#263CD9',
               border: '1px solid rgba(38,60,217,0.35)',
-              fontSize: 10,
-              fontWeight: 700,
-              padding: '3px 8px',
-              borderRadius: 6,
-              letterSpacing: 1,
-              flexShrink: 0,
+              fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6, letterSpacing: 1, flexShrink: 0,
             }}>
               DEV
             </span>
           )}
 
-          {/* User */}
           <div style={{ textAlign: 'right' }}>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                lineHeight: 1.3,
-              }}
-            >
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.3 }}>
               {user?.fullName || user?.email || ''}
             </div>
             {user?.role && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-muted)',
-                  marginTop: 1,
-                }}
-              >
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
                 {roleLabel[user.role] ?? user.role}
               </div>
             )}
@@ -312,13 +346,7 @@ export default function AppLayout() {
         </header>
 
         {/* Page content */}
-        <main
-          style={{
-            flex: 1,
-            padding: 21,
-            paddingTop: 'calc(56px + 21px)',
-          }}
-        >
+        <main style={{ flex: 1, padding: 21, paddingTop: 'calc(56px + 21px)' }}>
           <Outlet />
         </main>
       </div>

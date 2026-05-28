@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Plus, X, MessageCircle, Phone, User, AlertCircle,
   ChevronRight, Trash2, Edit2, Check, ChevronLeft,
+  UserPlus,
 } from 'lucide-react'
 import { leadsApi } from '../../api/leads.api'
 import { employeesApi } from '../../api/employees.api'
+import { clientsApi } from '../../api/clients.api'
 import { useAuth } from '../../hooks/useAuth'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { Lead, LeadStatus, LeadComment, Employee } from '../../types'
@@ -162,6 +164,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   const [editAssigned, setEditAssigned] = useState(lead.assigned_to ?? '')
   const [saving, setSaving]     = useState(false)
   const [movingTo, setMovingTo] = useState<LeadStatus | null>(null)
+  const [completeClientId, setCompleteClientId] = useState<string | null>(null)
   const commentsEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -197,6 +200,10 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
       const updated = await leadsApi.updateStatus(detail.id, status)
       setDetail(updated)
       onUpdate(updated)
+      // If success and a new client was created — open complete modal
+      if (status === 'success' && updated.client_id && !detail.client_id) {
+        setCompleteClientId(updated.client_id)
+      }
     } catch { /* */ }
     finally { setMovingTo(null) }
   }
@@ -216,6 +223,14 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   const assignedEmp = employees.find(e => e.id === detail.assigned_to)
 
   return (
+    <>
+    {completeClientId && (
+      <CompleteClientModal
+        clientId={completeClientId}
+        onClose={() => setCompleteClientId(null)}
+        onCompleted={() => setCompleteClientId(null)}
+      />
+    )}
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
       <div className="modal-animate" style={{
@@ -335,15 +350,10 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
             </div>
 
             {/* Success action */}
-            {detail.status === 'success' && !detail.client_id && (
+            {detail.status === 'success' && detail.client_id && (
               <div style={{ padding: 13, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 13 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#10b981', marginBottom: 8 }}>Лид закрыт!</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 13, lineHeight: 1.5 }}>
-                  Создайте клиента в системе для дальнейшей работы
-                </div>
-                <button style={{ width: '100%', height: 34, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  Создать клиента
-                </button>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#10b981', marginBottom: 4 }}>Клиент создан!</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>Клиент добавлен в базу и ожидает активации.</div>
               </div>
             )}
           </div>
@@ -413,6 +423,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
         </div>
       </div>
     </div>
+    </>
   )
 }
 
@@ -493,6 +504,91 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
             </span>
           )}
           <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{fmtDate(lead.created_at)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── CompleteClientModal ──────────────────────────────────────────────────────
+
+interface CompleteClientModalProps {
+  clientId: string
+  onClose: () => void
+  onCompleted: () => void
+}
+
+function CompleteClientModal({ clientId, onClose, onCompleted }: CompleteClientModalProps) {
+  const [email,     setEmail]     = useState('')
+  const [birthDate, setBirthDate] = useState('')
+  const [notes,     setNotes]     = useState('')
+  const [saving,    setSaving]    = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
+
+  const handleSave = async () => {
+    setSaving(true); setError(null)
+    try {
+      await clientsApi.update(clientId, {
+        email:      email.trim() || null,
+        birth_date: birthDate || null,
+        notes:      notes.trim() || null,
+        status:     'active',
+      } as Parameters<typeof clientsApi.update>[1])
+      onCompleted()
+    } catch {
+      setError('Не удалось сохранить данные клиента')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <UserPlus size={15} color="#10b981" />
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Дополните данные клиента</div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>Клиент создан. Заполните дополнительную информацию.</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, flexShrink: 0 }}><X size={18} /></button>
+        </div>
+
+        {error && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}>
+            <AlertCircle size={13} />{error}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Email</div>
+            <input style={inputStyle} type="email" placeholder="client@example.com" value={email} onChange={e => setEmail(e.target.value)} autoFocus />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Дата рождения</div>
+            <input style={inputStyle} type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Заметки</div>
+            <textarea style={textareaStyle} placeholder="Дополнительная информация..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
+          <button onClick={() => void handleSave()} disabled={saving}
+            style={{ flex: 1, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            {saving ? 'Сохранение...' : 'Сохранить'}
+          </button>
+          <button onClick={onClose}
+            style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            Пропустить
+          </button>
         </div>
       </div>
     </div>

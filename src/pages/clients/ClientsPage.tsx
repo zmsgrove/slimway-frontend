@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   Users, Search, Plus, X, AlertCircle, Phone, Mail, Calendar,
-  Edit2, Trash2, CreditCard, Eye, FileText, MoreVertical,
+  Edit2, Trash2, CreditCard, Eye, FileText, MoreVertical, History,
 } from 'lucide-react'
 import { clientsApi } from '../../api/clients.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
+import { api } from '../../lib/api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
-import type { Client, Subscription } from '../../types'
+import { useAuth } from '../../hooks/useAuth'
+import type { Client, Subscription, AuditLogEntry } from '../../types'
 
 const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
@@ -14,8 +16,8 @@ const DEVICE_TYPE_LABELS: Record<string, string> = {
 const DEVICE_TYPE_COLORS: Record<string, string> = {
   vacuactiv: '#02BDB6', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
 }
-const SUB_STATUS_COLOR: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A' }
-const SUB_STATUS_LABEL: Record<string, string> = { active: 'Активный', frozen: 'Заморожен', expired: 'Истёк' }
+const SUB_STATUS_COLOR: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A', cancelled: '#ef4444' }
+const SUB_STATUS_LABEL: Record<string, string> = { active: 'Активный', frozen: 'Заморожен', expired: 'Истёк', cancelled: 'Отменён' }
 
 const inputStyle: React.CSSProperties = {
   height: 40, padding: '0 13px', background: 'var(--bg-elevated)',
@@ -149,10 +151,23 @@ interface ClientDetailModalProps {
   onSellSub: () => void
 }
 
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  create_from_lead:   'Создан из лида',
+  cancel_subscription: 'Абонемент отменён',
+  cancel_booking:     'Бронь снята',
+  create_booking:     'Бронь создана',
+  reschedule_booking: 'Бронь перенесена',
+}
+
 function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailModalProps) {
-  const [tab,         setTab]      = useState<DetailTab>('profile')
-  const [subs,        setSubs]     = useState<Subscription[] | null>(null)
-  const [loadingSubs, setLoadSubs] = useState(false)
+  const { user } = useAuth()
+  const [tab,          setTab]       = useState<DetailTab>('profile')
+  const [subs,         setSubs]      = useState<Subscription[] | null>(null)
+  const [loadingSubs,  setLoadSubs]  = useState(false)
+  const [auditLog,     setAuditLog]  = useState<AuditLogEntry[] | null>(null)
+  const [loadingAudit, setLoadAudit] = useState(false)
+
+  const canDeleteSub = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
 
   const loadSubs = useCallback(() => {
     if (subs !== null || loadingSubs) return
@@ -163,9 +178,31 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
       .finally(() => setLoadSubs(false))
   }, [client.id, subs, loadingSubs])
 
+  const loadAuditLog = useCallback(() => {
+    if (auditLog !== null || loadingAudit) return
+    setLoadAudit(true)
+    api.get('/audit-log', { params: { entity_id: client.id } })
+      .then(res => setAuditLog((res.data as AuditLogEntry[]) ?? []))
+      .catch(() => setAuditLog([]))
+      .finally(() => setLoadAudit(false))
+  }, [client.id, auditLog, loadingAudit])
+
   useEffect(() => {
-    if (tab === 'subs' || tab === 'history') loadSubs()
-  }, [tab, loadSubs])
+    if (tab === 'subs') loadSubs()
+    if (tab === 'history') loadAuditLog()
+  }, [tab, loadSubs, loadAuditLog])
+
+  const handleDeleteSub = async (subId: string) => {
+    if (!confirm('Отменить абонемент? Действие нельзя отменить.')) return
+    try {
+      await subscriptionsApi.delete(subId)
+      setSubs(prev => prev ? prev.filter(s => s.id !== subId) : prev)
+      setAuditLog(null)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      alert(msg ?? 'Не удалось отменить абонемент')
+    }
+  }
 
   const initials   = client.full_name.charAt(0).toUpperCase()
   const activeSubs = subs?.filter(s => s.status === 'active') ?? []
@@ -279,11 +316,11 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                 {activeSubs.length > 0 && (
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Активные</div>
                 )}
-                {activeSubs.map(sub => <SubCard key={sub.id} sub={sub} />)}
+                {activeSubs.map(sub => <SubCard key={sub.id} sub={sub} onDelete={canDeleteSub ? () => void handleDeleteSub(sub.id) : undefined} />)}
                 {pastSubs.length > 0 && (
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 4 }}>Прошлые</div>
                 )}
-                {pastSubs.map(sub => <SubCard key={sub.id} sub={sub} />)}
+                {pastSubs.map(sub => <SubCard key={sub.id} sub={sub} onDelete={canDeleteSub ? () => void handleDeleteSub(sub.id) : undefined} />)}
               </div>
             )}
           </div>
@@ -292,30 +329,34 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
         {/* History tab */}
         {tab === 'history' && (
           <div style={{ padding: 34, maxHeight: 420, overflowY: 'auto' }}>
-            {loadingSubs ? (
+            {loadingAudit ? (
               <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Загрузка...</div>
-            ) : !subs || subs.length === 0 ? (
+            ) : !auditLog || auditLog.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
-                <FileText size={24} strokeWidth={1.5} color="var(--text-muted)" />
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Посещений нет</div>
+                <History size={24} strokeWidth={1.5} color="var(--text-muted)" />
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>История пуста</div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {subs.map(sub => {
-                  const sc = SUB_STATUS_COLOR[sub.status]
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {auditLog.map(entry => {
+                  const d = new Date(entry.created_at)
+                  const dateStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+                  const timeStr = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                  const actionLabel = AUDIT_ACTION_LABELS[entry.action] ?? entry.action
                   return (
-                    <div key={sub.id} style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${sc}22` }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{sub.name}</div>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>{SUB_STATUS_LABEL[sub.status]}</span>
+                    <div key={entry.id} style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{actionLabel}</div>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0 }}>{timeStr}</span>
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        {DEVICE_TYPE_LABELS[sub.slot_1_type]} · {sub.slot_1_sessions_total - sub.slot_1_sessions_left} посещений использовано
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                        {dateStr}{entry.actor_name ? ` · ${entry.actor_name}` : ''}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {new Date(sub.date_start).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        {sub.date_end && ` — ${new Date(sub.date_end).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}`}
-                      </div>
+                      {entry.details && Object.keys(entry.details).length > 0 && (
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4, fontFamily: 'monospace' }}>
+                          {JSON.stringify(entry.details)}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -328,13 +369,22 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
   )
 }
 
-function SubCard({ sub }: { sub: Subscription }) {
+interface SubCardProps { sub: Subscription; onDelete?: () => void }
+
+function SubCard({ sub, onDelete }: SubCardProps) {
   const sc = SUB_STATUS_COLOR[sub.status]
   return (
     <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${sc}22` }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{sub.name}</div>
-        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>{SUB_STATUS_LABEL[sub.status]}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>{SUB_STATUS_LABEL[sub.status]}</span>
+          {onDelete && sub.status !== 'cancelled' && (
+            <button onClick={onDelete} title="Отменить абонемент" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer', padding: 0 }}>
+              <Trash2 size={11} color="#ef4444" />
+            </button>
+          )}
+        </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
