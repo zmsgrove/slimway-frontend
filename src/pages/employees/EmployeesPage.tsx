@@ -536,7 +536,7 @@ export default function EmployeesPage() {
   const [successInfo, setSuccessInfo] = useState<{ emp: Employee; email: string; password: string } | null>(null)
   const [ctxMenu, setCtxMenu]     = useState<EmpCtxMenu | null>(null)
 
-  const canEdit = user?.role === 'owner' || user?.role === 'franchisee'
+  const canEdit = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
   const today   = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {

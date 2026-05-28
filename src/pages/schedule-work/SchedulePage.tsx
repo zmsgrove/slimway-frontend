@@ -429,7 +429,7 @@ export default function ScheduleWorkPage() {
   const notifTimer = useRef<ReturnType<typeof setTimeout> | undefined>()
   const [notification, setNotification] = useState<string | null>(null)
 
-  const canManage = user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin'
+  const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin'
 
   const twoWeekDays = Array.from({ length: 14 }, (_, i) => addDays(monday, i))
   const weekStart   = toISO(monday)

@@ -565,7 +565,7 @@ export default function SchedulePage() {
   const dragMoved   = useRef(false)
   const isToday     = date === toISO(new Date())
 
-  const canManageSlots = user?.role === 'owner' || user?.role === 'franchisee'
+  const canManageSlots = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
 
   useEffect(() => {
     const interval = setInterval(() => setTimeLeft(currentTimeLeft()), 60_000)
