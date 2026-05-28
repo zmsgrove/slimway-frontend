@@ -12,6 +12,17 @@ export const shiftsApi = {
     return data
   },
 
+  bulkCreate: async (shifts: Array<{
+    employee_id: string
+    date: string
+    time_start: string
+    time_end: string
+    status?: string
+  }>): Promise<Shift[]> => {
+    const { data } = await api.post('/shifts/bulk', { shifts })
+    return data
+  },
+
   create: async (payload: {
     employee_id: string
     date: string

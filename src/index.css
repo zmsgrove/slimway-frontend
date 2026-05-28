@@ -107,6 +107,15 @@ input, textarea, select {
   background: rgba(38, 60, 217, 0.12) !important;
 }
 
+/* Active shift pulse */
+@keyframes shift-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+.shift-active-pulse {
+  animation: shift-pulse 2s ease-in-out infinite;
+}
+
 /* Login page — hide right panel on small screens */
 @media (max-width: 768px) {
   .login-panel-right {

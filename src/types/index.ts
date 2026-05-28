@@ -1,4 +1,4 @@
-export type Role = 'owner' | 'franchisee' | 'admin' | 'trainer'
+export type Role = 'owner' | 'franchisee' | 'admin' | 'trainer' | 'staff' | 'technical'
 
 // ── Auth ────────────────────────────────────────────────────
 export interface User {
@@ -134,10 +134,14 @@ export interface Employee {
   branch_id: string
   profile_id: string | null
   full_name: string
+  first_name: string | null
+  last_name: string | null
+  middle_name: string | null
   phone: string | null
   birth_date: string | null
   position: string | null
   department: string | null
+  address: string | null
   created_at: string
 }
 
