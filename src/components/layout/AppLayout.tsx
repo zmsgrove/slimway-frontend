@@ -83,66 +83,55 @@ const headerStyle: React.CSSProperties = {
 // ─── BranchSwitcher ────────────────────────────────────────────────────────────
 
 function BranchSwitcher({ role }: { role: string }) {
-  const [branches,    setBranches]    = useState<BranchRaw[]>([])
-  const [active,      setActive]      = useState<string | null>(null)
-  const [open,        setOpen]        = useState(false)
-  const [switching,   setSwitching]   = useState(false)
+  const [branches, setBranches] = useState<BranchRaw[]>([])
+  const [active,   setActive]   = useState<string | null>(null)
+  const [open,     setOpen]     = useState(false)
 
   const canSwitch = role === 'developer' || role === 'owner'
 
   useEffect(() => {
     setActive(localStorage.getItem('activeBranchId'))
-    if (canSwitch) {
-      branchesApi.getAll()
-        .then(setBranches)
-        .catch(() => { /* ignore */ })
-    } else {
-      branchesApi.getAll()
-        .then(data => { if (data.length) { setBranches(data) } })
-        .catch(() => { /* ignore */ })
-    }
-  }, [canSwitch])
+    branchesApi.getAll()
+      .then(data => { if (data.length) setBranches(data) })
+      .catch(() => { /* ignore */ })
+  }, [])
 
   const activeBranch = branches.find(b => b.id === active) ?? branches[0] ?? null
 
   const handleSelect = (id: string) => {
     if (id === active) { setOpen(false); return }
-    localStorage.setItem('activeBranchId', id)
     setOpen(false)
-    setSwitching(true)
-    setTimeout(() => { window.location.reload() }, 300)
+    localStorage.setItem('activeBranchId', id)
+    const overlay = document.createElement('div')
+    overlay.style.cssText = [
+      'position:fixed;inset:0;z-index:9999',
+      'background:rgba(9,9,11,0.9)',
+      'display:flex;align-items:center;justify-content:center',
+      'color:white;font-size:15px;gap:12px',
+    ].join(';')
+    overlay.innerHTML = [
+      '<div style="width:20px;height:20px;border:2px solid #02BDB6;',
+      'border-top-color:transparent;border-radius:50%;',
+      'animation:spin 0.6s linear infinite"></div>',
+      'Переключение филиала...',
+    ].join('')
+    document.body.appendChild(overlay)
+    setTimeout(() => window.location.reload(), 400)
   }
 
-  const switchingOverlay = switching ? (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexDirection: 'column', gap: 13,
-    }}>
-      <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.12)', borderTop: '3px solid #02BDB6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-      <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Переключение филиала...</span>
-    </div>
-  ) : null
-
-  if (!activeBranch) return switchingOverlay
+  if (!activeBranch) return null
 
   if (!canSwitch) {
     return (
-      <>
-        {switchingOverlay}
-        <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Филиал</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{activeBranch.name}</div>
-        </div>
-      </>
+      <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)' }}>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Филиал</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{activeBranch.name}</div>
+      </div>
     )
   }
 
   return (
-    <>
-      {switchingOverlay}
-      <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)', position: 'relative' }}>
+    <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)', position: 'relative' }}>
       <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Филиал</div>
       <button
         onClick={() => setOpen(o => !o)}
@@ -180,8 +169,7 @@ function BranchSwitcher({ role }: { role: string }) {
           ))}
         </div>
       )}
-      </div>
-    </>
+    </div>
   )
 }
 
