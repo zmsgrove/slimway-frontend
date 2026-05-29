@@ -8,6 +8,7 @@ import { Plus, X, CheckSquare, MessageSquare, Clock, Flag, Trash2, ChevronDown }
 import { tasksApi, type CreateTaskPayload } from '../../api/tasks.api'
 import { employeesApi } from '../../api/employees.api'
 import { useAuth } from '../../hooks/useAuth'
+import { playSound } from '../../lib/notify'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { Task, TaskStatus, TaskPriority, TaskChecklistItem, TaskComment, Employee } from '../../types'
 
@@ -609,6 +610,7 @@ export default function TasksPage() {
   const handleTaskCreate = (task: Task) => {
     setTasks(prev => [task, ...prev])
     setShowCreate(false)
+    playSound('new_task')
   }
 
   const handleTaskUpdate = (updated: Task) => {

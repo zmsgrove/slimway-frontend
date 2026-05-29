@@ -243,6 +243,7 @@ export interface Task {
   priority: TaskPriority
   status: TaskStatus
   assigned_to: string | null
+  observer_ids: string[]
   created_by: string | null
   deadline: string | null
   created_at: string
@@ -257,7 +258,9 @@ export interface WarehouseItem {
   id: string
   branch_id: string
   name: string
+  sku: string | null
   category: WarehouseCategory
+  unit: string | null
   quantity: number
   min_quantity: number | null
   price: number | null

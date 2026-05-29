@@ -16,6 +16,7 @@ import {
   CalendarClock,
   ChevronDown,
   Package,
+  Wrench,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
@@ -33,7 +34,7 @@ const navItems = [
   { to: '/chat',          label: 'Чат',         icon: MessageSquare },
   { to: '/employees',     label: 'Сотрудники',  icon: UserCheck },
   { to: '/schedule-work', label: 'График',      icon: CalendarClock },
-  { to: '/warehouse',    label: 'Склад',       icon: Package },
+  { to: '/warehouse',     label: 'Склад',       icon: Package },
 ]
 
 const roleLabel: Record<string, string> = {
@@ -107,7 +108,7 @@ function BranchSwitcher({ role }: { role: string }) {
     localStorage.setItem('activeBranchId', id)
     setActive(id)
     setOpen(false)
-    window.location.reload()
+    window.dispatchEvent(new Event('branchChanged'))
   }
 
   if (!activeBranch) return null
@@ -164,6 +165,34 @@ function BranchSwitcher({ role }: { role: string }) {
   )
 }
 
+// ─── NavButton ────────────────────────────────────────────────────────────────
+
+function NavButton({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) {
+  return (
+    <NavLink
+      to={to}
+      style={({ isActive }) => ({
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '8px 13px',
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: isActive ? 600 : 400,
+        textDecoration: 'none',
+        color: isActive ? '#02BDB6' : 'var(--text-secondary)',
+        background: isActive ? 'rgba(2,189,182,0.10)' : 'transparent',
+        borderLeft: isActive ? '2px solid #02BDB6' : '2px solid transparent',
+        transition: 'all 0.15s',
+        cursor: 'pointer',
+      })}
+    >
+      <Icon size={16} strokeWidth={1.75} />
+      {label}
+    </NavLink>
+  )
+}
+
 export default function AppLayout() {
   const { user, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
@@ -178,6 +207,8 @@ export default function AppLayout() {
     if (!user) return
     void setTheme(theme === 'dark' ? 'light' : 'dark', user.id)
   }
+
+  const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)' }}>
@@ -224,33 +255,12 @@ export default function AppLayout() {
             overflowY: 'auto',
           }}
         >
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 13px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 400,
-                textDecoration: 'none',
-                color: isActive ? '#02BDB6' : 'var(--text-secondary)',
-                background: isActive ? 'rgba(2,189,182,0.10)' : 'transparent',
-                borderLeft: isActive ? '2px solid #02BDB6' : '2px solid transparent',
-                transition: 'all 0.15s',
-                cursor: 'pointer',
-              })}
-            >
-              <Icon size={16} strokeWidth={1.75} />
-              {label}
-            </NavLink>
+          {navItems.map(({ to, label, icon }) => (
+            <NavButton key={to} to={to} icon={icon} label={label} />
           ))}
         </nav>
 
-        {/* Bottom: Settings + Logout */}
+        {/* Bottom: Управление + Настройки + Выйти */}
         <div
           style={{
             padding: '8px 6px',
@@ -260,27 +270,11 @@ export default function AppLayout() {
             gap: 2,
           }}
         >
-          <NavLink
-            to="/settings"
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '8px 13px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: isActive ? 600 : 400,
-              textDecoration: 'none',
-              color: isActive ? '#02BDB6' : 'var(--text-secondary)',
-              background: isActive ? 'rgba(2,189,182,0.10)' : 'transparent',
-              borderLeft: isActive ? '2px solid #02BDB6' : '2px solid transparent',
-              transition: 'all 0.15s',
-              cursor: 'pointer',
-            })}
-          >
-            <Settings size={16} strokeWidth={1.75} />
-            Настройки
-          </NavLink>
+          {canManage && (
+            <NavButton to="/management" icon={Wrench} label="Управление" />
+          )}
+
+          <NavButton to="/settings" icon={Settings} label="Настройки" />
 
           <button
             onClick={handleSignOut}

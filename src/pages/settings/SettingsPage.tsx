@@ -1,15 +1,11 @@
-import React, { useState, useEffect } from 'react'
-import { User, Palette, Sun, Moon, Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { User, Palette, Sun, Moon, Bell, Volume2, VolumeX, Play } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
 import type { Theme } from '../../lib/theme'
-import type { Device, DeviceType, DeviceGroup, DeviceStatus, Department, Position } from '../../types'
-import { devicesApi } from '../../api/devices.api'
-import { branchesApi, type BranchRaw } from '../../api/branches.api'
-import { departmentsApi, positionsApi } from '../../api/departments.api'
 import { VERSION } from '../../version'
 
-// ─── shared components ─────────────────────────────────────────────────────
+// ─── shared ────────────────────────────────────────────────────────────────────
 
 interface SectionProps { title: string; icon: React.ReactNode; children: React.ReactNode }
 function Section({ title, icon, children }: SectionProps) {
@@ -33,472 +29,138 @@ function InfoRow({ label, children }: InfoRowProps) {
   )
 }
 
-// ─── constants ─────────────────────────────────────────────────────────────
+// ─── constants ─────────────────────────────────────────────────────────────────
 
 const roleLabel: Record<string, string> = {
-  owner: 'Владелец', franchisee: 'Франчайзи', admin: 'Администратор', trainer: 'Тренер',
+  developer: 'Разработчик', owner: 'Владелец', franchisee: 'Франчайзи',
+  admin: 'Администратор', trainer: 'Тренер', staff: 'Менеджер', technical: 'Тех. персонал',
 }
 
 const themeOptions: { value: Theme; label: string; icon: React.ReactNode }[] = [
-  { value: 'dark',  label: 'Тёмная',   icon: <Moon size={15} strokeWidth={1.75} /> },
-  { value: 'light', label: 'Светлая',  icon: <Sun  size={15} strokeWidth={1.75} /> },
+  { value: 'dark',  label: 'Тёмная',  icon: <Moon size={15} strokeWidth={1.75} /> },
+  { value: 'light', label: 'Светлая', icon: <Sun  size={15} strokeWidth={1.75} /> },
 ]
 
-const DEVICE_TYPES: { value: DeviceType; label: string }[] = [
-  { value: 'vacuactiv',  label: 'VacuActiv'  },
-  { value: 'rollshape',  label: 'RollShape'  },
-  { value: 'infrastep',  label: 'InfraStep'  },
-  { value: 'infrashape', label: 'InfraShape' },
+const SOUND_FILES = ['OK.mp3', '2toon.mp3', 'classic.mp3', 'crash.mp3', 'disck.mp3', 'error.mp3', 'hw.mp3', 'old.mp3', 'old2.mp3', 'rim.mp3', 'steam.mp3', 'toon.mp3']
+
+const SOUND_EVENTS: { key: string; label: string }[] = [
+  { key: 'new_lead',        label: 'Новый лид' },
+  { key: 'new_task',        label: 'Новая задача' },
+  { key: 'task_assigned',   label: 'Назначена задача' },
+  { key: 'booking_created', label: 'Бронь создана' },
+  { key: 'subscription_sold', label: 'Абонемент продан' },
+  { key: 'low_stock',       label: 'Низкий остаток' },
 ]
 
-const STATUS_COLORS: Record<DeviceStatus, string> = {
-  active:      '#02BDB6',
-  maintenance: '#f59e0b',
-  disabled:    '#71717A',
+interface NotificationSettings {
+  muted: boolean
+  volume: number
+  events: Record<string, string>
 }
 
-const STATUS_LABELS: Record<DeviceStatus, string> = {
-  active:      'Активен',
-  maintenance: 'Обслуживание',
-  disabled:    'Отключён',
+function loadSettings(): NotificationSettings {
+  try { return { muted: false, volume: 80, events: {}, ...JSON.parse(localStorage.getItem('notificationSettings') || '{}') } } catch { return { muted: false, volume: 80, events: {} } }
 }
 
-const inputStyle: React.CSSProperties = {
-  height: 36, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%',
-}
+// ─── NotificationsSection ──────────────────────────────────────────────────────
 
-const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' }
+function NotificationsSection() {
+  const [settings, setSettings] = useState<NotificationSettings>(loadSettings)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-// ─── Devices section ────────────────────────────────────────────────────────
-
-interface AddDeviceForm {
-  type: DeviceType
-  number: string
-  device_group: DeviceGroup
-}
-
-function DevicesSection() {
-  const [devices, setDevices]   = useState<Device[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [saving, setSaving]     = useState(false)
-  const [error, setError]       = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm]         = useState<AddDeviceForm>({ type: 'vacuactiv', number: '', device_group: 'A' })
-
-  useEffect(() => {
-    devicesApi.getAll()
-      .then(setDevices)
-      .catch(() => setError('Не удалось загрузить оборудование'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  const reload = async () => {
-    const list = await devicesApi.getAll()
-    setDevices(list)
+  const save = (patch: Partial<NotificationSettings>) => {
+    const next = { ...settings, ...patch }
+    setSettings(next)
+    localStorage.setItem('notificationSettings', JSON.stringify(next))
   }
 
-  const handleAdd = async () => {
-    if (!form.number.trim()) { setError('Введите номер тренажёра'); return }
-    setSaving(true); setError(null)
-    try {
-      await devicesApi.create(form)
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Не удалось добавить тренажёр')
-      setSaving(false)
-      return
-    }
-    try { await reload() } catch { /* ignore reload errors after successful add */ }
-    setForm({ type: 'vacuactiv', number: '', device_group: 'A' })
-    setShowForm(false)
-    setSaving(false)
+  const previewSound = (file: string) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0 }
+    const audio = new Audio('/sound/' + file)
+    audio.volume = settings.volume / 100
+    audio.play().catch(() => { /* ignore */ })
+    audioRef.current = audio
   }
 
-  const handleStatusCycle = async (device: Device) => {
-    const next: DeviceStatus[] = ['active', 'maintenance', 'disabled']
-    const idx   = next.indexOf(device.status)
-    const newSt = next[(idx + 1) % next.length]
-    try {
-      const updated = await devicesApi.updateStatus(device.id, newSt)
-      setDevices(prev => prev.map(d => d.id === updated.id ? updated : d))
-    } catch { /* ignore */ }
+  const setEventSound = (key: string, file: string) => {
+    save({ events: { ...settings.events, [key]: file } })
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить тренажёр?')) return
-    try {
-      await devicesApi.delete(id)
-      setDevices(prev => prev.filter(d => d.id !== id))
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Не удалось удалить тренажёр')
-    }
+  const selectStyle: React.CSSProperties = {
+    height: 32, padding: '0 8px', background: 'var(--bg-elevated)',
+    border: '1px solid var(--glass-border)', borderRadius: 8,
+    color: 'var(--text-primary)', fontSize: 12, outline: 'none', cursor: 'pointer',
   }
-
-  const grouped = { A: devices.filter(d => d.device_group === 'A'), B: devices.filter(d => d.device_group === 'B') }
 
   return (
-    <Section title="Оборудование" icon={<Cpu size={15} strokeWidth={1.75} color="#02BDB6" />}>
-      {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
-          <AlertCircle size={13} />{error}
+    <Section title="Уведомления" icon={<Bell size={15} strokeWidth={1.75} color="#02BDB6" />}>
+      {/* Mute toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)', marginBottom: 13 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {settings.muted ? <VolumeX size={16} color="var(--text-muted)" /> : <Volume2 size={16} color="#02BDB6" />}
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{settings.muted ? 'Без звука' : 'Звук включён'}</span>
         </div>
-      )}
+        <button
+          onClick={() => save({ muted: !settings.muted })}
+          style={{
+            width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', position: 'relative',
+            background: settings.muted ? 'var(--glass-border)' : '#02BDB6', transition: 'background 0.2s',
+          }}
+        >
+          <span style={{
+            position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
+            left: settings.muted ? 2 : 22,
+          }} />
+        </button>
+      </div>
 
-      {loading ? (
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Загрузка...</div>
-      ) : (
-        <>
-          {(['A', 'B'] as DeviceGroup[]).map(grp => (
-            grouped[grp].length > 0 && (
-              <div key={grp} style={{ marginBottom: 13 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                  Группа {grp}
-                </div>
-                {grouped[grp].map(d => (
-                  <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                        {DEVICE_TYPES.find(t => t.value === d.type)?.label ?? d.type}
-                      </span>
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>#{d.number}</span>
-                    </div>
-                    <button
-                      onClick={() => void handleStatusCycle(d)}
-                      style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, border: `1px solid ${STATUS_COLORS[d.status]}33`, background: `${STATUS_COLORS[d.status]}12`, color: STATUS_COLORS[d.status], cursor: 'pointer' }}
-                    >
-                      {STATUS_LABELS[d.status]}
-                    </button>
-                    <button
-                      onClick={() => void handleDelete(d.id)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={13} strokeWidth={1.75} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )
-          ))}
+      {/* Volume slider */}
+      <div style={{ marginBottom: 21 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Громкость</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#02BDB6' }}>{settings.volume}%</span>
+        </div>
+        <input
+          type="range" min={0} max={100} value={settings.volume}
+          onChange={e => save({ volume: Number(e.target.value) })}
+          style={{ width: '100%', accentColor: '#02BDB6', cursor: 'pointer' }}
+          disabled={settings.muted}
+        />
+      </div>
 
-          {devices.length === 0 && !showForm && (
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Тренажёры не добавлены</div>
-          )}
-
-          {showForm && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8, marginTop: 8 }}>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Тип</div>
-                <select style={selectStyle} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as DeviceType }))}>
-                  {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Номер</div>
-                <input style={inputStyle} placeholder="01" value={form.number} onChange={e => setForm(f => ({ ...f, number: e.target.value }))} />
-              </div>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Группа</div>
-                <select style={selectStyle} value={form.device_group} onChange={e => setForm(f => ({ ...f, device_group: e.target.value as DeviceGroup }))}>
-                  <option value="A">Группа A</option>
-                  <option value="B">Группа B</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            {showForm ? (
-              <>
-                <button
-                  onClick={() => void handleAdd()}
-                  disabled={saving}
-                  style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}
-                >
-                  {saving ? 'Сохранение...' : 'Добавить'}
-                </button>
-                <button
-                  onClick={() => { setShowForm(false); setError(null) }}
-                  style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
-                >
-                  Отмена
-                </button>
-              </>
-            ) : (
+      {/* Events table */}
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+        Событие → Звук
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {SOUND_EVENTS.map(ev => {
+          const current = settings.events[ev.key] || 'OK.mp3'
+          return (
+            <div key={ev.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--glass-border)' }}>
+              <span style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{ev.label}</span>
+              <select value={current} onChange={e => setEventSound(ev.key, e.target.value)} style={selectStyle}>
+                {SOUND_FILES.map(f => <option key={f} value={f}>{f.replace('.mp3', '')}</option>)}
+              </select>
               <button
-                onClick={() => setShowForm(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
+                onClick={() => previewSound(current)}
+                disabled={settings.muted}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: '#02BDB6', cursor: settings.muted ? 'not-allowed' : 'pointer', opacity: settings.muted ? 0.4 : 1 }}
               >
-                <Plus size={14} strokeWidth={2} />Добавить тренажёр
+                <Play size={12} />
               </button>
-            )}
-          </div>
-        </>
-      )}
+            </div>
+          )
+        })}
+      </div>
     </Section>
   )
 }
 
-// ─── Branches section ───────────────────────────────────────────────────────
-
-function BranchesSection() {
-  const [branches,  setBranches]  = useState<BranchRaw[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [saving,    setSaving]    = useState(false)
-  const [error,     setError]     = useState<string | null>(null)
-  const [showForm,  setShowForm]  = useState(false)
-  const [name,      setName]      = useState('')
-  const [city,      setCity]      = useState('')
-  const [franchise, setFranchise] = useState(false)
-
-  useEffect(() => {
-    branchesApi.getAll()
-      .then(setBranches)
-      .catch(() => setError('Не удалось загрузить филиалы'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  const handleAdd = async () => {
-    if (!name.trim()) { setError('Введите название филиала'); return }
-    setSaving(true); setError(null)
-    try {
-      const created = await branchesApi.create({ name: name.trim(), city: city.trim() || undefined, is_franchise: franchise })
-      setBranches(prev => [...prev, created])
-      setName(''); setCity(''); setFranchise(false); setShowForm(false)
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Не удалось добавить филиал')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Section title="Филиалы" icon={<Building2 size={15} strokeWidth={1.75} color="#02BDB6" />}>
-      {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
-          <AlertCircle size={13} />{error}
-        </div>
-      )}
-      {loading ? (
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Загрузка...</div>
-      ) : (
-        <>
-          {branches.map(b => (
-            <div key={b.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{b.name}</div>
-                {b.city && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{b.city}</div>}
-              </div>
-              {b.is_franchise && (
-                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'rgba(38,60,217,0.10)', color: '#263CD9', border: '1px solid rgba(38,60,217,0.25)', fontWeight: 600 }}>Франшиза</span>
-              )}
-            </div>
-          ))}
-          {branches.length === 0 && !showForm && (
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Филиалов нет</div>
-          )}
-          {showForm && (
-            <div style={{ marginTop: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Название *</div>
-                <input style={inputStyle} placeholder="Главный офис" value={name} onChange={e => setName(e.target.value)} />
-              </div>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Город</div>
-                <input style={inputStyle} placeholder="Алматы" value={city} onChange={e => setCity(e.target.value)} />
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                <input type="checkbox" checked={franchise} onChange={e => setFranchise(e.target.checked)} />
-                Франшиза
-              </label>
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
-            {showForm ? (
-              <>
-                <button onClick={() => void handleAdd()} disabled={saving}
-                  style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
-                  {saving ? 'Сохранение...' : 'Добавить'}
-                </button>
-                <button onClick={() => { setShowForm(false); setError(null) }}
-                  style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-                  Отмена
-                </button>
-              </>
-            ) : (
-              <button onClick={() => setShowForm(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-                <Plus size={14} strokeWidth={2} />Добавить филиал
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </Section>
-  )
-}
-
-// ─── Departments section ───────────────────────────────────────────────────
-
-function DepartmentsSection() {
-  const [items,    setItems]    = useState<Department[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [name,     setName]     = useState('')
-
-  useEffect(() => {
-    departmentsApi.getAll().then(setItems).catch(() => setError('Ошибка загрузки')).finally(() => setLoading(false))
-  }, [])
-
-  const handleAdd = async () => {
-    if (!name.trim()) { setError('Введите название'); return }
-    setSaving(true); setError(null)
-    try {
-      const created = await departmentsApi.create(name.trim())
-      setItems(prev => [...prev, created])
-      setName(''); setShowForm(false)
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Ошибка')
-    } finally { setSaving(false) }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить отдел?')) return
-    try {
-      await departmentsApi.delete(id)
-      setItems(prev => prev.filter(i => i.id !== id))
-    } catch { /* ignore */ }
-  }
-
-  return (
-    <Section title="Отделы" icon={<Briefcase size={15} strokeWidth={1.75} color="#02BDB6" />}>
-      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
-      {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
-        <>
-          {items.map(dep => (
-            <div key={dep.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
-              <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{dep.name}</span>
-              <button onClick={() => void handleDelete(dep.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <Trash2 size={12} strokeWidth={1.75} />
-              </button>
-            </div>
-          ))}
-          {items.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Отделов нет</div>}
-          {showForm && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <input style={inputStyle} placeholder="Название отдела" value={name} onChange={e => setName(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') void handleAdd() }} />
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            {showForm ? (
-              <>
-                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
-                  {saving ? '...' : 'Добавить'}
-                </button>
-                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-                  Отмена
-                </button>
-              </>
-            ) : (
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-                <Plus size={14} strokeWidth={2} />Добавить отдел
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </Section>
-  )
-}
-
-// ─── Positions section ─────────────────────────────────────────────────────
-
-function PositionsSection() {
-  const [items,    setItems]    = useState<Position[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [name,     setName]     = useState('')
-
-  useEffect(() => {
-    positionsApi.getAll().then(setItems).catch(() => setError('Ошибка загрузки')).finally(() => setLoading(false))
-  }, [])
-
-  const handleAdd = async () => {
-    if (!name.trim()) { setError('Введите название'); return }
-    setSaving(true); setError(null)
-    try {
-      const created = await positionsApi.create(name.trim())
-      setItems(prev => [...prev, created])
-      setName(''); setShowForm(false)
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Ошибка')
-    } finally { setSaving(false) }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить должность?')) return
-    try {
-      await positionsApi.delete(id)
-      setItems(prev => prev.filter(i => i.id !== id))
-    } catch { /* ignore */ }
-  }
-
-  return (
-    <Section title="Должности" icon={<LayoutGrid size={15} strokeWidth={1.75} color="#02BDB6" />}>
-      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
-      {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
-        <>
-          {items.map(pos => (
-            <div key={pos.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
-              <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{pos.name}</span>
-              <button onClick={() => void handleDelete(pos.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <Trash2 size={12} strokeWidth={1.75} />
-              </button>
-            </div>
-          ))}
-          {items.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Должностей нет</div>}
-          {showForm && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <input style={inputStyle} placeholder="Название должности" value={name} onChange={e => setName(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') void handleAdd() }} />
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            {showForm ? (
-              <>
-                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
-                  {saving ? '...' : 'Добавить'}
-                </button>
-                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-                  Отмена
-                </button>
-              </>
-            ) : (
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-                <Plus size={14} strokeWidth={2} />Добавить должность
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </Section>
-  )
-}
-
-// ─── Main page ──────────────────────────────────────────────────────────────
+// ─── Main ───────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const { user } = useAuth()
   const { theme, setTheme } = useTheme()
-  const isDeveloperOrOwner = user?.role === 'developer' || user?.role === 'owner'
 
   const handleTheme = (t: Theme) => {
     if (!user) return
@@ -509,7 +171,7 @@ export default function SettingsPage() {
     <div style={{ maxWidth: 600 }}>
       <div style={{ marginBottom: 21 }}>
         <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Настройки</h1>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Персональные настройки и оборудование</p>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Личные настройки</p>
       </div>
 
       <Section title="Профиль" icon={<User size={15} strokeWidth={1.75} color="#02BDB6" />}>
@@ -549,20 +211,7 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-      <DevicesSection />
-
-      <DepartmentsSection />
-      <PositionsSection />
-
-      {isDeveloperOrOwner && <BranchesSection />}
-
-      {/* Custom themes placeholder */}
-      <Section title="Кастомные темы" icon={<Palette size={15} strokeWidth={1.75} color="#263CD9" />}>
-        <div style={{ textAlign: 'center', padding: '21px 0' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Кастомные темы — скоро</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Создание и применение собственных цветовых схем появится в будущих версиях</div>
-        </div>
-      </Section>
+      <NotificationsSection />
 
       <div style={{ padding: '13px 21px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Slimway CRM</span>

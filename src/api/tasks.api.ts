@@ -7,6 +7,7 @@ export interface CreateTaskPayload {
   priority?: TaskPriority
   status?: TaskStatus
   assigned_to?: string | null
+  observer_ids?: string[]
   deadline?: string | null
 }
 

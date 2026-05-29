@@ -9,6 +9,7 @@ import { leadsApi } from '../../api/leads.api'
 import { employeesApi } from '../../api/employees.api'
 import { clientsApi } from '../../api/clients.api'
 import { useAuth } from '../../hooks/useAuth'
+import { playSound } from '../../lib/notify'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { Lead, LeadStatus, LeadComment, Employee } from '../../types'
 
@@ -673,6 +674,7 @@ export default function LeadsPage() {
   const handleLeadCreate = (lead: Lead) => {
     setLeads(prev => [lead, ...prev])
     setCreateCol(null)
+    playSound('new_lead')
   }
 
   const buildCtxItems = (lead: Lead): ContextMenuEntry[] => [
