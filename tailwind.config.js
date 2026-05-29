@@ -4,8 +4,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#02BDB6',
+        primary:   '#02BDB6',
         secondary: '#263CD9',
+        accent:        'var(--accent)',
+        'accent-hover': 'var(--accent-hover)',
+        'accent-muted': 'var(--accent-muted)',
       },
       spacing: {
         'fib-xs':  '8px',

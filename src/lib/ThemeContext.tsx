@@ -1,15 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import type { Theme } from './theme'
+import type { ThemePreference, ThemeMode, AccentColor } from './theme'
 import { applyTheme, getStoredTheme, loadTheme, saveTheme } from './theme'
 
+const DEFAULT_PREF: ThemePreference = { mode: 'dark', accent: 'teal' }
+
 interface ThemeContextValue {
-  theme: Theme
-  setTheme: (t: Theme, userId: string) => Promise<void>
+  pref:      ThemePreference
+  setPref:   (p: ThemePreference, userId: string) => Promise<void>
+  setAccent: (accent: AccentColor, userId: string) => Promise<void>
+  // backward compat for AppLayout theme toggle
+  theme:     ThemeMode
+  setTheme:  (mode: ThemeMode, userId: string) => Promise<void>
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'dark',
-  setTheme: async () => {},
+  pref:      DEFAULT_PREF,
+  setPref:   async () => {},
+  setAccent: async () => {},
+  theme:     'dark',
+  setTheme:  async () => {},
 })
 
 export function ThemeProvider({
@@ -17,9 +26,9 @@ export function ThemeProvider({
   userId,
 }: {
   children: React.ReactNode
-  userId: string | null
+  userId:   string | null
 }) {
-  const [theme, setThemeState] = useState<Theme>(getStoredTheme)
+  const [pref, setPrefState] = useState<ThemePreference>(getStoredTheme)
 
   useEffect(() => {
     applyTheme(getStoredTheme())
@@ -27,19 +36,31 @@ export function ThemeProvider({
 
   useEffect(() => {
     if (!userId) return
-    loadTheme(userId).then(t => {
-      setThemeState(t)
-      applyTheme(t)
+    loadTheme(userId).then(p => {
+      setPrefState(p)
+      applyTheme(p)
     })
   }, [userId])
 
-  const setTheme = async (t: Theme, uid: string) => {
-    setThemeState(t)
-    await saveTheme(uid, t)
+  const setPref = async (p: ThemePreference, uid: string) => {
+    setPrefState(p)
+    await saveTheme(uid, p)
+  }
+
+  const setAccent = async (accent: AccentColor, uid: string) => {
+    const next: ThemePreference = { ...pref, accent }
+    setPrefState(next)
+    await saveTheme(uid, next)
+  }
+
+  const setTheme = async (mode: ThemeMode, uid: string) => {
+    const next: ThemePreference = { ...pref, mode }
+    setPrefState(next)
+    await saveTheme(uid, next)
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ pref, setPref, setAccent, theme: pref.mode, setTheme }}>
       {children}
     </ThemeContext.Provider>
   )

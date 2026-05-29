@@ -110,7 +110,7 @@ function BranchSwitcher({ role }: { role: string }) {
       'color:white;font-size:15px;gap:12px',
     ].join(';')
     overlay.innerHTML = [
-      '<div style="width:20px;height:20px;border:2px solid #02BDB6;',
+      '<div style="width:20px;height:20px;border:2px solid var(--accent);',
       'border-top-color:transparent;border-radius:50%;',
       'animation:spin 0.6s linear infinite"></div>',
       'Переключение филиала...',
@@ -157,9 +157,9 @@ function BranchSwitcher({ role }: { role: string }) {
               onClick={() => handleSelect(b.id)}
               style={{
                 display: 'block', width: '100%', padding: '8px 13px', textAlign: 'left',
-                background: b.id === active ? 'rgba(2,189,182,0.08)' : 'transparent',
+                background: b.id === active ? 'var(--accent-muted)' : 'transparent',
                 border: 'none', cursor: 'pointer',
-                color: b.id === active ? '#02BDB6' : 'var(--text-primary)', fontSize: 12,
+                color: b.id === active ? 'var(--accent)' : 'var(--text-primary)', fontSize: 12,
                 borderBottom: '1px solid var(--glass-border)',
               }}
             >
@@ -188,9 +188,9 @@ function NavButton({ to, icon: Icon, label }: { to: string; icon: React.ElementT
         fontSize: 13,
         fontWeight: isActive ? 600 : 400,
         textDecoration: 'none',
-        color: isActive ? '#02BDB6' : 'var(--text-secondary)',
-        background: isActive ? 'rgba(2,189,182,0.10)' : 'transparent',
-        borderLeft: isActive ? '2px solid #02BDB6' : '2px solid transparent',
+        color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+        background: isActive ? 'var(--accent-muted)' : 'transparent',
+        borderLeft: isActive ? '2px solid var(--accent)' : '2px solid transparent',
         transition: 'all 0.15s',
         cursor: 'pointer',
       })}
@@ -230,13 +230,13 @@ export default function AppLayout() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 18, fontWeight: 700, color: '#02BDB6', letterSpacing: 0.5 }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)', letterSpacing: 0.5 }}>
               Slimway
             </span>
             <span style={{
-              background: 'rgba(2,189,182,0.12)',
-              color: '#02BDB6',
-              border: '1px solid rgba(2,189,182,0.25)',
+              background: 'var(--accent-muted)',
+              color: 'var(--accent)',
+              border: '1px solid var(--accent)',
               fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, letterSpacing: 1,
             }}>
               CRM
