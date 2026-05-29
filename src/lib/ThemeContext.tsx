@@ -1,24 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import type { ThemePreference, ThemeMode, AccentColor } from './theme'
-import { applyTheme, getStoredTheme, loadTheme, saveTheme } from './theme'
+import type { ThemePreference, ThemeId, AccentColor } from './theme'
+import { applyTheme, getStoredTheme, loadTheme, saveTheme, isDarkTheme } from './theme'
 
-const DEFAULT_PREF: ThemePreference = { mode: 'dark', accent: 'teal' }
+const DEFAULT_PREF: ThemePreference = { theme: 'dark', accent: 'teal' }
 
 interface ThemeContextValue {
   pref:      ThemePreference
   setPref:   (p: ThemePreference, userId: string) => Promise<void>
+  setTheme:  (theme: ThemeId,    userId: string) => Promise<void>
   setAccent: (accent: AccentColor, userId: string) => Promise<void>
-  // backward compat for AppLayout theme toggle
-  theme:     ThemeMode
-  setTheme:  (mode: ThemeMode, userId: string) => Promise<void>
+  isDark:    boolean
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   pref:      DEFAULT_PREF,
   setPref:   async () => {},
-  setAccent: async () => {},
-  theme:     'dark',
   setTheme:  async () => {},
+  setAccent: async () => {},
+  isDark:    true,
 })
 
 export function ThemeProvider({
@@ -47,20 +46,20 @@ export function ThemeProvider({
     await saveTheme(uid, p)
   }
 
+  const setTheme = async (theme: ThemeId, uid: string) => {
+    const next: ThemePreference = { ...pref, theme }
+    setPrefState(next)
+    await saveTheme(uid, next)
+  }
+
   const setAccent = async (accent: AccentColor, uid: string) => {
     const next: ThemePreference = { ...pref, accent }
     setPrefState(next)
     await saveTheme(uid, next)
   }
 
-  const setTheme = async (mode: ThemeMode, uid: string) => {
-    const next: ThemePreference = { ...pref, mode }
-    setPrefState(next)
-    await saveTheme(uid, next)
-  }
-
   return (
-    <ThemeContext.Provider value={{ pref, setPref, setAccent, theme: pref.mode, setTheme }}>
+    <ThemeContext.Provider value={{ pref, setPref, setTheme, setAccent, isDark: isDarkTheme(pref.theme) }}>
       {children}
     </ThemeContext.Provider>
   )

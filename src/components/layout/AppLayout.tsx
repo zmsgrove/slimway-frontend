@@ -55,10 +55,8 @@ const sidebarStyle: React.CSSProperties = {
   width: 220,
   display: 'flex',
   flexDirection: 'column',
-  background: 'var(--glass-bg)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  borderRight: '1px solid var(--glass-border)',
+  background: 'var(--bg-sidebar)',
+  borderRight: '1px solid var(--border)',
   zIndex: 20,
 }
 
@@ -73,10 +71,8 @@ const headerStyle: React.CSSProperties = {
   justifyContent: 'flex-end',
   padding: '0 21px',
   gap: 13,
-  background: 'var(--glass-bg)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  borderBottom: '1px solid var(--glass-border)',
+  background: 'var(--bg-sidebar)',
+  borderBottom: '1px solid var(--border)',
   zIndex: 10,
 }
 
@@ -123,7 +119,7 @@ function BranchSwitcher({ role }: { role: string }) {
 
   if (!canSwitch) {
     return (
-      <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)' }}>
+      <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Филиал</div>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{activeBranch.name}</div>
       </div>
@@ -131,7 +127,7 @@ function BranchSwitcher({ role }: { role: string }) {
   }
 
   return (
-    <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--glass-border)', position: 'relative' }}>
+    <div style={{ padding: '6px 13px 10px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
       <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Филиал</div>
       <button
         onClick={() => setOpen(o => !o)}
@@ -148,7 +144,7 @@ function BranchSwitcher({ role }: { role: string }) {
       {open && branches.length > 1 && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
-          background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
+          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
           borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
         }}>
           {branches.map(b => (
@@ -160,7 +156,7 @@ function BranchSwitcher({ role }: { role: string }) {
                 background: b.id === active ? 'var(--accent-muted)' : 'transparent',
                 border: 'none', cursor: 'pointer',
                 color: b.id === active ? 'var(--accent)' : 'var(--text-primary)', fontSize: 12,
-                borderBottom: '1px solid var(--glass-border)',
+                borderBottom: '1px solid var(--border)',
               }}
             >
               {b.name}
@@ -203,7 +199,7 @@ function NavButton({ to, icon: Icon, label }: { to: string; icon: React.ElementT
 
 export default function AppLayout() {
   const { user, signOut } = useAuth()
-  const { theme, setTheme } = useTheme()
+  const { isDark, setTheme } = useTheme()
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
@@ -213,7 +209,7 @@ export default function AppLayout() {
 
   const handleThemeToggle = () => {
     if (!user) return
-    void setTheme(theme === 'dark' ? 'light' : 'dark', user.id)
+    void setTheme(isDark ? 'white' : 'dark', user.id)
   }
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
@@ -226,7 +222,7 @@ export default function AppLayout() {
         <div
           style={{
             padding: '21px 13px 13px',
-            borderBottom: '1px solid var(--glass-border)',
+            borderBottom: '1px solid var(--border)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -272,7 +268,7 @@ export default function AppLayout() {
         <div
           style={{
             padding: '8px 6px',
-            borderTop: '1px solid var(--glass-border)',
+            borderTop: '1px solid var(--border)',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
@@ -316,15 +312,15 @@ export default function AppLayout() {
         <header style={headerStyle}>
           <button
             onClick={handleThemeToggle}
-            title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+            title={isDark ? 'Светлая тема' : 'Тёмная тема'}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 34, height: 34, borderRadius: 8,
-              border: '1px solid var(--glass-border)', background: 'transparent',
+              border: '1px solid var(--border)', background: 'transparent',
               color: 'var(--text-secondary)', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
             }}
           >
-            {theme === 'dark' ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
+            {isDark ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
           </button>
 
           {user?.role === 'developer' && (
