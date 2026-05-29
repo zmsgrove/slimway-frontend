@@ -51,4 +51,9 @@ export const warehouseApi = {
     const { data } = await api.get('/warehouse/export', { params })
     return data
   },
+
+  intake: async (payload: { catalog_item_id: string; quantity: number; supplier?: string; notes?: string }): Promise<WarehouseMovement> => {
+    const { data } = await api.post('/warehouse/intake', payload)
+    return data
+  },
 }

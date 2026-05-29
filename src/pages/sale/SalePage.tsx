@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ShoppingCart, Search, X, AlertCircle, Check, Calendar, ChevronDown, Plus, User, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { subscriptionTemplatesApi } from '../../api/subscription-templates.api'
+import { branchSubscriptionTemplatesApi } from '../../api/branch-subscription-templates.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { clientsApi } from '../../api/clients.api'
 import { warehouseApi } from '../../api/warehouse.api'
@@ -367,8 +367,12 @@ export default function SalePage() {
   const [showAllTpls,   setShowAllTpls]   = useState(false)
 
   useEffect(() => {
-    subscriptionTemplatesApi.getAll()
-      .then(data => { setTemplates(data); if (data.length === 1) setSelectedTpl(data[0]) })
+    branchSubscriptionTemplatesApi.getAll()
+      .then(data => {
+        const tpls = data.flatMap(bst => bst.subscription_templates ? [bst.subscription_templates] : [])
+        setTemplates(tpls)
+        if (tpls.length === 1) setSelectedTpl(tpls[0])
+      })
       .catch(() => setTplError('Не удалось загрузить шаблоны'))
       .finally(() => setLoadingTpls(false))
   }, [])
@@ -491,7 +495,7 @@ export default function SalePage() {
           <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка шаблонов...</div>
         ) : templates.length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>
-            Нет доступных шаблонов. Добавьте их в <button onClick={() => navigate('/settings')} style={{ background: 'none', border: 'none', color: '#02BDB6', cursor: 'pointer', fontSize: 13, padding: 0 }}>Настройках</button>.
+            Нет доступных шаблонов. Подключите их в <button onClick={() => navigate('/subscriptions')} style={{ background: 'none', border: 'none', color: '#02BDB6', cursor: 'pointer', fontSize: 13, padding: 0 }}>разделе Абонементы</button>.
           </div>
         ) : (
           <>

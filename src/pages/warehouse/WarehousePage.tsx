@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Plus, X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2 } from 'lucide-react'
 import { warehouseApi } from '../../api/warehouse.api'
+import { catalogApi } from '../../api/catalog.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
-import type { WarehouseItem, WarehouseMovement, WarehouseCategory } from '../../types'
+import type { WarehouseItem, WarehouseMovement, WarehouseCategory, CatalogItem } from '../../types'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -179,14 +180,23 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
 
 // ─── BulkIntakeModal ─────────────────────────────────────────────────────────
 
-function BulkIntakeModal({ items, onClose, onDone }: { items: WarehouseItem[]; onClose: () => void; onDone: () => void }) {
-  const [quantities, setQuantities] = useState<Record<string, string>>({})
-  const [supplier,   setSupplier]   = useState('')
-  const [notes,      setNotes]      = useState('')
-  const [saving,     setSaving]     = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
+function BulkIntakeModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([])
+  const [quantities,   setQuantities]   = useState<Record<string, string>>({})
+  const [supplier,     setSupplier]     = useState('')
+  const [notes,        setNotes]        = useState('')
+  const [loading,      setLoading]      = useState(true)
+  const [saving,       setSaving]       = useState(false)
+  const [error,        setError]        = useState<string | null>(null)
 
-  const toProcess = items.filter(i => parseInt(quantities[i.id] || '0', 10) > 0)
+  useEffect(() => {
+    catalogApi.getAll()
+      .then(data => setCatalogItems(data))
+      .catch(() => setError('Не удалось загрузить каталог'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const toProcess = catalogItems.filter(i => parseInt(quantities[i.id] || '0', 10) > 0)
 
   const handleSubmit = async () => {
     if (toProcess.length === 0) { setError('Укажите количество хотя бы для одного товара'); return }
@@ -194,8 +204,12 @@ function BulkIntakeModal({ items, onClose, onDone }: { items: WarehouseItem[]; o
     try {
       await Promise.all(toProcess.map(item => {
         const qty = parseInt(quantities[item.id], 10)
-        const noteText = [supplier ? `Поставщик: ${supplier}` : '', notes].filter(Boolean).join('. ')
-        return warehouseApi.addMovement(item.id, { type: 'in', quantity: qty, notes: noteText || undefined })
+        return warehouseApi.intake({
+          catalog_item_id: item.id,
+          quantity: qty,
+          supplier: supplier.trim() || undefined,
+          notes: notes.trim() || undefined,
+        })
       }))
       onDone()
       onClose()
@@ -215,30 +229,33 @@ function BulkIntakeModal({ items, onClose, onDone }: { items: WarehouseItem[]; o
         <div style={{ flex: 1, overflowY: 'auto', padding: 21 }}>
           {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
 
-          {/* Items table */}
-          <div style={{ marginBottom: 21 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--glass-border)', marginBottom: 8 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Товар</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Остаток</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Приход</div>
-            </div>
-            {items.map(item => (
-              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--glass-border)', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{item.name}</div>
-                  {item.sku && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.sku}</div>}
-                </div>
-                <div style={{ fontSize: 13, color: item.low_stock ? '#ef4444' : 'var(--text-secondary)', textAlign: 'center' }}>{item.quantity}</div>
-                <input
-                  type="number" min={0}
-                  value={quantities[item.id] || ''}
-                  onChange={e => setQuantities(prev => ({ ...prev, [item.id]: e.target.value }))}
-                  placeholder="0"
-                  style={{ ...inputStyle, height: 30, fontSize: 12, textAlign: 'center', padding: '0 6px' }}
-                />
+          {loading ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '21px 0' }}>Загрузка каталога...</div>
+          ) : catalogItems.length === 0 ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '21px 0' }}>Каталог пуст. Добавьте товары в разделе Управление → Каталог.</div>
+          ) : (
+            <div style={{ marginBottom: 21 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--glass-border)', marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Товар</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Приход</div>
               </div>
-            ))}
-          </div>
+              {catalogItems.map(item => (
+                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--glass-border)', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{item.name}</div>
+                    {item.sku && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.sku}</div>}
+                  </div>
+                  <input
+                    type="number" min={0}
+                    value={quantities[item.id] || ''}
+                    onChange={e => setQuantities(prev => ({ ...prev, [item.id]: e.target.value }))}
+                    placeholder="0"
+                    style={{ ...inputStyle, height: 30, fontSize: 12, textAlign: 'center', padding: '0 6px' }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Supplier + notes */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -261,7 +278,7 @@ function BulkIntakeModal({ items, onClose, onDone }: { items: WarehouseItem[]; o
 
         <div style={{ padding: '13px 21px', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
-          <button onClick={() => void handleSubmit()} disabled={saving} style={{ flex: 2, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+          <button onClick={() => void handleSubmit()} disabled={saving || loading} style={{ flex: 2, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || loading) ? 'not-allowed' : 'pointer', opacity: (saving || loading) ? 0.7 : 1 }}>
             {saving ? 'Оформляем...' : 'Оформить приход'}
           </button>
         </div>
@@ -612,7 +629,7 @@ export default function WarehousePage() {
 
       {showCreate && <CreateItemModal onClose={() => setShowCreate(false)} onCreate={item => { setItems(prev => [item, ...prev]) }} />}
 
-      {showBulk && <BulkIntakeModal items={items} onClose={() => setShowBulk(false)} onDone={() => void load()} />}
+      {showBulk && <BulkIntakeModal onClose={() => setShowBulk(false)} onDone={() => void load()} />}
 
       {cardItem && (
         <ItemCardModal

@@ -79,8 +79,8 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
       })
       // If not 'new', move to the correct status
       if (initialStatus !== 'new') {
-        const updated = await leadsApi.updateStatus(lead.id, initialStatus)
-        onCreate(updated)
+        const result = await leadsApi.updateStatus(lead.id, initialStatus)
+        onCreate(result.lead)
       } else {
         onCreate(lead)
       }
@@ -166,7 +166,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   const [editAssigned, setEditAssigned] = useState(lead.assigned_to ?? '')
   const [saving, setSaving]     = useState(false)
   const [movingTo, setMovingTo] = useState<LeadStatus | null>(null)
-  const [showClientAdded, setShowClientAdded] = useState(false)
+  const [showClientAdded, setShowClientAdded] = useState<{ full_name: string; phone: string | null } | null>(null)
   const commentsEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -199,11 +199,12 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   const handleStatusChange = async (status: LeadStatus) => {
     setMovingTo(status)
     try {
-      const updated = await leadsApi.updateStatus(detail.id, status)
+      const result = await leadsApi.updateStatus(detail.id, status)
+      const updated = result.lead
       setDetail(updated)
       onUpdate(updated)
-      if (status === 'success' && updated.client_id && !detail.client_id) {
-        setShowClientAdded(true)
+      if (status === 'success' && result.client) {
+        setShowClientAdded(result.client)
       }
     } catch { /* */ }
     finally { setMovingTo(null) }
@@ -227,8 +228,10 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
     <>
     {showClientAdded && (
       <ClientAddedModal
-        onEdit={() => { setShowClientAdded(false); navigate('/clients') }}
-        onClose={() => setShowClientAdded(false)}
+        clientName={showClientAdded.full_name}
+        clientPhone={showClientAdded.phone}
+        onEdit={() => { setShowClientAdded(null); navigate('/clients') }}
+        onClose={() => setShowClientAdded(null)}
       />
     )}
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
@@ -513,11 +516,13 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
 // ─── ClientAddedModal ─────────────────────────────────────────────────────────
 
 interface ClientAddedModalProps {
+  clientName: string
+  clientPhone: string | null
   onEdit: () => void
   onClose: () => void
 }
 
-function ClientAddedModal({ onEdit, onClose }: ClientAddedModalProps) {
+function ClientAddedModal({ clientName, clientPhone, onEdit, onClose }: ClientAddedModalProps) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
@@ -525,9 +530,13 @@ function ClientAddedModal({ onEdit, onClose }: ClientAddedModalProps) {
         <div style={{ width: 48, height: 48, borderRadius: 16, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 21px' }}>
           <UserPlus size={22} color="#10b981" />
         </div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Клиент добавлен в базу</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 13 }}>Клиент добавлен в базу</div>
+        <div style={{ marginBottom: 21, padding: '10px 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#10b981' }}>{clientName}</div>
+          {clientPhone && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{clientPhone}</div>}
+        </div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 34, lineHeight: 1.6 }}>
-          Клиент создан со статусом «Черновик». Вы можете перейти к карточке для заполнения данных.
+          Статус «Черновик». Перейдите в карточку для заполнения данных.
         </div>
         <div style={{ display: 'flex', gap: 13 }}>
           <button onClick={onEdit}
@@ -557,7 +566,7 @@ export default function LeadsPage() {
   const [createCol, setCreateCol]       = useState<LeadStatus | null>(null)
   const [dragOver, setDragOver]         = useState<LeadStatus | null>(null)
   const [ctxMenu, setCtxMenu]           = useState<{ x: number; y: number; lead: Lead } | null>(null)
-  const [clientAddedModal, setClientAddedModal] = useState(false)
+  const [clientAddedModal, setClientAddedModal] = useState<{ full_name: string; phone: string | null } | null>(null)
   const draggingRef = useRef<Lead | null>(null)
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin' || user?.role === 'staff'
@@ -598,10 +607,10 @@ export default function LeadsPage() {
     // Optimistic update
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: colId } : l))
     try {
-      const updated = await leadsApi.updateStatus(lead.id, colId)
-      setLeads(prev => prev.map(l => l.id === lead.id ? updated : l))
-      if (colId === 'success' && updated.client_id && !lead.client_id) {
-        setClientAddedModal(true)
+      const result = await leadsApi.updateStatus(lead.id, colId)
+      setLeads(prev => prev.map(l => l.id === lead.id ? result.lead : l))
+      if (colId === 'success' && result.client) {
+        setClientAddedModal(result.client)
       }
     } catch {
       // revert
@@ -636,8 +645,9 @@ export default function LeadsPage() {
       onClick: async () => {
         setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: c.id } : l))
         try {
-          const updated = await leadsApi.updateStatus(lead.id, c.id)
-          setLeads(prev => prev.map(l => l.id === lead.id ? updated : l))
+          const result = await leadsApi.updateStatus(lead.id, c.id)
+          setLeads(prev => prev.map(l => l.id === lead.id ? result.lead : l))
+          if (c.id === 'success' && result.client) setClientAddedModal(result.client)
         } catch {
           setLeads(prev => prev.map(l => l.id === lead.id ? lead : l))
         }
@@ -782,11 +792,13 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Client added confirmation (drag-drop to success) */}
+      {/* Client added confirmation (drag-drop / context menu to success) */}
       {clientAddedModal && (
         <ClientAddedModal
-          onEdit={() => { setClientAddedModal(false); navigate('/clients') }}
-          onClose={() => setClientAddedModal(false)}
+          clientName={clientAddedModal.full_name}
+          clientPhone={clientAddedModal.phone}
+          onEdit={() => { setClientAddedModal(null); navigate('/clients') }}
+          onClose={() => setClientAddedModal(null)}
         />
       )}
     </div>

@@ -305,10 +305,32 @@ export interface AnalyticsOverview {
   low_stock_items: number
 }
 
+// ── v1.5.4 ───────────────────────────────────────────────────
+export type CatalogCategory = 'merch' | 'nutrition' | 'equipment' | 'other'
+
+export interface CatalogItem {
+  id: string
+  name: string
+  sku: string | null
+  category: CatalogCategory
+  unit: string | null
+  description: string | null
+  price: number | null
+  created_at: string
+}
+
+export interface BranchSubscriptionTemplate {
+  id: string
+  branch_id: string
+  template_id: string
+  created_at: string
+  subscription_templates?: SubscriptionTemplate
+}
+
 // ── v1.2.1 ───────────────────────────────────────────────────
 export interface SubscriptionTemplate {
   id: string
-  branch_id: string
+  branch_id: string | null
   name: string
   slot_1_type: DeviceType
   slot_1_duration_min: number

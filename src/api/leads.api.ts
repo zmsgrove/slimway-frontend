@@ -36,7 +36,7 @@ export const leadsApi = {
     return data
   },
 
-  updateStatus: async (id: string, status: LeadStatus): Promise<Lead> => {
+  updateStatus: async (id: string, status: LeadStatus): Promise<{ lead: Lead; client: { id: string; full_name: string; phone: string | null } | null }> => {
     const { data } = await api.patch(`/leads/${id}/status`, { status })
     return data
   },
