@@ -5,7 +5,9 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { analyticsApi } from '../../api/analytics.api'
-import type { AnalyticsOverview } from '../../types'
+import { useAuth } from '../../hooks/useAuth'
+import { BranchSelector } from '../../components/ui/BranchSelector'
+import type { AnalyticsOverview, AnalyticsBranchRow } from '../../types'
 
 interface KpiCardProps {
   icon: LucideIcon
@@ -60,24 +62,41 @@ function StatRow({ label, value, color }: { label: string; value: string | numbe
 }
 
 export default function DashboardPage() {
-  const [overview, setOverview] = useState<AnalyticsOverview | null>(null)
-  const [loading,  setLoading]  = useState(true)
+  const { user } = useAuth()
+  const [overview,        setOverview]        = useState<AnalyticsOverview | null>(null)
+  const [loading,         setLoading]         = useState(true)
+  const [selectedBranches, setSelectedBranches] = useState<string[]>(() => {
+    const id = localStorage.getItem('activeBranchId')
+    return id ? [id] : []
+  })
 
   const today = new Date().toLocaleDateString('ru-RU', {
     weekday: 'long', day: 'numeric', month: 'long',
   })
 
   useEffect(() => {
-    analyticsApi.getOverview()
+    setLoading(true)
+    analyticsApi.getOverview({ branch_ids: selectedBranches.length > 0 ? selectedBranches : undefined })
       .then(setOverview)
-      .catch(() => { /* ignore — show placeholders */ })
+      .catch(() => { /* ignore */ })
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedBranches])
 
   const v = (n: number | undefined) => (loading ? '...' : (n ?? 0))
 
+  const byBranch: AnalyticsBranchRow[] = overview?.by_branch ?? []
+
   return (
     <div>
+      {/* Branch selector — developer/owner only */}
+      {user?.role && (
+        <BranchSelector
+          role={user.role}
+          selectedIds={selectedBranches}
+          onChange={setSelectedBranches}
+        />
+      )}
+
       <div style={{ marginBottom: 21 }}>
         <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Дашборд</h1>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, textTransform: 'capitalize' }}>{today}</p>
@@ -85,23 +104,49 @@ export default function DashboardPage() {
 
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 13, marginBottom: 21 }}>
-        <KpiCard icon={Users}    label="Клиентов"          value={v(overview?.clients_total)}           color="#02BDB6" subtitle="Всего в базе" />
-        <KpiCard icon={CreditCard} label="Абонементов"    value={v(overview?.subscriptions_active)}    color="#263CD9" subtitle="Активных" />
-        <KpiCard icon={Calendar} label="Ячеек сегодня"    value={v(overview?.slots_today)}             color="#02BDB6" subtitle="По расписанию" />
-        <KpiCard icon={Activity} label="Посещений сегодня" value={v(overview?.visits_today)}            color="#10b981" subtitle="Забронировано" />
-        <KpiCard icon={Target}   label="Новых лидов"      value={v(overview?.leads_new)}               color="#f59e0b" subtitle="Не обработаны" warn={(overview?.leads_new ?? 0) > 0} />
+        <KpiCard icon={Users}    label="Клиентов"           value={v(overview?.clients_total)}                color="#02BDB6" subtitle="Всего в базе" />
+        <KpiCard icon={CreditCard} label="Абонементов"     value={v(overview?.subscriptions_active)}         color="#263CD9" subtitle="Активных" />
+        <KpiCard icon={Calendar} label="Ячеек сегодня"     value={v(overview?.slots_today)}                  color="#02BDB6" subtitle="По расписанию" />
+        <KpiCard icon={Activity} label="Посещений сегодня" value={v(overview?.visits_today)}                 color="#10b981" subtitle="Забронировано" />
+        <KpiCard icon={Target}   label="Новых лидов"       value={v(overview?.leads_new)}                    color="#f59e0b" subtitle="Не обработаны" warn={(overview?.leads_new ?? 0) > 0} />
         <KpiCard icon={AlertTriangle} label="Истекают скоро" value={v(overview?.subscriptions_expiring_soon)} color="#ef4444" subtitle="В течение 7 дней" warn={(overview?.subscriptions_expiring_soon ?? 0) > 0} />
       </div>
 
+      {/* Per-branch breakdown (only when multiple branches) */}
+      {byBranch.length > 1 && (
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21, marginBottom: 21, overflow: 'hidden' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Разбивка по филиалам</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Филиал', 'Клиентов', 'Абонементов', 'Лидов'].map(h => (
+                  <th key={h} style={{ padding: '8px 13px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '1px solid var(--glass-border)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {byBranch.map((row, i) => (
+                <tr key={row.branch_id} style={{ borderBottom: i < byBranch.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
+                  <td style={{ padding: '10px 13px', fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{row.branch_name}</td>
+                  <td style={{ padding: '10px 13px', fontSize: 13, color: '#02BDB6', fontWeight: 600 }}>{row.clients_total}</td>
+                  <td style={{ padding: '10px 13px', fontSize: 13, color: '#263CD9', fontWeight: 600 }}>{row.subscriptions_active}</td>
+                  <td style={{ padding: '10px 13px', fontSize: 13, color: row.leads_new > 0 ? '#f59e0b' : 'var(--text-muted)', fontWeight: row.leads_new > 0 ? 600 : 400 }}>{row.leads_new}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* Two-column layout */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 13, alignItems: 'start' }}>
-        {/* Left: Subscriptions chart placeholder */}
+        {/* Left: Subscriptions stats */}
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Абонементы</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 21 }}>Статус активных абонементов</div>
           <div style={{ display: 'flex', gap: 21 }}>
             {[
-              { label: 'Активных',  value: overview?.subscriptions_active ?? 0,         color: '#02BDB6' },
+              { label: 'Активных',    value: overview?.subscriptions_active ?? 0,        color: '#02BDB6' },
               { label: 'Истекает 7д', value: overview?.subscriptions_expiring_soon ?? 0, color: '#ef4444' },
               { label: 'Истекает 30д', value: overview?.subscriptions_expiring_30d ?? 0, color: '#f59e0b' },
             ].map(item => (
@@ -111,7 +156,6 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          {/* Mini bar chart placeholder */}
           <div style={{ marginTop: 21 }}>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>Посещений за 7 дней</div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60 }}>

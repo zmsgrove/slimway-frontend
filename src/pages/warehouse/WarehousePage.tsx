@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2 } from 'lucide-react'
 import { warehouseApi } from '../../api/warehouse.api'
 import { catalogApi } from '../../api/catalog.api'
+import { branchesApi, type BranchRaw } from '../../api/branches.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
+import { BranchSelector } from '../../components/ui/BranchSelector'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
 import type { WarehouseItem, WarehouseMovement, WarehouseCategory, CatalogItem } from '../../types'
@@ -461,24 +463,37 @@ function CreateItemModal({ onClose, onCreate }: { onClose: () => void; onCreate:
 
 export default function WarehousePage() {
   const { user } = useAuth()
-  const [items,       setItems]       = useState<WarehouseItem[]>([])
-  const [loading,     setLoading]     = useState(true)
-  const [showBulk,    setShowBulk]    = useState(false)
-  const [cardItem,    setCardItem]    = useState<WarehouseItem | null>(null)
-  const [editItem,    setEditItem]    = useState<WarehouseItem | null>(null)
-  const [ctxMenu,     setCtxMenu]     = useState<{ item: WarehouseItem; x: number; y: number } | null>(null)
-  const [filterCat,   setFilterCat]   = useState<WarehouseCategory | 'all'>('all')
+  const [items,              setItems]              = useState<WarehouseItem[]>([])
+  const [loading,            setLoading]            = useState(true)
+  const [showBulk,           setShowBulk]           = useState(false)
+  const [cardItem,           setCardItem]           = useState<WarehouseItem | null>(null)
+  const [editItem,           setEditItem]           = useState<WarehouseItem | null>(null)
+  const [ctxMenu,            setCtxMenu]            = useState<{ item: WarehouseItem; x: number; y: number } | null>(null)
+  const [filterCat,          setFilterCat]          = useState<WarehouseCategory | 'all'>('all')
+  const [selectedBranchIds,  setSelectedBranchIds]  = useState<string[]>(() => {
+    const id = localStorage.getItem('activeBranchId')
+    return id ? [id] : []
+  })
+  const [branches, setBranches] = useState<BranchRaw[]>([])
 
   const canEdit = user?.role === 'developer' || user?.role === 'owner'
   const canIntake = canEdit || user?.role === 'franchisee'
+  const multiBranch = selectedBranchIds.length > 1
+
+  useEffect(() => {
+    if (user?.role !== 'developer' && user?.role !== 'owner') return
+    branchesApi.getAll().then(setBranches).catch(() => { /* ignore */ })
+  }, [user?.role])
+
+  const getBranchName = (branchId: string) => branches.find(b => b.id === branchId)?.name ?? branchId
 
   const load = useCallback(async () => {
     try {
-      const data = await warehouseApi.getAll()
+      const data = await warehouseApi.getAll(selectedBranchIds.length > 0 ? selectedBranchIds : undefined)
       setItems(data)
       if (data.some(i => i.low_stock)) playSound('low_stock')
     } catch { /* ignore */ } finally { setLoading(false) }
-  }, [])
+  }, [selectedBranchIds])
 
   useEffect(() => { void load() }, [load])
 
@@ -513,6 +528,14 @@ export default function WarehousePage() {
 
   return (
     <div>
+      {user?.role && (
+        <BranchSelector
+          role={user.role}
+          selectedIds={selectedBranchIds}
+          onChange={setSelectedBranchIds}
+        />
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
         <div>
@@ -570,7 +593,7 @@ export default function WarehousePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                {['Название', 'Категория', 'Количество', 'Мин.', 'Цена'].map(h => (
+                {[...(multiBranch ? ['Филиал'] : []), 'Название', 'Категория', 'Количество', 'Мин.', 'Цена'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                 ))}
               </tr>
@@ -587,6 +610,11 @@ export default function WarehousePage() {
                     cursor: 'pointer', transition: 'background 0.15s',
                   }}
                 >
+                  {multiBranch && (
+                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-muted)' }}>
+                      {getBranchName(item.branch_id)}
+                    </td>
+                  )}
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {item.low_stock && <AlertTriangle size={13} color="#ef4444" />}

@@ -304,6 +304,14 @@ export interface Position {
   created_at: string
 }
 
+export interface AnalyticsBranchRow {
+  branch_id: string
+  branch_name: string
+  clients_total: number
+  subscriptions_active: number
+  leads_new: number
+}
+
 export interface AnalyticsOverview {
   clients_total: number
   subscriptions_active: number
@@ -314,6 +322,7 @@ export interface AnalyticsOverview {
   leads_new: number
   active_shifts: number
   low_stock_items: number
+  by_branch?: AnalyticsBranchRow[]
 }
 
 // ── v1.5.4 ───────────────────────────────────────────────────

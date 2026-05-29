@@ -10,8 +10,9 @@ export interface CreateWarehouseItemPayload {
 }
 
 export const warehouseApi = {
-  getAll: async (): Promise<WarehouseItem[]> => {
-    const { data } = await api.get('/warehouse')
+  getAll: async (branchIds?: string[]): Promise<WarehouseItem[]> => {
+    const params = branchIds && branchIds.length > 0 ? { branch_ids: branchIds.join(',') } : undefined
+    const { data } = await api.get('/warehouse', { params })
     return data
   },
 
