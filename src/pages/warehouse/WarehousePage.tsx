@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2 } from 'lucide-react'
+import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2 } from 'lucide-react'
 import { warehouseApi } from '../../api/warehouse.api'
 import { catalogApi } from '../../api/catalog.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
@@ -463,7 +463,6 @@ export default function WarehousePage() {
   const { user } = useAuth()
   const [items,       setItems]       = useState<WarehouseItem[]>([])
   const [loading,     setLoading]     = useState(true)
-  const [showCreate,  setShowCreate]  = useState(false)
   const [showBulk,    setShowBulk]    = useState(false)
   const [cardItem,    setCardItem]    = useState<WarehouseItem | null>(null)
   const [editItem,    setEditItem]    = useState<WarehouseItem | null>(null)
@@ -533,14 +532,6 @@ export default function WarehousePage() {
               style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, color: '#10b981', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               <ArrowDown size={15} />Приход на склад
-            </button>
-          )}
-          {canEdit && (
-            <button
-              onClick={() => setShowCreate(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-            >
-              <Plus size={15} />Позиция
             </button>
           )}
         </div>
@@ -626,8 +617,6 @@ export default function WarehousePage() {
           </table>
         </div>
       )}
-
-      {showCreate && <CreateItemModal onClose={() => setShowCreate(false)} onCreate={item => { setItems(prev => [item, ...prev]) }} />}
 
       {showBulk && <BulkIntakeModal onClose={() => setShowBulk(false)} onDone={() => void load()} />}
 
