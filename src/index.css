@@ -116,6 +116,10 @@ input, textarea, select {
   animation: shift-pulse 2s ease-in-out infinite;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Login page — hide right panel on small screens */
 @media (max-width: 768px) {
   .login-panel-right {
