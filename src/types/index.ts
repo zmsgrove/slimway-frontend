@@ -216,12 +216,22 @@ export interface AuditLogEntry {
 }
 
 // ── v1.5.0 ───────────────────────────────────────────────────
-export type TaskStatus   = 'new' | 'today' | 'week' | 'long' | 'done'
+export type TaskStatus   = 'new' | 'today' | 'week' | 'long' | 'done' | 'closed' | 'pending_close'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
+
+export interface TaskChecklistGroup {
+  id: string
+  task_id: string
+  title: string
+  position: number
+  created_at: string
+  items?: TaskChecklistItem[]
+}
 
 export interface TaskChecklistItem {
   id: string
   task_id: string
+  group_id: string | null
   text: string
   is_done: boolean
   created_at: string
@@ -248,6 +258,7 @@ export interface Task {
   deadline: string | null
   created_at: string
   task_checklist_items?: TaskChecklistItem[]
+  task_checklist_groups?: TaskChecklistGroup[]
   task_comments?: TaskComment[]
 }
 
