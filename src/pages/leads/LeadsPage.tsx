@@ -163,7 +163,9 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   const [editName, setEditName] = useState(lead.full_name)
   const [editPhone, setEditPhone] = useState(lead.phone ?? '')
   const [editNotes, setEditNotes] = useState(lead.notes ?? '')
-  const [editAssigned, setEditAssigned] = useState(lead.assigned_to ?? '')
+  const [editAssigned, setEditAssigned] = useState(
+    () => employees.find(e => e.profile_id === lead.assigned_to)?.id ?? lead.assigned_to ?? ''
+  )
   const [saving, setSaving]     = useState(false)
   const [movingTo, setMovingTo] = useState<LeadStatus | null>(null)
   const [showClientAdded, setShowClientAdded] = useState<{ full_name: string; phone: string | null } | null>(null)
@@ -222,7 +224,8 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   }
 
   const col = COLUMNS.find(c => c.id === detail.status)
-  const assignedEmp = employees.find(e => e.id === detail.assigned_to)
+  const assignedEmp = employees.find(e => e.profile_id === detail.assigned_to)
+    ?? employees.find(e => e.id === detail.assigned_to)
 
   return (
     <>
