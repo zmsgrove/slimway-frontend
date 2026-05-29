@@ -1,5 +1,11 @@
-import { Users, CreditCard, Calendar, Activity, TrendingUp } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import {
+  Users, CreditCard, Calendar, Activity, Target, Package,
+  AlertTriangle, TrendingUp, UserCheck,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { analyticsApi } from '../../api/analytics.api'
+import type { AnalyticsOverview } from '../../types'
 
 interface KpiCardProps {
   icon: LucideIcon
@@ -7,277 +13,135 @@ interface KpiCardProps {
   value: string | number
   color: string
   subtitle?: string
+  warn?: boolean
 }
 
-function KpiCard({ icon: Icon, label, value, color, subtitle }: KpiCardProps) {
+function KpiCard({ icon: Icon, label, value, color, subtitle, warn }: KpiCardProps) {
   return (
     <div
       style={{
-        background: 'var(--glass-bg)',
+        background: warn ? `${color}08` : 'var(--glass-bg)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: 21,
-        padding: 21,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 13,
+        border: `1px solid ${warn ? `${color}30` : 'var(--glass-border)'}`,
+        borderRadius: 21, padding: 21,
+        display: 'flex', flexDirection: 'column', gap: 13,
       }}
     >
       <div
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: 13,
-          background: `${color}18`,
-          border: `1px solid ${color}30`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
+          width: 40, height: 40, borderRadius: 13,
+          background: `${color}18`, border: `1px solid ${color}30`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}
       >
         <Icon size={18} strokeWidth={1.75} color={color} />
       </div>
       <div>
-        <div
-          style={{
-            fontSize: 26,
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            lineHeight: 1.2,
-            marginBottom: 3,
-          }}
-        >
+        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, marginBottom: 3 }}>
           {value}
         </div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-          {label}
-        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</div>
         {subtitle && (
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>
-            {subtitle}
-          </div>
+          <div style={{ fontSize: 11, color: warn ? color : 'var(--text-muted)', marginTop: 3 }}>{subtitle}</div>
         )}
       </div>
     </div>
   )
 }
 
-function PlaceholderChart() {
-  const bars = [40, 65, 50, 80, 70, 90, 75, 85, 60, 95, 70, 88, 55, 78]
-  const max = Math.max(...bars)
+function StatRow({ label, value, color }: { label: string; value: string | number; color?: string }) {
   return (
-    <div
-      style={{
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: 21,
-        padding: 21,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          marginBottom: 4,
-        }}
-      >
-        Посещаемость за 14 дней
-      </div>
-      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 21 }}>
-        Данные будут доступны после подключения статистики
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          gap: 4,
-          height: 80,
-        }}
-      >
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            style={{
-              flex: 1,
-              height: `${Math.round((h / max) * 100)}%`,
-              background: i === bars.length - 1
-                ? '#02BDB6'
-                : 'rgba(2,189,182,0.25)',
-              borderRadius: '3px 3px 0 0',
-              minHeight: 4,
-              transition: 'height 0.3s',
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function QuickStat({
-  label,
-  value,
-  trend,
-}: {
-  label: string
-  value: string
-  trend?: 'up' | 'down'
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '13px 0',
-        borderBottom: '1px solid var(--glass-border)',
-      }}
-    >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
       <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-          {value}
-        </span>
-        {trend && (
-          <TrendingUp
-            size={12}
-            strokeWidth={2}
-            color={trend === 'up' ? '#10b981' : '#ef4444'}
-            style={{
-              transform: trend === 'down' ? 'scaleY(-1)' : undefined,
-            }}
-          />
-        )}
-      </div>
+      <span style={{ fontSize: 13, fontWeight: 600, color: color ?? 'var(--text-primary)' }}>{value}</span>
     </div>
   )
 }
 
 export default function DashboardPage() {
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null)
+  const [loading,  setLoading]  = useState(true)
+
   const today = new Date().toLocaleDateString('ru-RU', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
+    weekday: 'long', day: 'numeric', month: 'long',
   })
+
+  useEffect(() => {
+    analyticsApi.getOverview()
+      .then(setOverview)
+      .catch(() => { /* ignore — show placeholders */ })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const v = (n: number | undefined) => (loading ? '...' : (n ?? 0))
 
   return (
     <div>
-      {/* Page header */}
       <div style={{ marginBottom: 21 }}>
-        <h1
-          style={{
-            fontSize: 21,
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            margin: 0,
-            marginBottom: 4,
-          }}
-        >
-          Дашборд
-        </h1>
-        <p
-          style={{
-            fontSize: 13,
-            color: 'var(--text-secondary)',
-            margin: 0,
-            textTransform: 'capitalize',
-          }}
-        >
-          {today}
-        </p>
+        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Дашборд</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, textTransform: 'capitalize' }}>{today}</p>
       </div>
 
-      {/* KPI Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-          gap: 13,
-          marginBottom: 21,
-        }}
-      >
-        <KpiCard
-          icon={Users}
-          label="Клиентов"
-          value="—"
-          color="#02BDB6"
-          subtitle="Всего в базе"
-        />
-        <KpiCard
-          icon={CreditCard}
-          label="Абонементов"
-          value="—"
-          color="#263CD9"
-          subtitle="Активных"
-        />
-        <KpiCard
-          icon={Calendar}
-          label="Тренировок"
-          value="—"
-          color="#02BDB6"
-          subtitle="Сегодня по расписанию"
-        />
-        <KpiCard
-          icon={Activity}
-          label="Посещаемость"
-          value="—%"
-          color="#10b981"
-          subtitle="За последние 7 дней"
-        />
+      {/* KPI row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 13, marginBottom: 21 }}>
+        <KpiCard icon={Users}    label="Клиентов"          value={v(overview?.clients_total)}           color="#02BDB6" subtitle="Всего в базе" />
+        <KpiCard icon={CreditCard} label="Абонементов"    value={v(overview?.subscriptions_active)}    color="#263CD9" subtitle="Активных" />
+        <KpiCard icon={Calendar} label="Ячеек сегодня"    value={v(overview?.slots_today)}             color="#02BDB6" subtitle="По расписанию" />
+        <KpiCard icon={Activity} label="Посещений сегодня" value={v(overview?.visits_today)}            color="#10b981" subtitle="Забронировано" />
+        <KpiCard icon={Target}   label="Новых лидов"      value={v(overview?.leads_new)}               color="#f59e0b" subtitle="Не обработаны" warn={(overview?.leads_new ?? 0) > 0} />
+        <KpiCard icon={AlertTriangle} label="Истекают скоро" value={v(overview?.subscriptions_expiring_soon)} color="#ef4444" subtitle="В течение 7 дней" warn={(overview?.subscriptions_expiring_soon ?? 0) > 0} />
       </div>
 
-      {/* Charts + Quick stats */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto',
-          gap: 13,
-          alignItems: 'start',
-        }}
-      >
-        <PlaceholderChart />
+      {/* Two-column layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 13, alignItems: 'start' }}>
+        {/* Left: Subscriptions chart placeholder */}
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Абонементы</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 21 }}>Статус активных абонементов</div>
+          <div style={{ display: 'flex', gap: 21 }}>
+            {[
+              { label: 'Активных',  value: overview?.subscriptions_active ?? 0,         color: '#02BDB6' },
+              { label: 'Истекает 7д', value: overview?.subscriptions_expiring_soon ?? 0, color: '#ef4444' },
+              { label: 'Истекает 30д', value: overview?.subscriptions_expiring_30d ?? 0, color: '#f59e0b' },
+            ].map(item => (
+              <div key={item.label} style={{ flex: 1, textAlign: 'center', padding: '13px 0', background: `${item.color}08`, border: `1px solid ${item.color}20`, borderRadius: 13 }}>
+                <div style={{ fontSize: 26, fontWeight: 700, color: item.color, marginBottom: 4 }}>{loading ? '...' : item.value}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.label}</div>
+              </div>
+            ))}
+          </div>
+          {/* Mini bar chart placeholder */}
+          <div style={{ marginTop: 21 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>Посещений за 7 дней</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60 }}>
+              {[40, 55, 38, 70, 62, 80, overview?.visits_today ?? 45].map((h, i) => (
+                <div key={i} style={{ flex: 1, height: `${Math.round((h / 80) * 100)}%`, background: i === 6 ? '#02BDB6' : 'rgba(2,189,182,0.25)', borderRadius: '3px 3px 0 0', minHeight: 4 }} />
+              ))}
+            </div>
+          </div>
+        </div>
 
-        {/* Quick stats panel */}
-        <div
-          style={{
-            background: 'var(--glass-bg)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: 21,
-            padding: 21,
-            minWidth: 240,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: 8,
-            }}
-          >
-            Быстрая статистика
-          </div>
-          <QuickStat label="Новых клиентов сегодня" value="—" />
-          <QuickStat label="Записей на сегодня"      value="—" />
-          <QuickStat label="Истекает абонементов"    value="—" />
-          <QuickStat label="Свободных мест сегодня"  value="—" />
-          <div
-            style={{
-              paddingTop: 13,
-              fontSize: 11,
-              color: 'var(--text-muted)',
-              textAlign: 'center',
-            }}
-          >
-            Аналитика появится в v1.1
-          </div>
+        {/* Right: Quick stats */}
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Быстрая статистика</div>
+          <StatRow label="Клиентов всего"     value={v(overview?.clients_total)} />
+          <StatRow label="Активных смен"      value={v(overview?.active_shifts)}  color={overview?.active_shifts ? '#10b981' : undefined} />
+          <StatRow label="Лидов в работе"     value={v(overview?.leads_new)}      color={overview?.leads_new ? '#f59e0b' : undefined} />
+          <StatRow label="Мало на складе"     value={v(overview?.low_stock_items)} color={overview?.low_stock_items ? '#ef4444' : undefined} />
+          <StatRow label="Абонем. 30 дней"    value={v(overview?.subscriptions_expiring_30d)} />
+          {overview?.low_stock_items ? (
+            <div style={{ marginTop: 13, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Package size={13} color="#ef4444" />
+              <span style={{ fontSize: 12, color: '#ef4444' }}>{overview.low_stock_items} позиций на складе заканчивается</span>
+            </div>
+          ) : null}
+          {overview?.subscriptions_expiring_soon ? (
+            <div style={{ marginTop: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TrendingUp size={13} color="#ef4444" />
+              <span style={{ fontSize: 12, color: '#ef4444' }}>{overview.subscriptions_expiring_soon} абонемента истекают за 7 дней</span>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

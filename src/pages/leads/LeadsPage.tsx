@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus, X, MessageCircle, Phone, User, AlertCircle,
   ChevronRight, Trash2, Edit2, Check, ChevronLeft,
@@ -152,6 +153,7 @@ interface LeadModalProps {
 }
 
 function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalProps) {
+  const navigate = useNavigate()
   const [detail, setDetail]     = useState<Lead>(lead)
   const [activeTab, setActiveTab] = useState<'info' | 'comments'>('info')
   const [comments, setComments] = useState<LeadComment[]>(lead.lead_comments ?? [])
@@ -228,7 +230,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
       <CompleteClientModal
         clientId={completeClientId}
         onClose={() => setCompleteClientId(null)}
-        onCompleted={() => setCompleteClientId(null)}
+        onCompleted={() => { setCompleteClientId(null); navigate('/clients') }}
       />
     )}
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>

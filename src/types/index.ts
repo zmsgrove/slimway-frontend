@@ -215,6 +215,93 @@ export interface AuditLogEntry {
   created_at: string
 }
 
+// ── v1.5.0 ───────────────────────────────────────────────────
+export type TaskStatus   = 'new' | 'today' | 'week' | 'long' | 'done'
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
+
+export interface TaskChecklistItem {
+  id: string
+  task_id: string
+  text: string
+  is_done: boolean
+  created_at: string
+}
+
+export interface TaskComment {
+  id: string
+  task_id: string
+  author_id: string | null
+  text: string
+  created_at: string
+}
+
+export interface Task {
+  id: string
+  branch_id: string
+  title: string
+  description: string | null
+  priority: TaskPriority
+  status: TaskStatus
+  assigned_to: string | null
+  created_by: string | null
+  deadline: string | null
+  created_at: string
+  task_checklist_items?: TaskChecklistItem[]
+  task_comments?: TaskComment[]
+}
+
+export type WarehouseCategory = 'merch' | 'nutrition' | 'equipment' | 'other'
+export type MovementType = 'in' | 'out'
+
+export interface WarehouseItem {
+  id: string
+  branch_id: string
+  name: string
+  category: WarehouseCategory
+  quantity: number
+  min_quantity: number | null
+  price: number | null
+  low_stock?: boolean
+  created_at: string
+}
+
+export interface WarehouseMovement {
+  id: string
+  item_id: string
+  branch_id: string
+  type: MovementType
+  quantity: number
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export interface Department {
+  id: string
+  branch_id: string
+  name: string
+  created_at: string
+}
+
+export interface Position {
+  id: string
+  branch_id: string
+  name: string
+  created_at: string
+}
+
+export interface AnalyticsOverview {
+  clients_total: number
+  subscriptions_active: number
+  subscriptions_expiring_soon: number
+  subscriptions_expiring_30d: number
+  slots_today: number
+  visits_today: number
+  leads_new: number
+  active_shifts: number
+  low_stock_items: number
+}
+
 // ── v1.2.1 ───────────────────────────────────────────────────
 export interface SubscriptionTemplate {
   id: string

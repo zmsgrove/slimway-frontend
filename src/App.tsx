@@ -16,6 +16,7 @@ import ChatPage from './pages/chat/ChatPage'
 import EmployeesPage from './pages/employees/EmployeesPage'
 import ScheduleWorkPage from './pages/schedule-work/SchedulePage'
 import SalePage from './pages/sale/SalePage'
+import WarehousePage from './pages/warehouse/WarehousePage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +63,7 @@ function InnerApp() {
             <Route path="employees"     element={<EmployeesPage />} />
             <Route path="schedule-work" element={<ScheduleWorkPage />} />
             <Route path="sale"          element={<SalePage />} />
+            <Route path="warehouse"     element={<WarehousePage />} />
             <Route path="settings"      element={<SettingsPage />} />
           </Route>
           <Route

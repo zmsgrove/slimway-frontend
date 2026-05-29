@@ -15,6 +15,7 @@ import {
   UserCheck,
   CalendarClock,
   ChevronDown,
+  Package,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
@@ -32,6 +33,7 @@ const navItems = [
   { to: '/chat',          label: 'Чат',         icon: MessageSquare },
   { to: '/employees',     label: 'Сотрудники',  icon: UserCheck },
   { to: '/schedule-work', label: 'График',      icon: CalendarClock },
+  { to: '/warehouse',    label: 'Склад',       icon: Package },
 ]
 
 const roleLabel: Record<string, string> = {

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { User, Palette, Sun, Moon, Cpu, Plus, Trash2, AlertCircle, Building2 } from 'lucide-react'
+import { User, Palette, Sun, Moon, Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
 import type { Theme } from '../../lib/theme'
-import type { Device, DeviceType, DeviceGroup, DeviceStatus } from '../../types'
+import type { Device, DeviceType, DeviceGroup, DeviceStatus, Department, Position } from '../../types'
 import { devicesApi } from '../../api/devices.api'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
+import { departmentsApi, positionsApi } from '../../api/departments.api'
 import { VERSION } from '../../version'
 
 // ─── shared components ─────────────────────────────────────────────────────
@@ -340,6 +341,158 @@ function BranchesSection() {
   )
 }
 
+// ─── Departments section ───────────────────────────────────────────────────
+
+function DepartmentsSection() {
+  const [items,    setItems]    = useState<Department[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [saving,   setSaving]   = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [name,     setName]     = useState('')
+
+  useEffect(() => {
+    departmentsApi.getAll().then(setItems).catch(() => setError('Ошибка загрузки')).finally(() => setLoading(false))
+  }, [])
+
+  const handleAdd = async () => {
+    if (!name.trim()) { setError('Введите название'); return }
+    setSaving(true); setError(null)
+    try {
+      const created = await departmentsApi.create(name.trim())
+      setItems(prev => [...prev, created])
+      setName(''); setShowForm(false)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Ошибка')
+    } finally { setSaving(false) }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Удалить отдел?')) return
+    try {
+      await departmentsApi.delete(id)
+      setItems(prev => prev.filter(i => i.id !== id))
+    } catch { /* ignore */ }
+  }
+
+  return (
+    <Section title="Отделы" icon={<Briefcase size={15} strokeWidth={1.75} color="#02BDB6" />}>
+      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
+        <>
+          {items.map(dep => (
+            <div key={dep.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{dep.name}</span>
+              <button onClick={() => void handleDelete(dep.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <Trash2 size={12} strokeWidth={1.75} />
+              </button>
+            </div>
+          ))}
+          {items.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Отделов нет</div>}
+          {showForm && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <input style={inputStyle} placeholder="Название отдела" value={name} onChange={e => setName(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') void handleAdd() }} />
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            {showForm ? (
+              <>
+                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                  {saving ? '...' : 'Добавить'}
+                </button>
+                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                  Отмена
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                <Plus size={14} strokeWidth={2} />Добавить отдел
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </Section>
+  )
+}
+
+// ─── Positions section ─────────────────────────────────────────────────────
+
+function PositionsSection() {
+  const [items,    setItems]    = useState<Position[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [saving,   setSaving]   = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [name,     setName]     = useState('')
+
+  useEffect(() => {
+    positionsApi.getAll().then(setItems).catch(() => setError('Ошибка загрузки')).finally(() => setLoading(false))
+  }, [])
+
+  const handleAdd = async () => {
+    if (!name.trim()) { setError('Введите название'); return }
+    setSaving(true); setError(null)
+    try {
+      const created = await positionsApi.create(name.trim())
+      setItems(prev => [...prev, created])
+      setName(''); setShowForm(false)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Ошибка')
+    } finally { setSaving(false) }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Удалить должность?')) return
+    try {
+      await positionsApi.delete(id)
+      setItems(prev => prev.filter(i => i.id !== id))
+    } catch { /* ignore */ }
+  }
+
+  return (
+    <Section title="Должности" icon={<LayoutGrid size={15} strokeWidth={1.75} color="#02BDB6" />}>
+      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
+        <>
+          {items.map(pos => (
+            <div key={pos.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{pos.name}</span>
+              <button onClick={() => void handleDelete(pos.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <Trash2 size={12} strokeWidth={1.75} />
+              </button>
+            </div>
+          ))}
+          {items.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Должностей нет</div>}
+          {showForm && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <input style={inputStyle} placeholder="Название должности" value={name} onChange={e => setName(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') void handleAdd() }} />
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            {showForm ? (
+              <>
+                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                  {saving ? '...' : 'Добавить'}
+                </button>
+                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                  Отмена
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                <Plus size={14} strokeWidth={2} />Добавить должность
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </Section>
+  )
+}
+
 // ─── Main page ──────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -398,7 +551,18 @@ export default function SettingsPage() {
 
       <DevicesSection />
 
+      <DepartmentsSection />
+      <PositionsSection />
+
       {isDeveloperOrOwner && <BranchesSection />}
+
+      {/* Custom themes placeholder */}
+      <Section title="Кастомные темы" icon={<Palette size={15} strokeWidth={1.75} color="#263CD9" />}>
+        <div style={{ textAlign: 'center', padding: '21px 0' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Кастомные темы — скоро</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Создание и применение собственных цветовых схем появится в будущих версиях</div>
+        </div>
+      </Section>
 
       <div style={{ padding: '13px 21px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Slimway CRM</span>

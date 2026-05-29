@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ShoppingCart, Search, X, AlertCircle, Check, Calendar, ChevronDown, Plus, User } from 'lucide-react'
+import { ShoppingCart, Search, X, AlertCircle, Check, Calendar, ChevronDown, Plus, User, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { subscriptionTemplatesApi } from '../../api/subscription-templates.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { clientsApi } from '../../api/clients.api'
-import type { SubscriptionTemplate, Client, DeviceType } from '../../types'
+import { warehouseApi } from '../../api/warehouse.api'
+import type { SubscriptionTemplate, Client, DeviceType, WarehouseItem } from '../../types'
+
+type SaleCategory = 'subscription' | 'merch' | 'nutrition'
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -196,8 +199,160 @@ function TemplateCard({ tpl, selected, onClick }: { tpl: SubscriptionTemplate; s
 
 // ─── SalePage ─────────────────────────────────────────────────────────────────
 
+// ─── CategoryScreen ───────────────────────────────────────────────────────────
+
+function CategoryScreen({ onSelect }: { onSelect: (cat: SaleCategory) => void }) {
+  const categories: { id: SaleCategory; emoji: string; label: string; desc: string; color: string }[] = [
+    { id: 'subscription', emoji: '💳', label: 'Абонемент',  desc: 'Продажа абонемента клиенту', color: '#02BDB6' },
+    { id: 'merch',        emoji: '👕', label: 'Мерч',       desc: 'Одежда, аксессуары, сувениры',  color: '#8b5cf6' },
+    { id: 'nutrition',    emoji: '🥗', label: 'Питание',    desc: 'Протеины, батончики, напитки',  color: '#10b981' },
+  ]
+  return (
+    <div style={{ maxWidth: 520 }}>
+      <div style={{ marginBottom: 21 }}>
+        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Продажа</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Выберите категорию продажи</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => onSelect(cat.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 16, padding: '18px 21px',
+              background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid var(--glass-border)', borderRadius: 21, cursor: 'pointer',
+              textAlign: 'left', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = cat.color; (e.currentTarget as HTMLElement).style.background = `${cat.color}08` }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--glass-border)'; (e.currentTarget as HTMLElement).style.background = 'var(--glass-bg)' }}
+          >
+            <div style={{ width: 52, height: 52, borderRadius: 13, background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
+              {cat.emoji}
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>{cat.label}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{cat.desc}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── MerchSalePage ────────────────────────────────────────────────────────────
+
+function MerchSalePage({ category, onBack }: { category: 'merch' | 'nutrition'; onBack: () => void }) {
+  const [items,    setItems]    = useState<WarehouseItem[]>([])
+  const [selected, setSelected] = useState<WarehouseItem | null>(null)
+  const [qty,      setQty]      = useState('1')
+  const [client,   setClient]   = useState<Client | null>(null)
+  const [creatName,setCreatName]= useState<string | null>(null)
+  const [saving,   setSaving]   = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
+  const [sold,     setSold]     = useState(false)
+
+  useEffect(() => {
+    warehouseApi.getAll()
+      .then(data => setItems(data.filter(i => i.category === category && i.quantity > 0)))
+      .catch(() => { /* ignore */ })
+  }, [category])
+
+  const handleSell = async () => {
+    if (!selected) { setError('Выберите товар'); return }
+    const q = parseInt(qty, 10)
+    if (!q || q <= 0) { setError('Укажите количество'); return }
+    if (q > selected.quantity) { setError(`Недостаточно на складе (${selected.quantity} шт.)`); return }
+    setSaving(true); setError(null)
+    try {
+      await warehouseApi.addMovement(selected.id, {
+        type: 'out', quantity: q,
+        notes: client ? `Продажа: ${client.full_name}` : 'Продажа',
+      })
+      setSold(true)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Ошибка при оформлении')
+    } finally { setSaving(false) }
+  }
+
+  if (sold) {
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 34 }}>
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 21px' }}>
+            <Check size={28} strokeWidth={2.5} color="#02BDB6" />
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Продажа оформлена!</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 34 }}>
+            {selected?.name} × {qty} шт. {client ? `— ${client.full_name}` : ''}
+          </div>
+          <button onClick={onBack} style={{ height: 40, width: '100%', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            Новая продажа
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const catLabel = category === 'merch' ? 'Мерч' : 'Питание'
+  const inputStyle: React.CSSProperties = { height: 36, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box' }
+
+  return (
+    <div style={{ maxWidth: 560 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21 }}>
+        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', padding: 0 }}>
+          <ArrowLeft size={16} />Назад
+        </button>
+        <div>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{catLabel}</h1>
+        </div>
+      </div>
+      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21, marginBottom: 13 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Товар</div>
+        {items.length === 0 ? (
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Нет доступных товаров на складе</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {items.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setSelected(item)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: selected?.id === item.id ? 'rgba(2,189,182,0.08)' : 'var(--bg-elevated)', border: `1px solid ${selected?.id === item.id ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 10, cursor: 'pointer', textAlign: 'left' }}
+              >
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{item.name}</div>
+                  {item.price && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{new Intl.NumberFormat('ru-KZ').format(item.price)} ₸</div>}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.quantity} шт.</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {selected && (
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21, marginBottom: 13 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Количество</div>
+          <input type="number" min={1} max={selected.quantity} style={{ ...inputStyle, width: 120 }} value={qty} onChange={e => setQty(e.target.value)} />
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={onBack} style={{ height: 44, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        <button onClick={() => void handleSell()} disabled={saving || !selected} style={{ flex: 1, height: 44, background: selected ? '#02BDB6' : 'var(--bg-elevated)', border: 'none', borderRadius: 8, color: selected ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: selected && !saving ? 'pointer' : 'not-allowed', opacity: saving ? 0.7 : 1 }}>
+          {saving ? 'Оформление...' : 'Оформить продажу'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── SalePage ─────────────────────────────────────────────────────────────────
+
 export default function SalePage() {
   const navigate = useNavigate()
+  const [category, setCategory] = useState<SaleCategory | null>(null)
 
   const [templates,     setTemplates]     = useState<SubscriptionTemplate[]>([])
   const [loadingTpls,   setLoadingTpls]   = useState(true)
@@ -261,9 +416,19 @@ export default function SalePage() {
     setCreatingName(null)
     setSaleError(null)
     setDateStart(new Date().toISOString().slice(0, 10))
+    setCategory(null)
   }
 
   const visibleTpls = showAllTpls ? templates : templates.slice(0, 6)
+
+  // ── Category selection ───────────────────────────────────────────────────────
+  if (category === null) {
+    return <CategoryScreen onSelect={setCategory} />
+  }
+
+  if (category === 'merch' || category === 'nutrition') {
+    return <MerchSalePage category={category} onBack={() => setCategory(null)} />
+  }
 
   // ── Success state ────────────────────────────────────────────────────────────
   if (soldSub) {
@@ -303,7 +468,10 @@ export default function SalePage() {
   return (
     <div style={{ maxWidth: 640 }}>
       <div style={{ marginBottom: 21 }}>
-        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Продажа</h1>
+        <button onClick={() => setCategory(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', padding: 0, marginBottom: 8 }}>
+          <ArrowLeft size={14} />Назад к выбору категории
+        </button>
+        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Абонемент</h1>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Оформление абонемента клиенту</p>
       </div>
 
