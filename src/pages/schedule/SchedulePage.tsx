@@ -924,9 +924,12 @@ export default function SchedulePage() {
     setLoading(true); setError(null)
     try {
       const [devs, slotList] = await Promise.all([devicesApi.getAll(), scheduleSlotsApi.getByDate(d)])
+      console.log('[SchedulePage] devices:', devs)
+      console.log('[SchedulePage] slots:', slotList)
       setDevices(devs.filter(dev => dev.status !== 'disabled'))
       setSlots(slotList)
-    } catch {
+    } catch (err) {
+      console.error('[SchedulePage] load error:', err)
       setError('Не удалось загрузить расписание')
     } finally {
       setLoading(false)
@@ -1071,13 +1074,13 @@ export default function SchedulePage() {
 
       {loading ? (
         <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
-      ) : devices.length === 0 ? (
+      ) : !error && devices.length === 0 ? (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <Calendar size={28} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: 13 }} />
           <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>Нет активных тренажёров</div>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>Добавьте оборудование в Настройках</div>
         </div>
-      ) : (
+      ) : !error ? (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', userSelect: 'none' }}>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: gridMinWidth, position: 'relative' }}>
@@ -1182,7 +1185,7 @@ export default function SchedulePage() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Bulk selection hint */}
       {dragSelection.size > 0 && !showBulkModal && (

@@ -637,7 +637,7 @@ export default function ScheduleWorkPage() {
             <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <colgroup>
                 <col style={{ width: 160, minWidth: 160 }} />
-                {twoWeekDays.map((_, i) => <col key={i} style={{ width: 55, minWidth: 55 }} />)}
+                {twoWeekDays.map((_, i) => <col key={i} style={{ width: 64, minWidth: 64 }} />)}
               </colgroup>
               <thead>
                 <tr>
@@ -650,15 +650,15 @@ export default function ScheduleWorkPage() {
                     const wknd    = isWeekend(d)
                     const wIdx    = weekdayIndex(d)
                     return (
-                      <th key={iso} style={{ padding: '5px 2px', textAlign: 'center', borderBottom: '1px solid var(--glass-border)', borderLeft: '1px solid var(--glass-border)', background: isToday ? 'rgba(2,189,182,0.10)' : wknd ? 'rgba(255,255,255,0.015)' : 'transparent' }}>
-                        <div style={{ fontSize: 10, fontWeight: 500, color: isToday ? '#02BDB6' : wknd ? 'rgba(255,255,255,0.2)' : 'var(--text-muted)', lineHeight: 1.3 }}>
+                      <th key={iso} style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid var(--glass-border)', borderLeft: '1px solid var(--glass-border)', background: isToday ? 'rgba(2,189,182,0.10)' : wknd ? 'rgba(255,255,255,0.015)' : 'transparent', overflow: 'hidden' }}>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: isToday ? '#02BDB6' : wknd ? 'rgba(255,255,255,0.2)' : 'var(--text-muted)', lineHeight: 1.3, whiteSpace: 'nowrap' }}>
                           {WEEKDAYS_SHORT[wIdx]}
                         </div>
                         <div style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? '#02BDB6' : wknd ? 'var(--text-muted)' : 'var(--text-primary)', lineHeight: 1.3 }}>
                           {d.getDate()}
                         </div>
-                        <div style={{ fontSize: 9, color: isToday ? 'rgba(2,189,182,0.7)' : 'var(--text-muted)', lineHeight: 1.2, opacity: 0.8 }}>
-                          {d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '')}
+                        <div style={{ fontSize: 9, color: isToday ? 'rgba(2,189,182,0.7)' : 'var(--text-muted)', lineHeight: 1.2, opacity: 0.8, whiteSpace: 'nowrap' }}>
+                          {d.toLocaleDateString('ru-RU', { month: 'short' }).replace(/\./g, '')}
                         </div>
                       </th>
                     )
