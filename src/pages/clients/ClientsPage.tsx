@@ -312,6 +312,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
   )
 
   return (
+    <>
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
       <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 520, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
@@ -514,6 +515,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
     {renewalsTarget && (
       <RenewalsModal sub={renewalsTarget} onClose={() => setRenewalsTarget(null)} />
     )}
+    </>
   )
 }
 

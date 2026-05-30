@@ -798,7 +798,7 @@ export default function WarehousePage() {
             </tbody>
           </table>
         </div>
-      )}
+      ) : null}
 
       {showBulk && <BulkIntakeModal onClose={() => setShowBulk(false)} onDone={() => void load()} />}
 
