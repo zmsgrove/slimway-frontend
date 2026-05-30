@@ -428,15 +428,30 @@ export default function ScheduleWorkPage() {
   const [locLoading, setLocLoading]     = useState<string | null>(null)
   const notifTimer = useRef<ReturnType<typeof setTimeout> | undefined>()
   const [notification, setNotification] = useState<string | null>(null)
+  const [visibleDays, setVisibleDays]   = useState(14)
+  const gridContainerRef = useRef<HTMLDivElement>(null)
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin'
 
-  const twoWeekDays = Array.from({ length: 14 }, (_, i) => addDays(monday, i))
+  const twoWeekDays = Array.from({ length: visibleDays }, (_, i) => addDays(monday, i))
   const weekStart   = toISO(monday)
-  const weekEnd     = toISO(addDays(monday, 13))
+  const weekEnd     = toISO(addDays(monday, visibleDays - 1))
   const todayISO    = toISO(new Date())
 
   useEffect(() => () => clearTimeout(notifTimer.current), [])
+
+  useEffect(() => {
+    const el = gridContainerRef.current
+    if (!el) return
+    const calc = () => {
+      const days = Math.min(60, Math.max(7, Math.floor(el.clientWidth / 52)))
+      setVisibleDays(days)
+    }
+    calc()
+    const ro = new ResizeObserver(calc)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const showNotif = (msg: string) => {
     setNotification(msg)
@@ -609,14 +624,14 @@ export default function ScheduleWorkPage() {
 
       {/* Period navigation */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: '8px 13px', backdropFilter: 'blur(12px)' }}>
-        <button onClick={() => setMonday(m => addDays(m, -14))}
+        <button onClick={() => setMonday(m => addDays(m, -visibleDays))}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
           <ChevronLeft size={14} strokeWidth={2} />
         </button>
         <span style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-          {fmtRange(monday, addDays(monday, 13))}
+          {fmtRange(monday, addDays(monday, visibleDays - 1))}
         </span>
-        <button onClick={() => setMonday(m => addDays(m, 14))}
+        <button onClick={() => setMonday(m => addDays(m, visibleDays))}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
           <ChevronRight size={14} strokeWidth={2} />
         </button>
@@ -633,7 +648,7 @@ export default function ScheduleWorkPage() {
         </div>
       ) : (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+          <div ref={gridContainerRef} style={{ overflowX: 'auto' }}>
             <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <colgroup>
                 <col style={{ width: 160, minWidth: 160 }} />
