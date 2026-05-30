@@ -678,9 +678,18 @@ const ACTION_LABELS: Record<string, string> = {
 }
 
 function nextPermState(current: PermissionState, canLock: boolean): PermissionState {
-  if (current === 'allow') return 'deny'
-  if (current === 'deny')  return canLock ? 'locked' : 'allow'
-  return 'allow' // locked → allow
+  if (current === 'deny')   return 'allow'
+  if (current === 'allow')  return canLock ? 'locked' : 'deny'
+  return 'deny' // locked → deny, только developer сюда доходит
+}
+
+const ROLE_RANK: Partial<Record<string, number>> = {
+  developer: 0, owner: 1, franchisee: 2, admin: 3, staff: 4, technical: 5,
+}
+
+function isSetByHigherRole(override: PermissionOverride | undefined, myRole: string): boolean {
+  if (!override?.set_by || myRole === 'developer') return false
+  return (ROLE_RANK[override.set_by] ?? 99) < (ROLE_RANK[myRole] ?? 99)
 }
 
 function PermissionsTab() {
@@ -692,6 +701,9 @@ function PermissionsTab() {
     if (!canEditPermFn(perm.role as PermRole, targetRole)) return
     const current = getCellState(targetRole, resource, action, overrides)
     if (current === 'locked' && !perm.canSetLocked) return
+
+    const existingOverride = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
+    if (isSetByHigherRole(existingOverride, perm.role as string)) return
 
     const next = nextPermState(current, perm.canSetLocked)
     const key = `${targetRole}:${resource}:${action}`
@@ -750,7 +762,9 @@ function PermissionsTab() {
                   {PERM_ROLES.map(targetRole => {
                     const state = getCellState(targetRole, resource, action, overrides)
                     const canEdit = canEditPermFn(perm.role as PermRole, targetRole)
-                    const clickable = canEdit && (state !== 'locked' || perm.canSetLocked)
+                    const cellOverride = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
+                    const frozenByHigher = isSetByHigherRole(cellOverride, perm.role as string)
+                    const clickable = canEdit && (state !== 'locked' || perm.canSetLocked) && !frozenByHigher
                     const isSaving = saving === `${targetRole}:${resource}:${action}`
 
                     return (
@@ -758,16 +772,20 @@ function PermissionsTab() {
                         <button
                           onClick={() => void handleClick(targetRole, resource, action)}
                           disabled={!clickable || isSaving}
-                          title={!clickable ? (state === 'locked' ? 'Заблокировано' : 'Нет прав на изменение') : undefined}
+                          title={
+                            frozenByHigher ? 'Установлено вышестоящей ролью' :
+                            !clickable ? (state === 'locked' ? 'Заблокировано' : 'Нет прав на изменение') :
+                            undefined
+                          }
                           style={{
                             width: 30, height: 30, borderRadius: 7, border: 'none',
                             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: clickable && !isSaving ? 'pointer' : 'default',
+                            cursor: clickable && !isSaving ? 'pointer' : 'not-allowed',
                             background: state === 'allow'  ? 'rgba(2,189,182,0.12)'  :
                                         state === 'locked' ? 'rgba(239,68,68,0.10)'  : 'transparent',
                             color:      state === 'allow'  ? '#02BDB6' :
                                         state === 'locked' ? '#ef4444' : 'var(--text-muted)',
-                            opacity: isSaving ? 0.4 : (!canEdit ? 0.6 : 1),
+                            opacity: isSaving ? 0.4 : (!canEdit || frozenByHigher ? 0.4 : 1),
                             fontSize: 15, fontWeight: 700,
                             transition: 'all 0.1s',
                           }}
