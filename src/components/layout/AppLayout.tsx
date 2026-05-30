@@ -17,8 +17,11 @@ import {
   ChevronDown,
   Package,
   Wrench,
+  Shield,
+  X,
 } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
+import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
 import { usePermissions } from '../../hooks/usePermissions'
@@ -207,6 +210,7 @@ function AppLayoutInner() {
   const location = useLocation()
   const [badges, setBadges] = useState<Badges>({ leads_new: 0, tasks_overdue: 0, low_stock_items: 0 })
   const badgeTimer = useRef<ReturnType<typeof setInterval>>()
+  const [showMfaBanner, setShowMfaBanner] = useState(false)
 
   // Редирект для technical — только /schedule-work
   useEffect(() => {
@@ -214,6 +218,15 @@ function AppLayoutInner() {
       navigate('/schedule-work', { replace: true })
     }
   }, [perm.isTechnical, location.pathname, navigate])
+
+  // MFA баннер для developer/owner
+  useEffect(() => {
+    if (!user?.role || !['developer', 'owner'].includes(user.role)) return
+    if (localStorage.getItem('mfa_banner_dismissed')) return
+    api.get<{ enabled: boolean }>('/auth/mfa/status')
+      .then(({ data }) => { if (!data.enabled) setShowMfaBanner(true) })
+      .catch(() => { /* игнорируем */ })
+  }, [user?.role])
 
   useEffect(() => {
     const load = () => {
@@ -354,8 +367,44 @@ function AppLayoutInner() {
           </div>
         </header>
 
+        {/* MFA баннер */}
+        {showMfaBanner && (
+          <div style={{
+            position: 'fixed', top: 56, left: 220, right: 0, zIndex: 9,
+            background: 'linear-gradient(90deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.06) 100%)',
+            borderBottom: '1px solid rgba(245,158,11,0.3)',
+            padding: '10px 21px', display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <Shield size={16} color="#f59e0b" strokeWidth={1.75} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: 'var(--text-primary)', flex: 1 }}>
+              Рекомендуем включить двухфакторную аутентификацию для защиты аккаунта.
+            </span>
+            <button
+              onClick={() => { navigate('/settings#security') }}
+              style={{
+                padding: '4px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                background: 'rgba(245,158,11,0.2)', border: '1px solid rgba(245,158,11,0.4)',
+                color: '#f59e0b', cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              Настроить сейчас
+            </button>
+            <button
+              onClick={() => { localStorage.setItem('mfa_banner_dismissed', '1'); setShowMfaBanner(false) }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 24, height: 24, borderRadius: 6, border: 'none',
+                background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)', flexShrink: 0,
+              }}
+              title="Скрыть"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* Page content */}
-        <main style={{ flex: 1, padding: 21, paddingTop: 'calc(56px + 21px)' }}>
+        <main style={{ flex: 1, padding: 21, paddingTop: showMfaBanner ? 'calc(56px + 41px + 21px)' : 'calc(56px + 21px)' }}>
           <Outlet />
         </main>
       </div>

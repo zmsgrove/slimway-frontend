@@ -26,6 +26,10 @@ api.interceptors.response.use(
       supabase.auth.signOut()
       window.location.href = '/login'
     }
+    if (error.response?.status === 403 && error.response?.data?.code === 'MFA_REQUIRED') {
+      // Не разлогиниваем — сохраняем aal1 сессию, чтобы LoginPage показал шаг MFA
+      window.location.href = '/login'
+    }
     return Promise.reject(error)
   }
 )

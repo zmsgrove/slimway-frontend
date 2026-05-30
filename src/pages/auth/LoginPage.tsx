@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { VERSION } from '../../version'
@@ -74,6 +74,42 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false)
   const [branches, setBranches] = useState<BranchRaw[] | null>(null)
 
+  // 2FA state
+  const [mfaStep,    setMfaStep]    = useState(false)
+  const [mfaCode,    setMfaCode]    = useState('')
+  const [mfaLoading, setMfaLoading] = useState(false)
+  const [mfaError,   setMfaError]   = useState('')
+
+  // On mount: check if we have an aal1 session that needs MFA
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return
+      const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (assurance?.nextLevel === 'aal2' && assurance.currentLevel !== 'aal2') {
+        setMfaStep(true)
+      } else if (assurance?.currentLevel === 'aal2') {
+        navigate('/dashboard')
+      }
+    })
+  }, [navigate])
+
+  const navigateAfterLogin = useCallback(async (role: string, branchId: string | null) => {
+    localStorage.removeItem('activeBranchId')
+    if (role === 'developer' || role === 'owner') {
+      try {
+        const { data: branchList } = await api.get('/branches')
+        if (!branchList || branchList.length === 0) { navigate('/dashboard'); return }
+        if (branchList.length === 1) { localStorage.setItem('activeBranchId', branchList[0].id); navigate('/dashboard'); return }
+        setBranches(branchList)
+      } catch {
+        navigate('/dashboard')
+      }
+      return
+    }
+    if (branchId) localStorage.setItem('activeBranchId', branchId)
+    navigate('/dashboard')
+  }, [navigate])
+
   const handleLogin = async () => {
     if (!email || !password) return
     setLoading(true)
@@ -86,38 +122,54 @@ export default function LoginPage() {
       return
     }
 
-    const meta = authData.user.app_metadata as { role?: string; branch_id?: string }
-    const role = meta.role ?? 'admin'
+    // Check if MFA is required
+    const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (assurance?.nextLevel === 'aal2' && assurance.currentLevel !== 'aal2') {
+      setMfaStep(true)
+      setLoading(false)
+      return
+    }
+
+    const meta     = authData.user.app_metadata as { role?: string; branch_id?: string }
+    const role     = meta.role ?? 'admin'
     const branchId = meta.branch_id ?? null
+    setLoading(false)
+    await navigateAfterLogin(role, branchId)
+  }
 
-    localStorage.removeItem('activeBranchId')
+  const handleMfaVerify = async () => {
+    if (!mfaCode.trim()) return
+    setMfaLoading(true)
+    setMfaError('')
 
-    if (role === 'developer' || role === 'owner') {
-      try {
-        const { data: branchList } = await api.get('/branches')
-        if (!branchList || branchList.length === 0) {
-          navigate('/dashboard')
-          return
-        }
-        if (branchList.length === 1) {
-          localStorage.setItem('activeBranchId', branchList[0].id)
-          navigate('/dashboard')
-          return
-        }
-        setBranches(branchList)
-        setLoading(false)
-        return
-      } catch {
-        navigate('/dashboard')
-        return
-      }
+    try {
+      const { data: factors, error: factorsErr } = await supabase.auth.mfa.listFactors()
+      if (factorsErr || !factors?.totp?.length) throw new Error('No TOTP factor')
+
+      const totpFactor = factors.totp[0]
+      const { data: challenge, error: chalErr } = await supabase.auth.mfa.challenge({ factorId: totpFactor.id })
+      if (chalErr || !challenge) throw new Error('Challenge failed')
+
+      const { error: verErr } = await supabase.auth.mfa.verify({
+        factorId:    totpFactor.id,
+        challengeId: challenge.id,
+        code:        mfaCode.trim(),
+      })
+      if (verErr) throw verErr
+
+      // Session is now aal2 — proceed
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('No session after MFA')
+
+      const meta     = session.user.app_metadata as { role?: string; branch_id?: string }
+      const role     = meta.role ?? 'admin'
+      const branchId = meta.branch_id ?? null
+      await navigateAfterLogin(role, branchId)
+    } catch {
+      setMfaError('Неверный код. Проверьте приложение Google Authenticator.')
+    } finally {
+      setMfaLoading(false)
     }
-
-    // Other roles — set their branch_id from app_metadata
-    if (branchId) {
-      localStorage.setItem('activeBranchId', branchId)
-    }
-    navigate('/dashboard')
   }
 
   const handleBranchSelect = (id: string) => {
@@ -136,7 +188,6 @@ export default function LoginPage() {
         backgroundColor: '#09090B',
       }}
     >
-      {/* Branch selector shown after login for multi-branch users */}
       {branches && <BranchSelectModal branches={branches} onSelect={handleBranchSelect} />}
 
       {/* Left — login form */}
@@ -153,32 +204,92 @@ export default function LoginPage() {
 
           {/* Form card */}
           <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 21, padding: 34 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#FFFFFF', marginBottom: 21 }}>Войти в систему</div>
+            {!mfaStep ? (
+              /* ── Step 1: email + password ── */
+              <>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#FFFFFF', marginBottom: 21 }}>Войти в систему</div>
 
-            {error && (
-              <div style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 13, padding: '10px 13px', marginBottom: 13 }}>
-                {error}
-              </div>
+                {error && (
+                  <div style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 13, padding: '10px 13px', marginBottom: 13 }}>
+                    {error}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ color: '#71717A', fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' as const }}>Email</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@slimway.ru" style={inputBase} onFocus={handleFocus} onBlur={handleBlur} autoFocus />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ color: '#71717A', fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' as const }}>Пароль</label>
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void handleLogin() }} placeholder="••••••••" style={inputBase} onFocus={handleFocus} onBlur={handleBlur} />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => void handleLogin()}
+                  disabled={loading}
+                  style={{ display: 'block', width: '100%', height: 42, marginTop: 21, borderRadius: 8, border: 'none', background: loading ? 'rgba(2,189,182,0.5)' : '#02BDB6', color: '#FFFFFF', fontSize: 13, fontWeight: 600, cursor: loading ? 'default' : 'pointer', transition: 'all 0.18s', letterSpacing: 0.3 }}
+                >
+                  {loading ? 'Вход...' : 'Войти'}
+                </button>
+              </>
+            ) : (
+              /* ── Step 2: MFA code ── */
+              <>
+                <div style={{ marginBottom: 21 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 18 }}>🔒</span>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: '#FFFFFF' }}>Двухфакторная аутентификация</div>
+                  </div>
+                  <div style={{ fontSize: 13, color: '#71717A' }}>Введите код из приложения Google Authenticator</div>
+                </div>
+
+                {mfaError && (
+                  <div style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 13, padding: '10px 13px', marginBottom: 13 }}>
+                    {mfaError}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 13 }}>
+                  <label style={{ color: '#71717A', fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' as const }}>6-значный код</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={e => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={e => { if (e.key === 'Enter') void handleMfaVerify() }}
+                    placeholder="000000"
+                    autoFocus
+                    style={{
+                      ...inputBase,
+                      letterSpacing: '0.5em',
+                      fontSize: 22,
+                      fontWeight: 600,
+                      textAlign: 'center',
+                    }}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </div>
+
+                <button
+                  onClick={() => void handleMfaVerify()}
+                  disabled={mfaLoading || mfaCode.length !== 6}
+                  style={{ display: 'block', width: '100%', height: 42, borderRadius: 8, border: 'none', background: (mfaLoading || mfaCode.length !== 6) ? 'rgba(2,189,182,0.5)' : '#02BDB6', color: '#FFFFFF', fontSize: 13, fontWeight: 600, cursor: (mfaLoading || mfaCode.length !== 6) ? 'default' : 'pointer', transition: 'all 0.18s' }}
+                >
+                  {mfaLoading ? 'Проверка...' : 'Подтвердить'}
+                </button>
+
+                <button
+                  onClick={() => { setMfaStep(false); setMfaCode(''); setMfaError(''); void supabase.auth.signOut() }}
+                  style={{ display: 'block', width: '100%', height: 36, marginTop: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.10)', background: 'transparent', color: '#71717A', fontSize: 13, cursor: 'pointer' }}
+                >
+                  Назад
+                </button>
+              </>
             )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ color: '#71717A', fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' as const }}>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@slimway.ru" style={inputBase} onFocus={handleFocus} onBlur={handleBlur} autoFocus />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ color: '#71717A', fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' as const }}>Пароль</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void handleLogin() }} placeholder="••••••••" style={inputBase} onFocus={handleFocus} onBlur={handleBlur} />
-              </div>
-            </div>
-
-            <button
-              onClick={() => void handleLogin()}
-              disabled={loading}
-              style={{ display: 'block', width: '100%', height: 42, marginTop: 21, borderRadius: 8, border: 'none', background: loading ? 'rgba(2,189,182,0.5)' : '#02BDB6', color: '#FFFFFF', fontSize: 13, fontWeight: 600, cursor: loading ? 'default' : 'pointer', transition: 'all 0.18s', letterSpacing: 0.3 }}
-            >
-              {loading ? 'Вход...' : 'Войти'}
-            </button>
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 21, color: '#3F3F46', fontSize: 11 }}>
