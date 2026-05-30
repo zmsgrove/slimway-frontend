@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react'
-import { Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid, CreditCard, Package, Edit2, X, ChevronDown } from 'lucide-react'
+import {
+  Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid,
+  CreditCard, Package, Edit2, X, ChevronDown, Shield, Users,
+} from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import type { Device, DeviceType, DeviceGroup, DeviceStatus, Department, Position, SubscriptionTemplate, CatalogItem, BranchSubscriptionTemplate } from '../../types'
-import { devicesApi } from '../../api/devices.api'
+import { usePermissions } from '../../hooks/usePermissions'
+import { usePermissionOverrides } from '../../hooks/usePermissionOverrides'
+import { permissionsApi } from '../../api/permissions.api'
+import { employeesApi } from '../../api/employees.api'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
+import {
+  DEFAULT_PERMISSIONS, getCellState,
+  canEditRolePermissions as canEditPermFn,
+} from '../../lib/permissions'
+import type { PermissionOverride, Role as PermRole, PermissionState } from '../../lib/permissions'
+import type {
+  Device, DeviceType, DeviceGroup, DeviceStatus, Department, Position,
+  SubscriptionTemplate, CatalogItem, BranchSubscriptionTemplate, Employee,
+} from '../../types'
+import { devicesApi } from '../../api/devices.api'
 import { departmentsApi, positionsApi } from '../../api/departments.api'
 import { subscriptionTemplatesApi } from '../../api/subscription-templates.api'
 import { branchSubscriptionTemplatesApi } from '../../api/branch-subscription-templates.api'
@@ -30,6 +45,13 @@ const inputStyle: React.CSSProperties = {
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' }
 const labelStyle: React.CSSProperties  = { fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }
+const thStyle: React.CSSProperties = {
+  padding: '10px 13px', borderBottom: '1px solid var(--glass-border)',
+  fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
+  textTransform: 'uppercase', letterSpacing: 0.5,
+  background: 'var(--bg-elevated)', whiteSpace: 'nowrap',
+}
+const tdStyle: React.CSSProperties = { padding: '6px 13px', fontSize: 13, color: 'var(--text-primary)' }
 
 // ─── constants ─────────────────────────────────────────────────────────────────
 
@@ -354,7 +376,6 @@ function SubscriptionTemplatesSection() {
   const [error,      setError]      = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
 
-  // create form
   const [name,         setName]         = useState('')
   const [validityDays, setValidityDays] = useState(30)
   const [price,        setPrice]        = useState('')
@@ -636,30 +657,285 @@ function CatalogSection() {
   )
 }
 
+// ─── PermissionsTab ──────────────────────────────────────────────────────────
+
+const PERM_ROLES: PermRole[] = ['owner', 'franchisee', 'admin', 'staff', 'technical']
+
+const PERM_ROLE_LABELS: Record<string, string> = {
+  owner: 'Владелец', franchisee: 'Франчайзи', admin: 'Адм.', staff: 'Мен.', technical: 'Тех.',
+}
+
+const RESOURCE_LABELS: Record<string, string> = {
+  clients: 'Клиенты', leads: 'Лиды', bookings: 'Бронирования', subscriptions: 'Абонементы',
+  schedule: 'Расписание', shifts: 'График', employees: 'Сотрудники', warehouse: 'Склад',
+  analytics: 'Аналитика', tasks: 'Задачи', management: 'Управление', settings: 'Настройки',
+  permissions: 'Права доступа',
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  view: 'Просмотр', create: 'Создание', edit: 'Редактирование', delete: 'Удаление',
+  cancel_early: 'Отмена (>24ч)', cancel_late: 'Отмена (<24ч)',
+}
+
+function nextPermState(current: PermissionState, canLock: boolean): PermissionState {
+  if (current === 'allow') return 'deny'
+  if (current === 'deny')  return canLock ? 'locked' : 'allow'
+  return 'allow' // locked → allow
+}
+
+function PermissionsTab() {
+  const perm = usePermissions()
+  const { overrides, refresh } = usePermissionOverrides()
+  const [saving, setSaving] = useState<string | null>(null)
+
+  const handleClick = async (targetRole: PermRole, resource: string, action: string) => {
+    if (!canEditPermFn(perm.role as PermRole, targetRole)) return
+    const current = getCellState(targetRole, resource, action, overrides)
+    if (current === 'locked' && !perm.canSetLocked) return
+
+    const next = nextPermState(current, perm.canSetLocked)
+    const key = `${targetRole}:${resource}:${action}`
+    setSaving(key)
+
+    try {
+      const isInDefault = DEFAULT_PERMISSIONS[resource]?.[action]?.includes(targetRole) ?? false
+      const defaultState: PermissionState = isInDefault ? 'allow' : 'deny'
+
+      if (next === defaultState) {
+        const existing = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
+        if (existing?.id) await permissionsApi.delete(existing.id)
+      } else {
+        await permissionsApi.upsert({
+          role: targetRole, resource, action, state: next,
+          set_by: perm.role as PermRole, branch_id: null,
+        })
+      }
+      refresh()
+    } catch { /* ignore */ }
+    finally { setSaving(null) }
+  }
+
+  return (
+    <div style={{ overflowX: 'auto', margin: -21 }}>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '13px 21px 8px' }}>
+        ✓ — разрешено · — — запрещено · ✕ — заблокировано (нельзя изменить пользователям). Нажмите на ячейку для изменения.
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 660 }}>
+        <thead>
+          <tr>
+            <th style={{ ...thStyle, textAlign: 'left', width: 110 }}>Ресурс</th>
+            <th style={{ ...thStyle, textAlign: 'left', width: 140 }}>Действие</th>
+            {PERM_ROLES.map(r => (
+              <th key={r} style={{ ...thStyle, textAlign: 'center', width: 76 }}>{PERM_ROLE_LABELS[r]}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(DEFAULT_PERMISSIONS).flatMap(([resource, actions]) =>
+            Object.keys(actions).map((action, actionIdx) => {
+              const actionCount = Object.keys(actions).length
+              return (
+                <tr key={`${resource}:${action}`} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                  {actionIdx === 0 && (
+                    <td
+                      rowSpan={actionCount}
+                      style={{ ...tdStyle, fontWeight: 600, fontSize: 12, verticalAlign: 'middle', borderRight: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', whiteSpace: 'nowrap' }}
+                    >
+                      {RESOURCE_LABELS[resource] ?? resource}
+                    </td>
+                  )}
+                  <td style={{ ...tdStyle, fontSize: 12, color: 'var(--text-secondary)', borderRight: '1px solid var(--glass-border)' }}>
+                    {ACTION_LABELS[action] ?? action}
+                  </td>
+                  {PERM_ROLES.map(targetRole => {
+                    const state = getCellState(targetRole, resource, action, overrides)
+                    const canEdit = canEditPermFn(perm.role as PermRole, targetRole)
+                    const clickable = canEdit && (state !== 'locked' || perm.canSetLocked)
+                    const isSaving = saving === `${targetRole}:${resource}:${action}`
+
+                    return (
+                      <td key={targetRole} style={{ ...tdStyle, textAlign: 'center', padding: '4px 8px' }}>
+                        <button
+                          onClick={() => void handleClick(targetRole, resource, action)}
+                          disabled={!clickable || isSaving}
+                          title={!clickable ? (state === 'locked' ? 'Заблокировано' : 'Нет прав на изменение') : undefined}
+                          style={{
+                            width: 30, height: 30, borderRadius: 7, border: 'none',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: clickable && !isSaving ? 'pointer' : 'default',
+                            background: state === 'allow'  ? 'rgba(2,189,182,0.12)'  :
+                                        state === 'locked' ? 'rgba(239,68,68,0.10)'  : 'transparent',
+                            color:      state === 'allow'  ? '#02BDB6' :
+                                        state === 'locked' ? '#ef4444' : 'var(--text-muted)',
+                            opacity: isSaving ? 0.4 : (!canEdit ? 0.6 : 1),
+                            fontSize: 15, fontWeight: 700,
+                            transition: 'all 0.1s',
+                          }}
+                        >
+                          {isSaving ? '·' : state === 'allow' ? '✓' : state === 'locked' ? '✕' : '—'}
+                        </button>
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── UsersTab ────────────────────────────────────────────────────────────────
+
+interface EmployeeWithRole extends Employee {
+  profiles?: { role: string } | null
+}
+
+const USER_ROLES: string[] = ['owner', 'franchisee', 'admin', 'staff', 'technical']
+const USER_ROLE_LABELS: Record<string, string> = {
+  owner: 'Владелец', franchisee: 'Франчайзи', admin: 'Администратор',
+  staff: 'Менеджер', technical: 'Тех. персонал',
+}
+
+function UsersTab() {
+  const [employees, setEmployees] = useState<EmployeeWithRole[]>([])
+  const [branches,  setBranches]  = useState<BranchRaw[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [saving,    setSaving]    = useState<string | null>(null)
+  const [error,     setError]     = useState<string | null>(null)
+
+  useEffect(() => {
+    Promise.all([
+      employeesApi.getAll() as Promise<EmployeeWithRole[]>,
+      branchesApi.getAll(),
+    ])
+      .then(([emps, brs]) => { setEmployees(emps); setBranches(brs) })
+      .catch(() => setError('Не удалось загрузить пользователей'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleRoleChange = async (emp: EmployeeWithRole, newRole: string) => {
+    const key = `role:${emp.id}`
+    setSaving(key)
+    try {
+      await employeesApi.patchRole(emp.id, { role: newRole, branch_id: emp.branch_id })
+      setEmployees(prev => prev.map(e => e.id === emp.id
+        ? { ...e, profiles: { ...(e.profiles ?? {}), role: newRole } }
+        : e
+      ))
+    } catch { /* ignore */ }
+    finally { setSaving(null) }
+  }
+
+  const handleBranchChange = async (emp: EmployeeWithRole, newBranchId: string) => {
+    const key = `branch:${emp.id}`
+    setSaving(key)
+    try {
+      const role = emp.profiles?.role ?? 'staff'
+      await employeesApi.patchRole(emp.id, { role, branch_id: newBranchId || null })
+      setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, branch_id: newBranchId } : e))
+    } catch { /* ignore */ }
+    finally { setSaving(null) }
+  }
+
+  if (loading) return <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '21px 0', textAlign: 'center' }}>Загрузка...</div>
+  if (error)   return <div style={{ fontSize: 13, color: '#ef4444', padding: '13px 0' }}>{error}</div>
+
+  return (
+    <div style={{ overflowX: 'auto', margin: -21 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+        <thead>
+          <tr>
+            <th style={{ ...thStyle, textAlign: 'left' }}>Сотрудник</th>
+            <th style={{ ...thStyle, textAlign: 'left', width: 170 }}>Роль</th>
+            <th style={{ ...thStyle, textAlign: 'left', width: 190 }}>Филиал</th>
+          </tr>
+        </thead>
+        <tbody>
+          {employees.map(emp => {
+            const currentRole = emp.profiles?.role ?? ''
+            const isSavingRole   = saving === `role:${emp.id}`
+            const isSavingBranch = saving === `branch:${emp.id}`
+
+            return (
+              <tr key={emp.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                <td style={tdStyle}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{emp.full_name}</div>
+                  {emp.phone && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.phone}</div>}
+                </td>
+                <td style={{ ...tdStyle, padding: '6px 8px' }}>
+                  <select
+                    value={currentRole}
+                    disabled={isSavingRole}
+                    onChange={e => void handleRoleChange(emp, e.target.value)}
+                    style={{ ...selectStyle, opacity: isSavingRole ? 0.6 : 1, fontSize: 12 }}
+                  >
+                    {currentRole && !USER_ROLES.includes(currentRole) && (
+                      <option value={currentRole}>{currentRole}</option>
+                    )}
+                    {USER_ROLES.map(r => (
+                      <option key={r} value={r}>{USER_ROLE_LABELS[r]}</option>
+                    ))}
+                  </select>
+                </td>
+                <td style={{ ...tdStyle, padding: '6px 8px' }}>
+                  <select
+                    value={emp.branch_id ?? ''}
+                    disabled={isSavingBranch}
+                    onChange={e => void handleBranchChange(emp, e.target.value)}
+                    style={{ ...selectStyle, opacity: isSavingBranch ? 0.6 : 1, fontSize: 12 }}
+                  >
+                    <option value="">— Нет —</option>
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}{b.city ? ` (${b.city})` : ''}</option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            )
+          })}
+          {employees.length === 0 && (
+            <tr>
+              <td colSpan={3} style={{ ...tdStyle, textAlign: 'center', color: 'var(--text-muted)', padding: '34px 0' }}>
+                Сотрудники не найдены
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-type ManagementTab = 'general' | 'subscriptions' | 'catalog'
+type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users'
 
 export default function ManagementPage() {
   const { user } = useAuth()
+  const perm = usePermissions()
   const isDeveloperOrOwner = user?.role === 'developer' || user?.role === 'owner'
   const [tab, setTab] = useState<ManagementTab>('general')
 
   const TABS: { id: ManagementTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'general',       label: 'Общее',     icon: <Cpu size={14} strokeWidth={1.75} /> },
-    { id: 'subscriptions', label: 'Абонементы', icon: <CreditCard size={14} strokeWidth={1.75} /> },
-    ...(isDeveloperOrOwner ? [{ id: 'catalog' as ManagementTab, label: 'Каталог товаров', icon: <Package size={14} strokeWidth={1.75} /> }] : []),
+    { id: 'general',       label: 'Общее',       icon: <Cpu size={14} strokeWidth={1.75} /> },
+    { id: 'subscriptions', label: 'Абонементы',  icon: <CreditCard size={14} strokeWidth={1.75} /> },
+    ...(isDeveloperOrOwner ? [{ id: 'catalog' as ManagementTab, label: 'Каталог', icon: <Package size={14} strokeWidth={1.75} /> }] : []),
+    ...(perm.can('permissions', 'view') ? [{ id: 'permissions' as ManagementTab, label: 'Права доступа', icon: <Shield size={14} strokeWidth={1.75} /> }] : []),
+    ...(user?.role === 'developer' ? [{ id: 'users' as ManagementTab, label: 'Пользователи', icon: <Users size={14} strokeWidth={1.75} /> }] : []),
   ]
 
   return (
-    <div style={{ maxWidth: 700 }}>
-      <div style={{ marginBottom: 21 }}>
+    <div>
+      <div style={{ marginBottom: 21, maxWidth: 700 }}>
         <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Управление</h1>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Оборудование, структура, абонементы, каталог</p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 4, maxWidth: 700 }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, height: 34, borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-elevated)' : 'transparent', color: tab === t.id ? 'var(--text-primary)' : 'var(--text-muted)', justifyContent: 'center', transition: 'all 0.15s' }}>
@@ -669,15 +945,25 @@ export default function ManagementPage() {
       </div>
 
       {tab === 'general' && (
-        <>
+        <div style={{ maxWidth: 700 }}>
           <DevicesSection />
           <DepartmentsSection />
           <PositionsSection />
           {isDeveloperOrOwner && <BranchesSection />}
-        </>
+        </div>
       )}
-      {tab === 'subscriptions' && <SubscriptionTemplatesSection />}
-      {tab === 'catalog' && isDeveloperOrOwner && <CatalogSection />}
+      {tab === 'subscriptions' && <div style={{ maxWidth: 700 }}><SubscriptionTemplatesSection /></div>}
+      {tab === 'catalog' && isDeveloperOrOwner && <div style={{ maxWidth: 700 }}><CatalogSection /></div>}
+      {tab === 'permissions' && perm.can('permissions', 'view') && (
+        <Section title="Матрица прав доступа" icon={<Shield size={15} strokeWidth={1.75} color="#02BDB6" />}>
+          <PermissionsTab />
+        </Section>
+      )}
+      {tab === 'users' && user?.role === 'developer' && (
+        <Section title="Пользователи" icon={<Users size={15} strokeWidth={1.75} color="#02BDB6" />}>
+          <UsersTab />
+        </Section>
+      )}
     </div>
   )
 }

@@ -43,4 +43,8 @@ export const employeesApi = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/employees/${id}`)
   },
+
+  patchRole: async (id: string, payload: { role: string; branch_id: string | null }): Promise<void> => {
+    await api.patch(`/employees/${id}/role`, payload)
+  },
 }

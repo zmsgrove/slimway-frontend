@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
@@ -18,34 +18,21 @@ import {
   Package,
   Wrench,
 } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
+import { usePermissions } from '../../hooks/usePermissions'
+import { PermissionsProvider } from '../../hooks/usePermissionOverrides'
 import { HotkeyHelp } from '../ui/HotkeyHelp'
-import { useEffect, useState, useRef } from 'react'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
 import { badgesApi } from '../../api/badges.api'
 import type { Badges } from '../../types'
-
-const navItems = [
-  { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard },
-  { to: '/clients',       label: 'Клиенты',     icon: Users },
-  { to: '/subscriptions', label: 'Абонементы',  icon: CreditCard },
-  { to: '/sale',          label: 'Продажа',     icon: ShoppingCart },
-  { to: '/schedule',      label: 'Расписание',  icon: Calendar },
-  { to: '/leads',         label: 'Лиды',        icon: Target },
-  { to: '/tasks',         label: 'Задачи',      icon: CheckSquare },
-  { to: '/chat',          label: 'Чат',         icon: MessageSquare },
-  { to: '/employees',     label: 'Сотрудники',  icon: UserCheck },
-  { to: '/schedule-work', label: 'График',      icon: CalendarClock },
-  { to: '/warehouse',     label: 'Склад',       icon: Package },
-]
 
 const roleLabel: Record<string, string> = {
   developer:  'Разработчик',
   owner:      'Владелец',
   franchisee: 'Франчайзи',
   admin:      'Администратор',
-  trainer:    'Тренер',
   staff:      'Менеджер',
   technical:  'Тех. персонал',
 }
@@ -210,12 +197,23 @@ function NavButton({ to, icon: Icon, label, badge }: { to: string; icon: React.E
   )
 }
 
-export default function AppLayout() {
+// ─── AppLayoutInner (uses permissions hook inside PermissionsProvider) ────────
+
+function AppLayoutInner() {
   const { user, signOut } = useAuth()
   const { isDark, setTheme } = useTheme()
+  const perm = usePermissions()
   const navigate = useNavigate()
+  const location = useLocation()
   const [badges, setBadges] = useState<Badges>({ leads_new: 0, tasks_overdue: 0, low_stock_items: 0 })
   const badgeTimer = useRef<ReturnType<typeof setInterval>>()
+
+  // Редирект для technical — только /schedule-work
+  useEffect(() => {
+    if (perm.isTechnical && location.pathname !== '/schedule-work') {
+      navigate('/schedule-work', { replace: true })
+    }
+  }, [perm.isTechnical, location.pathname, navigate])
 
   useEffect(() => {
     const load = () => {
@@ -236,19 +234,29 @@ export default function AppLayout() {
     void setTheme(isDark ? 'white' : 'dark', user.id)
   }
 
-  const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
+  // Для technical показываем только /schedule-work
+  const navItems = perm.isTechnical
+    ? [{ to: '/schedule-work', label: 'График', icon: CalendarClock }]
+    : [
+        { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard,  show: true },
+        { to: '/clients',       label: 'Клиенты',    icon: Users,            show: perm.can('clients', 'view') },
+        { to: '/subscriptions', label: 'Абонементы', icon: CreditCard,       show: perm.can('subscriptions', 'view') },
+        { to: '/sale',          label: 'Продажа',    icon: ShoppingCart,     show: perm.can('subscriptions', 'create') },
+        { to: '/schedule',      label: 'Расписание', icon: Calendar,         show: perm.can('schedule', 'view') },
+        { to: '/leads',         label: 'Лиды',       icon: Target,           show: perm.can('leads', 'view') },
+        { to: '/tasks',         label: 'Задачи',     icon: CheckSquare,      show: perm.can('tasks', 'view') },
+        { to: '/chat',          label: 'Чат',        icon: MessageSquare,    show: true },
+        { to: '/employees',     label: 'Сотрудники', icon: UserCheck,        show: perm.can('employees', 'view') },
+        { to: '/schedule-work', label: 'График',     icon: CalendarClock,    show: perm.can('shifts', 'view') },
+        { to: '/warehouse',     label: 'Склад',      icon: Package,          show: perm.can('warehouse', 'view') },
+      ].filter(item => item.show)
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)' }}>
       {/* ── Sidebar ── */}
       <aside style={sidebarStyle}>
         {/* Logo */}
-        <div
-          style={{
-            padding: '21px 13px 13px',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
+        <div style={{ padding: '21px 13px 13px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)', letterSpacing: 0.5 }}>
               Slimway
@@ -273,16 +281,7 @@ export default function AppLayout() {
         {user?.role && <BranchSwitcher role={user.role} />}
 
         {/* Nav */}
-        <nav
-          style={{
-            flex: 1,
-            padding: '8px 6px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-            overflowY: 'auto',
-          }}
-        >
+        <nav style={{ flex: 1, padding: '8px 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {navItems.map(({ to, label, icon }) => {
             let badge: number | undefined
             if (to === '/leads')     badge = badges.leads_new       || undefined
@@ -292,17 +291,9 @@ export default function AppLayout() {
           })}
         </nav>
 
-        {/* Bottom: Управление + Настройки + Выйти */}
-        <div
-          style={{
-            padding: '8px 6px',
-            borderTop: '1px solid var(--border)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          {canManage && (
+        {/* Bottom */}
+        <div style={{ padding: '8px 6px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {perm.can('management', 'view') && (
             <NavButton to="/management" icon={Wrench} label="Управление" />
           )}
 
@@ -311,21 +302,11 @@ export default function AppLayout() {
           <button
             onClick={handleSignOut}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '8px 13px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 400,
-              color: 'var(--text-muted)',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              borderLeft: '2px solid transparent',
-              width: '100%',
-              textAlign: 'left',
-              transition: 'color 0.15s',
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 13px',
+              borderRadius: 8, fontSize: 13, fontWeight: 400,
+              color: 'var(--text-muted)', background: 'transparent', border: 'none',
+              cursor: 'pointer', borderLeft: '2px solid transparent',
+              width: '100%', textAlign: 'left', transition: 'color 0.15s',
             }}
           >
             <LogOut size={16} strokeWidth={1.75} />
@@ -380,5 +361,13 @@ export default function AppLayout() {
       </div>
       <HotkeyHelp />
     </div>
+  )
+}
+
+export default function AppLayout() {
+  return (
+    <PermissionsProvider>
+      <AppLayoutInner />
+    </PermissionsProvider>
   )
 }

@@ -1,4 +1,4 @@
-export type Role = 'developer' | 'owner' | 'franchisee' | 'admin' | 'trainer' | 'staff' | 'technical'
+export type Role = 'developer' | 'owner' | 'franchisee' | 'admin' | 'staff' | 'technical'
 
 // ── Auth ────────────────────────────────────────────────────
 export interface User {
