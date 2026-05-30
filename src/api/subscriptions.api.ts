@@ -1,5 +1,5 @@
 import { api } from '../lib/api'
-import type { Subscription, DeviceType } from '../types'
+import type { Subscription, SubscriptionRenewal, DeviceType } from '../types'
 
 export interface CreateSubscriptionPayload {
   client_id: string
@@ -38,5 +38,20 @@ export const subscriptionsApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/subscriptions/${id}`)
+  },
+
+  freeze: async (id: string, frozenUntil: string): Promise<Subscription> => {
+    const { data } = await api.post(`/subscriptions/${id}/freeze`, { frozen_until: frozenUntil })
+    return data
+  },
+
+  unfreeze: async (id: string): Promise<Subscription> => {
+    const { data } = await api.post(`/subscriptions/${id}/unfreeze`)
+    return data
+  },
+
+  getRenewals: async (id: string): Promise<SubscriptionRenewal[]> => {
+    const { data } = await api.get(`/subscriptions/${id}/renewals`)
+    return data
   },
 }

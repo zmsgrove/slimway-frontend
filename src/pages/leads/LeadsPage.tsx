@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Plus, X, MessageCircle, Phone, User, AlertCircle,
   ChevronRight, Trash2, Edit2, Check, ChevronLeft,
-  UserPlus,
+  UserPlus, Download, Clock,
 } from 'lucide-react'
 import { leadsApi } from '../../api/leads.api'
 import { employeesApi } from '../../api/employees.api'
@@ -23,8 +23,33 @@ const COLUMNS: { id: LeadStatus; label: string; color: string }[] = [
 ]
 
 const SOURCE_LABELS: Record<string, string> = {
-  manual:    'Вручную',
-  whatsapp:  'WhatsApp',
+  manual:         'Вручную',
+  whatsapp:       'WhatsApp',
+  instagram:      'Instagram',
+  tiktok:         'TikTok',
+  site:           'Сайт',
+  tilda:          'Tilda',
+  recommendation: 'Рекомендация',
+  call:           'Обзвон',
+  other:          'Другое',
+}
+
+const LEAD_SOURCES = [
+  { value: 'instagram',      label: 'Instagram' },
+  { value: 'tiktok',         label: 'TikTok' },
+  { value: 'site',           label: 'Сайт' },
+  { value: 'tilda',          label: 'Tilda' },
+  { value: 'recommendation', label: 'Рекомендация' },
+  { value: 'call',           label: 'Обзвон' },
+  { value: 'whatsapp',       label: 'WhatsApp' },
+  { value: 'manual',         label: 'Вручную' },
+  { value: 'other',          label: 'Другое' },
+]
+
+function daysInStage(statusChangedAt: string | null | undefined, createdAt: string): number {
+  const base = statusChangedAt ?? createdAt
+  const diff = Date.now() - new Date(base).getTime()
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
 const inputStyle: React.CSSProperties = {
@@ -63,6 +88,7 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
   const [phone, setPhone]       = useState('')
   const [notes, setNotes]       = useState('')
   const [assignedTo, setAssignedTo] = useState('')
+  const [source, setSource]     = useState('manual')
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState<string | null>(null)
 
@@ -75,7 +101,7 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
         phone:     phone.trim() || undefined,
         notes:     notes.trim() || undefined,
         assigned_to: assignedTo || undefined,
-        source:    'manual',
+        source:    source as Lead['source'],
       })
       // If not 'new', move to the correct status
       if (initialStatus !== 'new') {
@@ -115,12 +141,20 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Телефон</div>
             <input style={inputStyle} placeholder="+7 ..." value={phone} onChange={e => setPhone(e.target.value)} />
           </div>
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Ответственный</div>
-            <select style={{ ...inputStyle, cursor: 'pointer' }} value={assignedTo} onChange={e => setAssignedTo(e.target.value)}>
-              <option value="">Не назначен</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
-            </select>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Источник</div>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={source} onChange={e => setSource(e.target.value)}>
+                {LEAD_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Ответственный</div>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={assignedTo} onChange={e => setAssignedTo(e.target.value)}>
+                <option value="">Не назначен</option>
+                {employees.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
+              </select>
+            </div>
           </div>
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Заметки</div>
@@ -458,6 +492,8 @@ interface LeadCardProps {
 function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart, onDragEnd, onContextMenu }: LeadCardProps) {
   const assignedEmp = employees.find(e => e.id === lead.assigned_to)
   const commentCount = lead.lead_comments?.length ?? 0
+  const days = daysInStage(lead.status_changed_at, lead.created_at)
+  const stageColor = days >= 7 ? '#ef4444' : days >= 3 ? '#f59e0b' : 'var(--text-muted)'
 
   return (
     <div
@@ -491,8 +527,8 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, flexWrap: 'wrap', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--glass-border)' }}>
             {SOURCE_LABELS[lead.source] ?? lead.source}
           </span>
@@ -503,13 +539,15 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 10, color: stageColor, display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Clock size={9} />{days}д
+          </span>
           {commentCount > 0 && (
             <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
               <MessageCircle size={10} />{commentCount}
             </span>
           )}
-          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{fmtDate(lead.created_at)}</span>
         </div>
       </div>
     </div>
@@ -570,9 +608,26 @@ export default function LeadsPage() {
   const [dragOver, setDragOver]         = useState<LeadStatus | null>(null)
   const [ctxMenu, setCtxMenu]           = useState<{ x: number; y: number; lead: Lead } | null>(null)
   const [clientAddedModal, setClientAddedModal] = useState<{ full_name: string; phone: string | null } | null>(null)
+  const [filterSource, setFilterSource] = useState('')
   const draggingRef = useRef<Lead | null>(null)
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin' || user?.role === 'staff'
+
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
+    const ws = XLSX.utils.json_to_sheet(leads.map(l => ({
+      'Имя': l.full_name,
+      'Телефон': l.phone ?? '',
+      'Статус': COLUMNS.find(c => c.id === l.status)?.label ?? l.status,
+      'Источник': SOURCE_LABELS[l.source] ?? l.source,
+      'Ответственный': employees.find(e => e.id === l.assigned_to)?.full_name ?? '',
+      'Дней в статусе': daysInStage(l.status_changed_at, l.created_at),
+      'Создан': new Date(l.created_at).toLocaleDateString('ru-RU'),
+    })))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Лиды')
+    XLSX.writeFile(wb, 'leads.xlsx')
+  }
 
   const loadData = useCallback(async () => {
     setLoading(true); setError(null)
@@ -672,20 +727,35 @@ export default function LeadsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px - 42px)', minHeight: 0 }}>
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13, flexShrink: 0, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Лиды</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
             {leads.length} лидов · Воронка продаж
           </p>
         </div>
-        {canManage && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select
+            value={filterSource}
+            onChange={e => setFilterSource(e.target.value)}
+            style={{ height: 36, padding: '0 10px', background: 'var(--bg-elevated)', border: `1px solid ${filterSource ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: filterSource ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', outline: 'none' }}
+          >
+            <option value="">Все источники</option>
+            {LEAD_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
           <button
-            onClick={() => setCreateCol('new')}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            <Plus size={16} />Новый лид
+            onClick={() => void handleExport()}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            <Download size={14} />Excel
           </button>
-        )}
+          {canManage && (
+            <button
+              onClick={() => setCreateCol('new')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              <Plus size={16} />Новый лид
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -697,7 +767,7 @@ export default function LeadsPage() {
       {/* Kanban board */}
       <div style={{ display: 'flex', gap: 13, flex: 1, minHeight: 0, overflowX: 'auto', paddingBottom: 8 }}>
         {COLUMNS.map(col => {
-          const colLeads = leads.filter(l => l.status === col.id)
+          const colLeads = leads.filter(l => l.status === col.id && (!filterSource || l.source === filterSource))
           const isOver   = dragOver === col.id
 
           return (

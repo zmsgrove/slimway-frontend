@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2 } from 'lucide-react'
+import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2, Plus, Download, Truck } from 'lucide-react'
 import { warehouseApi } from '../../api/warehouse.api'
 import { catalogApi } from '../../api/catalog.api'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
+import { suppliersApi } from '../../api/suppliers.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { BranchSelector } from '../../components/ui/BranchSelector'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
-import type { WarehouseItem, WarehouseMovement, WarehouseCategory, CatalogItem } from '../../types'
+import type { WarehouseItem, WarehouseMovement, WarehouseCategory, CatalogItem, Supplier } from '../../types'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -459,6 +460,66 @@ function CreateItemModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   )
 }
 
+// ─── SupplierModal ────────────────────────────────────────────────────────────
+
+function SupplierModal({ initial, onClose, onSave }: { initial?: Supplier | null; onClose: () => void; onSave: (s: Supplier) => void }) {
+  const [name,  setName]  = useState(initial?.name  ?? '')
+  const [phone, setPhone] = useState(initial?.phone ?? '')
+  const [email, setEmail] = useState(initial?.email ?? '')
+  const [notes, setNotes] = useState(initial?.notes ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState<string | null>(null)
+
+  const handle = async () => {
+    if (!name.trim()) { setError('Введите название'); return }
+    setSaving(true); setError(null)
+    try {
+      const payload = { name: name.trim(), phone: phone.trim() || null, email: email.trim() || null, notes: notes.trim() || null }
+      const result = initial ? await suppliersApi.patch(initial.id, payload) : await suppliersApi.create(payload)
+      onSave(result)
+    } catch { setError('Ошибка при сохранении') } finally { setSaving(false) }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 420, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{initial ? 'Редактировать поставщика' : 'Новый поставщик'}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+        </div>
+        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8 }}>{error}</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Название *</label>
+            <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="ООО Поставщик" autoFocus />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Телефон</label>
+              <input style={inputStyle} value={phone} onChange={e => setPhone(e.target.value)} placeholder="+7..." />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Email</label>
+              <input type="email" style={inputStyle} value={email} onChange={e => setEmail(e.target.value)} placeholder="mail@..." />
+            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Заметки</label>
+            <textarea style={{ ...inputStyle, height: 60, paddingTop: 8, resize: 'vertical' }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Дополнительная информация..." />
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 21 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={() => void handle()} disabled={saving} style={{ flex: 2, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+            {saving ? 'Сохранение...' : initial ? 'Сохранить' : 'Добавить'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export default function WarehousePage() {
@@ -470,6 +531,9 @@ export default function WarehousePage() {
   const [editItem,           setEditItem]           = useState<WarehouseItem | null>(null)
   const [ctxMenu,            setCtxMenu]            = useState<{ item: WarehouseItem; x: number; y: number } | null>(null)
   const [filterCat,          setFilterCat]          = useState<WarehouseCategory | 'all'>('all')
+  const [activeTab,          setActiveTab]          = useState<'items' | 'suppliers'>('items')
+  const [suppliers,          setSuppliers]          = useState<Supplier[]>([])
+  const [suppModal,          setSuppModal]          = useState<Supplier | null | 'new'>()
   const [selectedBranchIds,  setSelectedBranchIds]  = useState<string[]>(() => {
     const id = localStorage.getItem('activeBranchId')
     return id ? [id] : []
@@ -484,6 +548,27 @@ export default function WarehousePage() {
     if (user?.role !== 'developer' && user?.role !== 'owner') return
     branchesApi.getAll().then(setBranches).catch(() => { /* ignore */ })
   }, [user?.role])
+
+  useEffect(() => {
+    suppliersApi.getAll().then(setSuppliers).catch(() => { /* ignore */ })
+  }, [])
+
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
+    const ws = XLSX.utils.json_to_sheet(items.map(i => ({
+      'Название': i.name,
+      'SKU': i.sku ?? '',
+      'Категория': CATEGORY_LABELS[i.category],
+      'Количество': i.quantity,
+      'Ед.': i.unit ?? 'шт.',
+      'Мин.': i.min_quantity ?? '',
+      'Цена': i.price ?? '',
+      'Низкий остаток': i.low_stock ? 'Да' : '',
+    })))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Склад')
+    XLSX.writeFile(wb, 'warehouse.xlsx')
+  }
 
   const getBranchName = (branchId: string) => branches.find(b => b.id === branchId)?.name ?? branchId
 
@@ -537,7 +622,7 @@ export default function WarehousePage() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13 }}>
         <div>
           <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Склад</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Учёт товаров и расходников</p>
@@ -549,6 +634,12 @@ export default function WarehousePage() {
               <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{lowStockCount} мало</span>
             </div>
           )}
+          <button
+            onClick={() => void handleExport()}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
+          >
+            <Download size={14} />Excel
+          </button>
           {canIntake && (
             <button
               onClick={() => setShowBulk(true)}
@@ -560,7 +651,20 @@ export default function WarehousePage() {
         </div>
       </div>
 
-      {/* Category filter */}
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', borderRadius: 10, padding: 4, marginBottom: 13, width: 'fit-content' }}>
+        {[{ id: 'items', label: 'Товары' }, { id: 'suppliers', label: 'Поставщики' }].map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id as 'items' | 'suppliers')}
+            style={{ height: 32, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: activeTab === t.id ? 600 : 400, background: activeTab === t.id ? 'rgba(2,189,182,0.12)' : 'transparent', border: 'none', color: activeTab === t.id ? '#02BDB6' : 'var(--text-secondary)', cursor: 'pointer' }}>
+            {t.label}
+            {t.id === 'items' && items.length > 0 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700 }}>({items.length})</span>}
+            {t.id === 'suppliers' && suppliers.length > 0 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700 }}>({suppliers.length})</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Category filter (items tab only) */}
+      {activeTab === 'items' && (
       <div style={{ display: 'flex', gap: 8, marginBottom: 13, flexWrap: 'wrap' }}>
         {(['all', ...Object.keys(CATEGORY_LABELS)] as (WarehouseCategory | 'all')[]).map(cat => (
           <button
@@ -578,17 +682,67 @@ export default function WarehousePage() {
           </button>
         ))}
       </div>
+      )}
 
-      {/* Table */}
-      {loading ? (
+      {/* Suppliers tab */}
+      {activeTab === 'suppliers' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 13 }}>
+            {canEdit && (
+              <button onClick={() => setSuppModal('new')} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                <Plus size={15} />Добавить
+              </button>
+            )}
+          </div>
+          {suppliers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 55, color: 'var(--text-muted)' }}>
+              <Truck size={40} strokeWidth={1} style={{ marginBottom: 13, opacity: 0.3 }} />
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Нет поставщиков</div>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                    {['Название', 'Телефон', 'Email', 'Заметки', ''].map(h => (
+                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {suppliers.map((s, i) => (
+                    <tr key={s.id} style={{ borderBottom: i < suppliers.length - 1 ? '1px solid var(--glass-border)' : 'none', transition: 'background 0.15s' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{s.name}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{s.phone ?? '—'}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{s.email ?? '—'}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.notes ?? '—'}</td>
+                      {canEdit && (
+                        <td style={{ padding: '8px 16px' }}>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button onClick={() => setSuppModal(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-muted)', cursor: 'pointer' }}><Edit2 size={12} /></button>
+                            <button onClick={async () => { if (!confirm('Удалить?')) return; await suppliersApi.delete(s.id); setSuppliers(prev => prev.filter(x => x.id !== s.id)) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Table (items tab) */}
+      {activeTab === 'items' && loading ? (
         <div style={{ textAlign: 'center', padding: 34, color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>
-      ) : filtered.length === 0 ? (
+      ) : activeTab === 'items' && filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 55, color: 'var(--text-muted)' }}>
           <Package size={40} strokeWidth={1} style={{ marginBottom: 13, opacity: 0.3 }} />
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Склад пуст</div>
           <div style={{ fontSize: 13 }}>Добавьте первую позицию</div>
         </div>
-      ) : (
+      ) : activeTab === 'items' ? (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -668,6 +822,17 @@ export default function WarehousePage() {
       )}
 
       {ctxMenu && <ContextMenu x={ctxMenu.x} y={ctxMenu.y} items={buildCtxItems(ctxMenu.item)} onClose={() => setCtxMenu(null)} />}
+
+      {suppModal && (
+        <SupplierModal
+          initial={suppModal === 'new' ? null : suppModal}
+          onClose={() => setSuppModal(undefined)}
+          onSave={saved => {
+            setSuppliers(prev => suppModal === 'new' ? [saved, ...prev] : prev.map(x => x.id === saved.id ? saved : x))
+            setSuppModal(undefined)
+          }}
+        />
+      )}
     </div>
   )
 }

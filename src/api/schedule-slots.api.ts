@@ -9,6 +9,7 @@ export interface BookingV2Result {
   date: string
   slot_1_schedule_slot_id: string
   slot_2_schedule_slot_id: string | null
+  attended: boolean | null
   created_by: string
   created_at: string
 }
@@ -90,6 +91,11 @@ export const bookingsV2Api = {
 
   reschedule: async (id: string, payload: { new_slot_1_id: string; new_slot_2_id?: string }): Promise<BookingV2Result> => {
     const { data } = await api.patch(`/bookings-v2/${id}/reschedule`, payload)
+    return data
+  },
+
+  markAttended: async (id: string, attended: boolean | null): Promise<BookingV2Result> => {
+    const { data } = await api.patch(`/bookings-v2/${id}`, { attended })
     return data
   },
 }

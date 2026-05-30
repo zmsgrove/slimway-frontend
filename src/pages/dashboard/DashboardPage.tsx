@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react'
 import {
   Users, CreditCard, Calendar, Activity, Target, Package,
-  AlertTriangle, TrendingUp, UserCheck,
+  AlertTriangle, TrendingUp, Cake,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { analyticsApi } from '../../api/analytics.api'
+import { clientsApi } from '../../api/clients.api'
 import { useAuth } from '../../hooks/useAuth'
 import { BranchSelector } from '../../components/ui/BranchSelector'
-import type { AnalyticsOverview, AnalyticsBranchRow } from '../../types'
+import type { AnalyticsOverview, AnalyticsBranchRow, Client } from '../../types'
+
+function isTodayBirthday(birthDate: string | null | undefined): boolean {
+  if (!birthDate) return false
+  const bd = new Date(birthDate + 'T00:00:00')
+  const now = new Date()
+  return bd.getDate() === now.getDate() && bd.getMonth() === now.getMonth()
+}
 
 interface KpiCardProps {
   icon: LucideIcon
@@ -65,6 +73,7 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [overview,        setOverview]        = useState<AnalyticsOverview | null>(null)
   const [loading,         setLoading]         = useState(true)
+  const [birthdays,       setBirthdays]       = useState<Client[]>([])
   const [selectedBranches, setSelectedBranches] = useState<string[]>(() => {
     const id = localStorage.getItem('activeBranchId')
     return id ? [id] : []
@@ -73,6 +82,12 @@ export default function DashboardPage() {
   const today = new Date().toLocaleDateString('ru-RU', {
     weekday: 'long', day: 'numeric', month: 'long',
   })
+
+  useEffect(() => {
+    clientsApi.getAll()
+      .then(all => setBirthdays(all.filter(c => isTodayBirthday(c.birth_date))))
+      .catch(() => { /* ignore */ })
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -135,6 +150,25 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Birthday widget */}
+      {birthdays.length > 0 && (
+        <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 21, padding: 21, marginBottom: 21, display: 'flex', alignItems: 'flex-start', gap: 13 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 13, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Cake size={18} color="#f59e0b" />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b', marginBottom: 8 }}>Именинники сегодня ({birthdays.length})</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {birthdays.map(c => (
+                <span key={c.id} style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#f59e0b' }}>
+                  🎂 {c.full_name}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

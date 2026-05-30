@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Users, Search, Plus, X, AlertCircle, Phone, Mail, Calendar,
   Edit2, Trash2, CreditCard, Eye, FileText, MoreVertical, History,
+  Download, Tag, Cake,
 } from 'lucide-react'
 import { clientsApi } from '../../api/clients.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { api } from '../../lib/api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { useAuth } from '../../hooks/useAuth'
-import type { Client, Subscription, AuditLogEntry } from '../../types'
+import type { Client, Subscription, AuditLogEntry, SubscriptionRenewal } from '../../types'
 
 const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
@@ -18,6 +19,43 @@ const DEVICE_TYPE_COLORS: Record<string, string> = {
 }
 const SUB_STATUS_COLOR: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A', cancelled: '#ef4444' }
 const SUB_STATUS_LABEL: Record<string, string> = { active: 'Активный', frozen: 'Заморожен', expired: 'Истёк', cancelled: 'Отменён' }
+
+const CLIENT_SOURCES = [
+  { value: '', label: 'Не указан' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'site', label: 'Сайт' },
+  { value: 'recommendation', label: 'Рекомендация' },
+  { value: 'lead', label: 'Лид' },
+  { value: 'call', label: 'Обзвон' },
+  { value: 'other', label: 'Другое' },
+]
+
+const SOURCE_LABELS: Record<string, string> = {
+  instagram: 'Instagram', site: 'Сайт', recommendation: 'Рекомендация',
+  lead: 'Лид', call: 'Обзвон', other: 'Другое', manual: 'Вручную', whatsapp: 'WhatsApp',
+}
+
+const PRESET_TAGS = ['VIP', 'Пробный', 'Реферал', 'Корпоративный', 'Онлайн']
+
+const TAG_COLORS: Record<string, string> = {
+  'VIP': '#f59e0b', 'Пробный': '#3b82f6', 'Реферал': '#10b981',
+  'Корпоративный': '#8b5cf6', 'Онлайн': '#06b6d4',
+}
+
+function isTodayBirthday(birthDate: string | null): boolean {
+  if (!birthDate) return false
+  const bd = new Date(birthDate + 'T00:00:00')
+  const now = new Date()
+  return bd.getDate() === now.getDate() && bd.getMonth() === now.getMonth()
+}
+
+function calcAge(birthDate: string): number {
+  const bd = new Date(birthDate + 'T00:00:00')
+  const now = new Date()
+  let age = now.getFullYear() - bd.getFullYear()
+  if (now.getMonth() < bd.getMonth() || (now.getMonth() === bd.getMonth() && now.getDate() < bd.getDate())) age--
+  return age
+}
 
 const inputStyle: React.CSSProperties = {
   height: 40, padding: '0 13px', background: 'var(--bg-elevated)',
@@ -36,8 +74,18 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
   const [email,     setEmail]     = useState(initial?.email      ?? '')
   const [birthDate, setBirthDate] = useState(initial?.birth_date ?? '')
   const [notes,     setNotes]     = useState(initial?.notes      ?? '')
+  const [source,    setSource]    = useState(initial?.source     ?? '')
+  const [tags,      setTags]      = useState<string[]>(initial?.tags ?? [])
+  const [tagInput,  setTagInput]  = useState('')
   const [saving,    setSaving]    = useState(false)
   const [error,     setError]     = useState<string | null>(null)
+
+  const addTag = (t: string) => {
+    const trimmed = t.trim()
+    if (trimmed && !tags.includes(trimmed)) setTags(prev => [...prev, trimmed])
+    setTagInput('')
+  }
+  const removeTag = (t: string) => setTags(prev => prev.filter(x => x !== t))
 
   const handleSubmit = async () => {
     if (!fullName.trim()) { setError('Введите имя клиента'); return }
@@ -49,6 +97,8 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
         email:      email.trim()  || null,
         birth_date: birthDate     || null,
         notes:      notes.trim()  || null,
+        source:     source        || null,
+        tags:       tags.length   ? tags : null,
       }
       const result = initial ? await clientsApi.update(initial.id, payload) : await clientsApi.create(payload)
       onSave(result)
@@ -98,6 +148,36 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
             <input type="date" style={inputStyle} value={birthDate} onChange={e => setBirthDate(e.target.value)} />
           </div>
           <div>
+            <label style={labelStyle}>Источник</label>
+            <select style={{ ...inputStyle, cursor: 'pointer' }} value={source} onChange={e => setSource(e.target.value)}>
+              {CLIENT_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Теги</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
+              {PRESET_TAGS.map(t => (
+                <button key={t} type="button" onClick={() => tags.includes(t) ? removeTag(t) : addTag(t)}
+                  style={{ padding: '2px 8px', borderRadius: 20, fontSize: 11, cursor: 'pointer', border: `1px solid ${tags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--glass-border)'}`, background: tags.includes(t) ? `${TAG_COLORS[t] ?? '#02BDB6'}18` : 'transparent', color: tags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--text-secondary)' }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input style={{ ...inputStyle, height: 34 }} placeholder="Свой тег..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }} />
+              <button type="button" onClick={() => addTag(tagInput)} style={{ height: 34, padding: '0 10px', background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.3)', borderRadius: 8, color: '#02BDB6', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>+</button>
+            </div>
+            {tags.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+                {tags.map(t => (
+                  <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 20, fontSize: 11, background: `${TAG_COLORS[t] ?? '#02BDB6'}18`, border: `1px solid ${TAG_COLORS[t] ?? '#02BDB6'}33`, color: TAG_COLORS[t] ?? '#02BDB6' }}>
+                    {t}<button type="button" onClick={() => removeTag(t)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X size={9} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
             <label style={labelStyle}>Заметки</label>
             <textarea
               style={{ ...inputStyle, height: 72, paddingTop: 8, paddingBottom: 8, resize: 'vertical' }}
@@ -144,6 +224,14 @@ function SubProgressBar({ used, total, color }: { used: number; total: number | 
 
 type DetailTab = 'profile' | 'subs' | 'history'
 
+const CANCELLATION_REASONS = [
+  { value: 'changed_mind', label: 'Клиент передумал' },
+  { value: 'moving',       label: 'Переезд' },
+  { value: 'finances',     label: 'Финансы' },
+  { value: 'health',       label: 'Здоровье' },
+  { value: 'other',        label: 'Другое' },
+]
+
 interface ClientDetailModalProps {
   client: Client
   onClose: () => void
@@ -169,6 +257,10 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
   const canDeleteSub = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
 
+  const [freezeTarget,   setFreezeTarget]   = useState<Subscription | null>(null)
+  const [cancelSubId,    setCancelSubId]    = useState<string | null>(null)
+  const [renewalsTarget, setRenewalsTarget] = useState<Subscription | null>(null)
+
   const loadSubs = useCallback(() => {
     if (subs !== null || loadingSubs) return
     setLoadSubs(true)
@@ -192,16 +284,15 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
     if (tab === 'history') loadAuditLog()
   }, [tab, loadSubs, loadAuditLog])
 
-  const handleDeleteSub = async (subId: string) => {
-    if (!confirm('Отменить абонемент? Действие нельзя отменить.')) return
+  const handleDeleteSub = (subId: string) => {
+    setCancelSubId(subId)
+  }
+
+  const handleUnfreeze = async (subId: string) => {
     try {
-      await subscriptionsApi.delete(subId)
-      setSubs(prev => prev ? prev.filter(s => s.id !== subId) : prev)
-      setAuditLog(null)
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-      alert(msg ?? 'Не удалось отменить абонемент')
-    }
+      const updated = await subscriptionsApi.unfreeze(subId)
+      setSubs(prev => prev ? prev.map(s => s.id === subId ? updated : s) : prev)
+    } catch { /* ignore */ }
   }
 
   const initials   = client.full_name.charAt(0).toUpperCase()
@@ -281,7 +372,14 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                   <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Calendar size={12} color="var(--text-muted)" />
                     {new Date(client.birth_date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({calcAge(client.birth_date)} лет)</span>
                   </div>
+                </div>
+              )}
+              {client.source && (
+                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Источник</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{SOURCE_LABELS[client.source] ?? client.source}</div>
                 </div>
               )}
             </div>
@@ -289,6 +387,18 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Заметки</div>
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{client.notes}</div>
+              </div>
+            )}
+            {client.tags && client.tags.length > 0 && (
+              <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Теги</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {client.tags.map(t => (
+                    <span key={t} style={{ padding: '2px 8px', borderRadius: 20, fontSize: 11, background: `${TAG_COLORS[t] ?? '#02BDB6'}18`, border: `1px solid ${TAG_COLORS[t] ?? '#02BDB6'}33`, color: TAG_COLORS[t] ?? '#02BDB6' }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
             {/* Quick actions */}
@@ -316,11 +426,23 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                 {activeSubs.length > 0 && (
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Активные</div>
                 )}
-                {activeSubs.map(sub => <SubCard key={sub.id} sub={sub} onDelete={canDeleteSub ? () => void handleDeleteSub(sub.id) : undefined} />)}
+                {activeSubs.map(sub => (
+                  <SubCard key={sub.id} sub={sub}
+                    onDelete={canDeleteSub ? () => handleDeleteSub(sub.id) : undefined}
+                    onFreeze={canDeleteSub ? setFreezeTarget : undefined}
+                    onUnfreeze={canDeleteSub ? (id) => void handleUnfreeze(id) : undefined}
+                    onShowRenewals={setRenewalsTarget}
+                  />
+                ))}
                 {pastSubs.length > 0 && (
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 4 }}>Прошлые</div>
                 )}
-                {pastSubs.map(sub => <SubCard key={sub.id} sub={sub} onDelete={canDeleteSub ? () => void handleDeleteSub(sub.id) : undefined} />)}
+                {pastSubs.map(sub => (
+                  <SubCard key={sub.id} sub={sub}
+                    onDelete={canDeleteSub ? () => handleDeleteSub(sub.id) : undefined}
+                    onShowRenewals={setRenewalsTarget}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -366,19 +488,72 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
         )}
       </div>
     </div>
+
+    {/* Sub modals rendered above the main modal */}
+    {freezeTarget && (
+      <FreezeModal
+        sub={freezeTarget}
+        onClose={() => setFreezeTarget(null)}
+        onFrozen={updated => {
+          setSubs(prev => prev ? prev.map(s => s.id === updated.id ? updated : s) : prev)
+          setFreezeTarget(null)
+        }}
+      />
+    )}
+    {cancelSubId && (
+      <CancelSubModal
+        subId={cancelSubId}
+        onClose={() => setCancelSubId(null)}
+        onCancelled={() => {
+          setSubs(null)
+          setCancelSubId(null)
+          setAuditLog(null)
+        }}
+      />
+    )}
+    {renewalsTarget && (
+      <RenewalsModal sub={renewalsTarget} onClose={() => setRenewalsTarget(null)} />
+    )}
   )
 }
 
-interface SubCardProps { sub: Subscription; onDelete?: () => void }
+interface SubCardProps {
+  sub: Subscription
+  onDelete?: () => void
+  onFreeze?: (sub: Subscription) => void
+  onUnfreeze?: (id: string) => void
+  onShowRenewals?: (sub: Subscription) => void
+}
 
-function SubCard({ sub, onDelete }: SubCardProps) {
+function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCardProps) {
   const sc = SUB_STATUS_COLOR[sub.status]
+  const frozenLabel = sub.status === 'frozen' && sub.frozen_until
+    ? `До ${new Date(sub.frozen_until + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`
+    : null
+
   return (
     <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${sc}22` }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{sub.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>{SUB_STATUS_LABEL[sub.status]}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>
+            {frozenLabel ?? SUB_STATUS_LABEL[sub.status]}
+          </span>
+          {onFreeze && sub.status === 'active' && (
+            <button onClick={() => onFreeze(sub)} title="Заморозить" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.25)', cursor: 'pointer', padding: 0, fontSize: 10 }}>
+              ❄
+            </button>
+          )}
+          {onUnfreeze && sub.status === 'frozen' && (
+            <button onClick={() => onUnfreeze(sub.id)} title="Разморозить" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.25)', cursor: 'pointer', padding: 0, fontSize: 10 }}>
+              ☀
+            </button>
+          )}
+          {onShowRenewals && (
+            <button onClick={() => onShowRenewals(sub)} title="История продлений" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(2,189,182,0.10)', border: '1px solid rgba(2,189,182,0.25)', cursor: 'pointer', padding: 0 }}>
+              <History size={11} color="#02BDB6" />
+            </button>
+          )}
           {onDelete && sub.status !== 'cancelled' && (
             <button onClick={onDelete} title="Отменить абонемент" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer', padding: 0 }}>
               <Trash2 size={11} color="#ef4444" />
@@ -408,6 +583,142 @@ function SubCard({ sub, onDelete }: SubCardProps) {
         <span>С {new Date(sub.date_start).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
         {sub.date_end && <span>По {new Date(sub.date_end).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
         {sub.price != null && <span>· {sub.price.toLocaleString('ru-RU')} ₸</span>}
+        {sub.cancellation_reason && <span>· Причина: {CANCELLATION_REASONS.find(r => r.value === sub.cancellation_reason)?.label ?? sub.cancellation_reason}</span>}
+      </div>
+    </div>
+  )
+}
+
+// ─── FreezeModal ─────────────────────────────────────────────────────────────
+
+function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: () => void; onFrozen: (s: Subscription) => void }) {
+  const today = new Date()
+  const maxDate = new Date(today); maxDate.setDate(today.getDate() + 30)
+  const [frozenUntil, setFrozenUntil] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handle = async () => {
+    if (!frozenUntil) { setError('Выберите дату окончания заморозки'); return }
+    setSaving(true); setError(null)
+    try {
+      const updated = await subscriptionsApi.freeze(sub.id, frozenUntil)
+      onFrozen(updated)
+    } catch { setError('Ошибка при заморозке') } finally { setSaving(false) }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Заморозить абонемент</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 13 }}>{sub.name}</div>
+        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8 }}>{error}</div>}
+        <div style={{ marginBottom: 21 }}>
+          <label style={labelStyle}>Заморозить до (макс. 30 дней)</label>
+          <input type="date" style={inputStyle}
+            min={today.toISOString().split('T')[0]}
+            max={maxDate.toISOString().split('T')[0]}
+            value={frozenUntil}
+            onChange={e => setFrozenUntil(e.target.value)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => void handle()} disabled={saving} style={{ flex: 1, height: 40, background: '#f59e0b', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            {saving ? 'Заморозка...' : 'Заморозить'}
+          </button>
+          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── CancelSubModal ───────────────────────────────────────────────────────────
+
+function CancelSubModal({ subId, onClose, onCancelled }: { subId: string; onClose: () => void; onCancelled: () => void }) {
+  const [reason, setReason] = useState('')
+  const [comment, setComment] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const handle = async () => {
+    setSaving(true)
+    try {
+      await subscriptionsApi.patch(subId, { status: 'cancelled', cancellation_reason: reason || undefined })
+      onCancelled()
+    } catch { /* ignore */ } finally { setSaving(false) }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 400, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Причина отмены</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 21 }}>
+          {CANCELLATION_REASONS.map(r => (
+            <button key={r.value} onClick={() => setReason(r.value)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: reason === r.value ? 'rgba(239,68,68,0.08)' : 'transparent', border: `1px solid ${reason === r.value ? 'rgba(239,68,68,0.35)' : 'var(--glass-border)'}`, borderRadius: 8, color: reason === r.value ? '#ef4444' : 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', textAlign: 'left' }}>
+              {r.label}
+            </button>
+          ))}
+          <textarea style={{ ...inputStyle, height: 60, paddingTop: 8, paddingBottom: 8, resize: 'none' }} placeholder="Комментарий (необязательно)..." value={comment} onChange={e => setComment(e.target.value)} />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => void handle()} disabled={saving} style={{ flex: 1, height: 40, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            {saving ? 'Отмена...' : 'Отменить абонемент'}
+          </button>
+          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── RenewalsModal ────────────────────────────────────────────────────────────
+
+function RenewalsModal({ sub, onClose }: { sub: Subscription; onClose: () => void }) {
+  const [renewals, setRenewals] = useState<SubscriptionRenewal[] | null>(null)
+  useEffect(() => {
+    subscriptionsApi.getRenewals(sub.id)
+      .then(setRenewals)
+      .catch(() => setRenewals([]))
+  }, [sub.id])
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>История продлений · {sub.name}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+        </div>
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {renewals === null ? (
+            <div style={{ textAlign: 'center', padding: 34, fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+          ) : renewals.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 34, fontSize: 13, color: 'var(--text-muted)' }}>История продлений пуста</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {renewals.map(r => (
+                <div key={r.id} style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.profiles?.full_name ?? '—'}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                    {r.old_date_end && <span>Было до: {new Date(r.old_date_end).toLocaleDateString('ru-RU')} → </span>}
+                    {r.new_date_end && <span>Стало до: {new Date(r.new_date_end).toLocaleDateString('ru-RU')}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -449,10 +760,18 @@ function ClientRow({ client, onClick, onContextMenu }: ClientRowProps) {
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {client.full_name}
           </span>
+          {isTodayBirthday(client.birth_date ?? null) && (
+            <span title="День рождения сегодня!" style={{ fontSize: 14, flexShrink: 0 }}>🎂</span>
+          )}
+          {client.tags && client.tags.slice(0, 2).map(t => (
+            <span key={t} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: `${TAG_COLORS[t] ?? '#02BDB6'}18`, border: `1px solid ${TAG_COLORS[t] ?? '#02BDB6'}33`, color: TAG_COLORS[t] ?? '#02BDB6', flexShrink: 0 }}>
+              {t}
+            </span>
+          ))}
           {activeSub && (
             <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.25)', color: '#02BDB6', flexShrink: 0 }}>
               Активный
@@ -498,14 +817,16 @@ function ClientRow({ client, onClick, onContextMenu }: ClientRowProps) {
 interface CtxMenu { x: number; y: number; client: Client }
 
 export default function ClientsPage() {
-  const [clients,    setClients]   = useState<Client[]>([])
-  const [loading,    setLoading]   = useState(true)
-  const [error,      setError]     = useState<string | null>(null)
-  const [search,     setSearch]    = useState('')
-  const [showModal,  setShowModal] = useState(false)
-  const [editTarget, setEditTarget] = useState<Client | null>(null)
-  const [viewTarget, setViewTarget] = useState<Client | null>(null)
-  const [ctxMenu,    setCtxMenu]   = useState<CtxMenu | null>(null)
+  const [clients,      setClients]     = useState<Client[]>([])
+  const [loading,      setLoading]     = useState(true)
+  const [error,        setError]       = useState<string | null>(null)
+  const [search,       setSearch]      = useState('')
+  const [filterSource, setFilterSource] = useState('')
+  const [filterTags,   setFilterTags]  = useState<string[]>([])
+  const [showModal,    setShowModal]   = useState(false)
+  const [editTarget,   setEditTarget]  = useState<Client | null>(null)
+  const [viewTarget,   setViewTarget]  = useState<Client | null>(null)
+  const [ctxMenu,      setCtxMenu]     = useState<CtxMenu | null>(null)
 
   const load = async (q?: string) => {
     setLoading(true); setError(null)
@@ -522,6 +843,32 @@ export default function ClientsPage() {
   useEffect(() => { void load() }, [])
 
   const handleSearch = (q: string) => { setSearch(q); void load(q || undefined) }
+
+  const toggleFilterTag = (t: string) => {
+    setFilterTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+  }
+
+  const filtered = clients.filter(c => {
+    if (filterSource && c.source !== filterSource) return false
+    if (filterTags.length && !filterTags.every(t => c.tags?.includes(t))) return false
+    return true
+  })
+
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
+    const ws = XLSX.utils.json_to_sheet(clients.map(c => ({
+      'Имя': c.full_name,
+      'Телефон': c.phone ?? '',
+      'Email': c.email ?? '',
+      'Дата рождения': c.birth_date ?? '',
+      'Теги': (c.tags ?? []).join(', '),
+      'Источник': c.source ? (SOURCE_LABELS[c.source] ?? c.source) : '',
+      'Создан': new Date(c.created_at).toLocaleDateString('ru-RU'),
+    })))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Клиенты')
+    XLSX.writeFile(wb, 'clients.xlsx')
+  }
 
   const handleSave = (c: Client) => {
     if (editTarget) setClients(prev => prev.map(x => x.id === c.id ? c : x))
@@ -546,7 +893,6 @@ export default function ClientsPage() {
 
   const handleSellSub = (c: Client) => {
     setViewTarget(null)
-    // Navigate to sale page or open sale modal — for now, just log intent
     window.alert(`Продать абонемент клиенту: ${c.full_name}`)
   }
 
@@ -558,24 +904,34 @@ export default function ClientsPage() {
     { label: 'Удалить',          icon: <Trash2 size={13} />,      onClick: () => void handleDelete(c.id), danger: true },
   ]
 
+  const hasFilters = !!filterSource || filterTags.length > 0
+
   return (
     <div>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
         <div>
           <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Клиенты</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{clients.length} клиентов в базе</p>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{filtered.length} из {clients.length} клиентов</p>
         </div>
-        <button
-          onClick={() => { setEditTarget(null); setShowModal(true) }}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
-        >
-          <Plus size={15} strokeWidth={2} />Добавить клиента
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button
+            onClick={() => void handleExport()}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
+          >
+            <Download size={14} />Excel
+          </button>
+          <button
+            onClick={() => { setEditTarget(null); setShowModal(true) }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+          >
+            <Plus size={15} strokeWidth={2} />Добавить клиента
+          </button>
+        </div>
       </div>
 
       {/* Search */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8, marginBottom: 13, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8, marginBottom: 8, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         <Search size={15} strokeWidth={1.75} color="var(--text-muted)" />
         <input
           style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}
@@ -590,6 +946,30 @@ export default function ClientsPage() {
         )}
       </div>
 
+      {/* Filters */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, flexWrap: 'wrap' }}>
+        <select
+          value={filterSource}
+          onChange={e => setFilterSource(e.target.value)}
+          style={{ height: 32, padding: '0 8px', background: 'var(--bg-elevated)', border: `1px solid ${filterSource ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: filterSource ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', outline: 'none' }}
+        >
+          <option value="">Все источники</option>
+          {CLIENT_SOURCES.filter(s => s.value).map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+        {PRESET_TAGS.map(t => (
+          <button key={t} onClick={() => toggleFilterTag(t)}
+            style={{ height: 32, padding: '0 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer', border: `1px solid ${filterTags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--glass-border)'}`, background: filterTags.includes(t) ? `${TAG_COLORS[t] ?? '#02BDB6'}18` : 'transparent', color: filterTags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Tag size={10} />{t}
+          </button>
+        ))}
+        {hasFilters && (
+          <button onClick={() => { setFilterSource(''); setFilterTags([]) }}
+            style={{ height: 32, padding: '0 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <X size={10} />Сбросить
+          </button>
+        )}
+      </div>
+
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
           <AlertCircle size={13} />{error}
@@ -600,21 +980,21 @@ export default function ClientsPage() {
         <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center' }}>
           <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
         </div>
-      ) : clients.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: 300 }}>
           <div style={{ width: 56, height: 56, borderRadius: 21, background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
             <Users size={24} strokeWidth={1.5} color="#02BDB6" />
           </div>
           <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>
-            {search ? 'Ничего не найдено' : 'Клиентов пока нет'}
+            {search || hasFilters ? 'Ничего не найдено' : 'Клиентов пока нет'}
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 300, lineHeight: 1.6 }}>
-            {search ? 'Попробуйте изменить запрос' : 'Нажмите «Добавить клиента» чтобы создать первого'}
+            {search || hasFilters ? 'Попробуйте изменить фильтры' : 'Нажмите «Добавить клиента» чтобы создать первого'}
           </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {clients.map(c => (
+          {filtered.map(c => (
             <ClientRow
               key={c.id}
               client={c}

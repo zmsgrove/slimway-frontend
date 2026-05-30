@@ -60,13 +60,15 @@ const textareaStyle: React.CSSProperties = {
   resize: 'vertical', lineHeight: 1.5,
 }
 
-function fmtDeadline(iso: string) {
+function fmtDeadline(iso: string): { text: string; color: string; bg: string } {
   const d = new Date(iso)
   const now = new Date()
   const diff = d.getTime() - now.getTime()
-  if (diff < 0) return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: '#EF4444' }
-  if (diff < 86400000) return { text: d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), color: '#F59E0B' }
-  return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: 'var(--text-muted)' }
+  const dayMs = 86400000
+  if (diff < 0)           return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: '#EF4444', bg: 'rgba(239,68,68,0.12)' }
+  if (diff < dayMs)       return { text: d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' }
+  if (diff < 2 * dayMs)   return { text: 'Завтра', color: '#EAB308', bg: 'rgba(234,179,8,0.12)' }
+  return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: 'var(--text-muted)', bg: 'transparent' }
 }
 
 // ─── Task Card Content ────────────────────────────────────────────────────────
@@ -129,7 +131,7 @@ function TaskCardContent({ task, onClick, onContextMenu, isDragging }: TaskCardP
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {deadline && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: deadline.color }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: deadline.color, background: deadline.bg, borderRadius: 4, padding: '1px 5px' }}>
             <Clock size={10} />{deadline.text}
           </span>
         )}
@@ -850,7 +852,10 @@ function TaskModal({ task: initialTask, employees, onClose, onUpdate, onDelete }
 
 // ─── Main TasksPage ────────────────────────────────────────────────────────────
 
+type MyFilter = 'all' | 'my' | 'observing'
+
 export default function TasksPage() {
+  const { user } = useAuth()
   const [tasks,        setTasks]        = useState<Task[]>([])
   const [loading,      setLoading]      = useState(true)
   const [employees,    setEmployees]    = useState<Employee[]>([])
@@ -861,6 +866,7 @@ export default function TasksPage() {
   const [ctxMenu,      setCtxMenu]      = useState<{ task: Task; x: number; y: number } | null>(null)
   const [search,       setSearch]       = useState('')
   const [filterPri,    setFilterPri]    = useState<TaskPriority | null>(null)
+  const [myFilter,     setMyFilter]     = useState<MyFilter>('all')
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
@@ -882,18 +888,24 @@ export default function TasksPage() {
     return () => document.removeEventListener('click', close)
   }, [])
 
-  const getColTasks = (colId: TaskStatus) =>
-    tasks.filter(t => {
-      // 'done' (legacy) shown in 'closed' column
-      const effectiveStatus = t.status === 'done' ? 'closed' : t.status
-      if (effectiveStatus !== colId) return false
-      if (filterPri && t.priority !== filterPri) return false
-      if (search) {
-        const q = search.toLowerCase()
-        if (!t.title.toLowerCase().includes(q)) return false
-      }
-      return true
-    })
+  const getColTasks = (colId: TaskStatus) => {
+    const userId = user?.id
+    return tasks
+      .filter(t => {
+        const effectiveStatus = t.status === 'done' ? 'closed' : t.status
+        if (effectiveStatus !== colId) return false
+        if (filterPri && t.priority !== filterPri) return false
+        if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
+        if (myFilter === 'my' && t.assigned_to !== userId) return false
+        if (myFilter === 'observing' && (!userId || !t.observer_ids.includes(userId))) return false
+        return true
+      })
+      .sort((a, b) => {
+        const aOver = a.deadline && new Date(a.deadline) < new Date() ? 0 : 1
+        const bOver = b.deadline && new Date(b.deadline) < new Date() ? 0 : 1
+        return aOver - bOver
+      })
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
@@ -970,10 +982,19 @@ export default function TasksPage() {
           <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 2 }}>Задачи</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Канбан доска</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {/* My filter */}
+          <div style={{ display: 'flex', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
+            {(['all', 'my', 'observing'] as MyFilter[]).map(f => (
+              <button key={f} onClick={() => setMyFilter(f)}
+                style={{ height: 36, padding: '0 12px', background: myFilter === f ? 'rgba(2,189,182,0.15)' : 'transparent', border: 'none', borderRight: f !== 'observing' ? '1px solid var(--glass-border)' : 'none', color: myFilter === f ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', fontWeight: myFilter === f ? 600 : 400 }}>
+                {f === 'all' ? 'Все' : f === 'my' ? 'Мои' : 'Наблюдаю'}
+              </button>
+            ))}
+          </div>
           <div style={{ position: 'relative' }}>
             <input
-              style={{ ...inputStyle, width: 200, paddingLeft: 30 }}
+              style={{ ...inputStyle, width: 180, paddingLeft: 30 }}
               placeholder="Поиск задач..."
               value={search}
               onChange={e => setSearch(e.target.value)}

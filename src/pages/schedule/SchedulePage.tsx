@@ -30,13 +30,25 @@ const DEVICE_TYPE_COLORS: Record<string, string> = {
   vacuactiv: '#02BDB6', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
 }
 const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  free:        { bg: 'rgba(16,185,129,0.15)',   border: 'rgba(16,185,129,0.4)',   text: '#10b981' },
-  booked:      { bg: 'rgba(2,189,182,0.18)',    border: 'rgba(2,189,182,0.45)',   text: '#02BDB6' },
-  blocked:     { bg: 'rgba(113,113,122,0.12)',  border: 'rgba(113,113,122,0.3)',  text: '#71717A' },
-  maintenance: { bg: 'rgba(245,158,11,0.12)',   border: 'rgba(245,158,11,0.3)',   text: '#f59e0b' },
+  free:              { bg: 'rgba(16,185,129,0.15)',  border: 'rgba(16,185,129,0.4)',  text: '#10b981' },
+  booked:            { bg: 'rgba(2,189,182,0.18)',   border: 'rgba(2,189,182,0.45)',  text: '#02BDB6' },
+  booked_attended:   { bg: 'rgba(16,185,129,0.18)',  border: 'rgba(16,185,129,0.5)',  text: '#10b981' },
+  booked_missed:     { bg: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.4)',   text: '#ef4444' },
+  blocked:           { bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)',  text: '#f59e0b' },
+  maintenance:       { bg: 'rgba(113,113,122,0.12)', border: 'rgba(113,113,122,0.3)', text: '#71717A' },
+}
+
+function slotColorKey(slot: { status: string; bookings_v2?: { attended: boolean | null } | null }): string {
+  if (slot.status === 'booked') {
+    const att = slot.bookings_v2?.attended
+    if (att === true)  return 'booked_attended'
+    if (att === false) return 'booked_missed'
+  }
+  return slot.status
 }
 const STATUS_LABELS: Record<string, string> = {
-  free: 'Свободно', booked: 'Занято', blocked: 'Заблокировано', maintenance: 'Обслуживание',
+  free: 'Свободно', booked: 'Занято', booked_attended: 'Был', booked_missed: 'Не был',
+  blocked: 'Заблокировано', maintenance: 'Обслуживание',
 }
 
 function ft(t: string) { return t.slice(0, 5) }
@@ -418,16 +430,27 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
   const [info,       setInfo]       = useState<BookingInfo | null>(null)
   const [loading,    setLoading]    = useState(true)
   const [cancelling, setCancelling] = useState(false)
+  const [marking,    setMarking]    = useState(false)
+  const [attended,   setAttended]   = useState<boolean | null>(null)
   const [error,      setError]      = useState<string | null>(null)
   const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#02BDB6'
 
   useEffect(() => {
     if (!slot.booking_id) { setLoading(false); return }
     bookingsV2Api.getById(slot.booking_id)
-      .then(setInfo)
+      .then(d => { setInfo(d); setAttended(d.booking.attended) })
       .catch(() => setError('Не удалось загрузить данные брони'))
       .finally(() => setLoading(false))
   }, [slot.booking_id])
+
+  const handleMarkAttended = async (val: boolean | null) => {
+    if (!info) return
+    setMarking(true)
+    try {
+      const updated = await bookingsV2Api.markAttended(info.booking.id, val)
+      setAttended(updated.attended)
+    } catch { /* ignore */ } finally { setMarking(false) }
+  }
 
   const handleCancel = async () => {
     if (!info) return
@@ -500,6 +523,25 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
                 </div>
               )
             })}
+          </div>
+
+          {/* Attendance */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>Посещение:</span>
+            <button onClick={() => void handleMarkAttended(true)} disabled={marking}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === true ? 'rgba(16,185,129,0.15)' : 'transparent', border: `1px solid ${attended === true ? '#10b981' : 'var(--glass-border)'}`, color: attended === true ? '#10b981' : 'var(--text-muted)' }}>
+              ✓ Был
+            </button>
+            <button onClick={() => void handleMarkAttended(false)} disabled={marking}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === false ? 'rgba(239,68,68,0.12)' : 'transparent', border: `1px solid ${attended === false ? '#ef4444' : 'var(--glass-border)'}`, color: attended === false ? '#ef4444' : 'var(--text-muted)' }}>
+              ✗ Не был
+            </button>
+            {attended !== null && (
+              <button onClick={() => void handleMarkAttended(null)} disabled={marking}
+                style={{ height: 30, padding: '0 8px', borderRadius: 6, fontSize: 11, cursor: 'pointer', background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                Сброс
+              </button>
+            )}
           </div>
 
           {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
@@ -1073,7 +1115,7 @@ export default function SchedulePage() {
                     {TIME_SLOTS.map(time => {
                       const ck      = cellKey(device.id, time)
                       const slot    = slotMap.get(ck)
-                      const sc      = slot ? STATUS_COLORS[slot.status] : null
+                      const sc      = slot ? STATUS_COLORS[slotColorKey(slot)] : null
                       const isHov   = hoveredCell === ck
                       const isSelec = dragSelection.has(ck)
 

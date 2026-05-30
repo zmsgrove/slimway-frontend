@@ -20,8 +20,11 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
-import { useEffect, useState } from 'react'
+import { HotkeyHelp } from '../ui/HotkeyHelp'
+import { useEffect, useState, useRef } from 'react'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
+import { badgesApi } from '../../api/badges.api'
+import type { Badges } from '../../types'
 
 const navItems = [
   { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard },
@@ -171,7 +174,7 @@ function BranchSwitcher({ role }: { role: string }) {
 
 // ─── NavButton ────────────────────────────────────────────────────────────────
 
-function NavButton({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) {
+function NavButton({ to, icon: Icon, label, badge }: { to: string; icon: React.ElementType; label: string; badge?: number }) {
   return (
     <NavLink
       to={to}
@@ -192,7 +195,17 @@ function NavButton({ to, icon: Icon, label }: { to: string; icon: React.ElementT
       })}
     >
       <Icon size={16} strokeWidth={1.75} />
-      {label}
+      <span style={{ flex: 1 }}>{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span style={{
+          minWidth: 18, height: 18, borderRadius: 9, background: '#ef4444',
+          color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', padding: '0 4px',
+          flexShrink: 0,
+        }}>
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </NavLink>
   )
 }
@@ -201,6 +214,17 @@ export default function AppLayout() {
   const { user, signOut } = useAuth()
   const { isDark, setTheme } = useTheme()
   const navigate = useNavigate()
+  const [badges, setBadges] = useState<Badges>({ leads_new: 0, tasks_overdue: 0, low_stock_items: 0 })
+  const badgeTimer = useRef<ReturnType<typeof setInterval>>()
+
+  useEffect(() => {
+    const load = () => {
+      badgesApi.get().then(setBadges).catch(() => { /* ignore */ })
+    }
+    load()
+    badgeTimer.current = setInterval(load, 5 * 60 * 1000)
+    return () => clearInterval(badgeTimer.current)
+  }, [])
 
   const handleSignOut = async () => {
     await signOut()
@@ -259,9 +283,13 @@ export default function AppLayout() {
             overflowY: 'auto',
           }}
         >
-          {navItems.map(({ to, label, icon }) => (
-            <NavButton key={to} to={to} icon={icon} label={label} />
-          ))}
+          {navItems.map(({ to, label, icon }) => {
+            let badge: number | undefined
+            if (to === '/leads')     badge = badges.leads_new       || undefined
+            if (to === '/tasks')     badge = badges.tasks_overdue   || undefined
+            if (to === '/warehouse') badge = badges.low_stock_items || undefined
+            return <NavButton key={to} to={to} icon={icon} label={label} badge={badge} />
+          })}
         </nav>
 
         {/* Bottom: Управление + Настройки + Выйти */}
@@ -350,6 +378,7 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <HotkeyHelp />
     </div>
   )
 }

@@ -29,6 +29,10 @@ export interface Client {
   notes: string | null
   is_deleted?: boolean
   created_at: string
+  status?: string | null
+  avatar_url?: string | null
+  tags?: string[] | null
+  source?: string | null
   memberships?: ClientMembership[]
 }
 
@@ -111,8 +115,24 @@ export interface Subscription {
   date_end: string | null
   price: number | null
   status: 'active' | 'frozen' | 'expired' | 'cancelled'
+  frozen_at: string | null
+  frozen_until: string | null
+  freeze_days_used: number | null
+  cancellation_reason: string | null
   created_at: string
   clients?: { full_name: string; phone: string | null }
+}
+
+export interface SubscriptionRenewal {
+  id: string
+  subscription_id: string
+  old_date_start: string | null
+  old_date_end: string | null
+  new_date_start: string | null
+  new_date_end: string | null
+  renewed_by: string | null
+  created_at: string
+  profiles?: { full_name: string } | null
 }
 
 export interface ScheduleSlot {
@@ -126,6 +146,7 @@ export interface ScheduleSlot {
   booking_id: string | null
   created_at: string
   devices?: Device
+  bookings_v2?: { attended: boolean | null } | null
 }
 
 // ── v1.3.0 Employees & Shifts ────────────────────────────────
@@ -174,7 +195,7 @@ export interface Shift {
 
 // ── v1.4.0 Leads ─────────────────────────────────────────────
 export type LeadStatus = 'new' | 'in_work' | 'waiting' | 'success' | 'fail'
-export type LeadSource = 'manual' | 'whatsapp'
+export type LeadSource = 'manual' | 'whatsapp' | 'instagram' | 'tiktok' | 'site' | 'tilda' | 'recommendation' | 'call' | 'other'
 
 export interface LeadComment {
   id: string
@@ -199,6 +220,8 @@ export interface Lead {
   archived_at: string | null
   created_at: string
   updated_at: string
+  status_changed_at: string | null
+  desired_template_id: string | null
   lead_comments?: LeadComment[]
 }
 
@@ -337,6 +360,22 @@ export interface CatalogItem {
   description: string | null
   price: number | null
   created_at: string
+}
+
+export interface Supplier {
+  id: string
+  branch_id: string
+  name: string
+  phone: string | null
+  email: string | null
+  notes: string | null
+  created_at: string
+}
+
+export interface Badges {
+  leads_new: number
+  tasks_overdue: number
+  low_stock_items: number
 }
 
 export interface BranchSubscriptionTemplate {

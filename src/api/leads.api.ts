@@ -18,6 +18,7 @@ export const leadsApi = {
     source?: string
     notes?: string
     assigned_to?: string
+    desired_template_id?: string | null
   }): Promise<Lead> => {
     const { data } = await api.post('/leads', payload)
     return data
@@ -31,6 +32,7 @@ export const leadsApi = {
     assigned_to: string | null
     status: LeadStatus
     client_id: string | null
+    desired_template_id: string | null
   }>): Promise<Lead> => {
     const { data } = await api.patch(`/leads/${id}`, payload)
     return data
