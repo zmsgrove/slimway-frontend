@@ -214,6 +214,7 @@ export interface Lead {
   source: LeadSource
   status: LeadStatus
   assigned_to: string | null
+  assigned_profile?: { full_name: string } | null
   notes: string | null
   client_id: string | null
   created_by: string | null

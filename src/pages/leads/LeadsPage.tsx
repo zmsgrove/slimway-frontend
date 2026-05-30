@@ -202,7 +202,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   )
   const [saving, setSaving]     = useState(false)
   const [movingTo, setMovingTo] = useState<LeadStatus | null>(null)
-  const [showClientAdded, setShowClientAdded] = useState<{ full_name: string; phone: string | null } | null>(null)
+  const [showClientAdded, setShowClientAdded] = useState<{ id: string | null; full_name: string | null; phone: string | null } | null>(null)
   const commentsEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -239,8 +239,11 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
       const updated = result.lead
       setDetail(updated)
       onUpdate(updated)
-      if (status === 'success' && result.client) {
-        setShowClientAdded(result.client)
+      if (status === 'success') {
+        setShowClientAdded(result.client
+          ? { id: result.client.id, full_name: result.client.full_name, phone: result.client.phone }
+          : { id: null, full_name: null, phone: null }
+        )
       }
     } catch { /* */ }
     finally { setMovingTo(null) }
@@ -263,11 +266,11 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
 
   return (
     <>
-    {showClientAdded && (
+    {showClientAdded !== null && (
       <ClientAddedModal
+        clientId={showClientAdded.id}
         clientName={showClientAdded.full_name}
-        clientPhone={showClientAdded.phone}
-        onEdit={() => { setShowClientAdded(null); navigate('/clients') }}
+        onGoToClient={() => { const cid = showClientAdded.id; setShowClientAdded(null); if (cid) navigate(`/clients/${cid}`) }}
         onClose={() => setShowClientAdded(null)}
       />
     )}
@@ -490,7 +493,8 @@ interface LeadCardProps {
 }
 
 function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart, onDragEnd, onContextMenu }: LeadCardProps) {
-  const assignedEmp = employees.find(e => e.id === lead.assigned_to)
+  const assignedEmp = employees.find(e => e.profile_id === lead.assigned_to)
+    ?? employees.find(e => e.id === lead.assigned_to)
   const commentCount = lead.lead_comments?.length ?? 0
   const days = daysInStage(lead.status_changed_at, lead.created_at)
   const stageColor = days >= 7 ? '#ef4444' : days >= 3 ? '#f59e0b' : 'var(--text-muted)'
@@ -557,13 +561,13 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
 // ─── ClientAddedModal ─────────────────────────────────────────────────────────
 
 interface ClientAddedModalProps {
-  clientName: string
-  clientPhone: string | null
-  onEdit: () => void
+  clientId: string | null
+  clientName: string | null
+  onGoToClient: () => void
   onClose: () => void
 }
 
-function ClientAddedModal({ clientName, clientPhone, onEdit, onClose }: ClientAddedModalProps) {
+function ClientAddedModal({ clientId, clientName, onGoToClient, onClose }: ClientAddedModalProps) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
@@ -571,21 +575,31 @@ function ClientAddedModal({ clientName, clientPhone, onEdit, onClose }: ClientAd
         <div style={{ width: 48, height: 48, borderRadius: 16, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 21px' }}>
           <UserPlus size={22} color="#10b981" />
         </div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 13 }}>Клиент добавлен в базу</div>
-        <div style={{ marginBottom: 21, padding: '10px 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#10b981' }}>{clientName}</div>
-          {clientPhone && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{clientPhone}</div>}
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 34, lineHeight: 1.6 }}>
-          Статус «Черновик». Перейдите в карточку для заполнения данных.
-        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 13 }}>Лид успешно закрыт!</div>
+        {clientName ? (
+          <>
+            <div style={{ marginBottom: 21, padding: '10px 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Создана карточка клиента</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#10b981' }}>{clientName}</div>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 34, lineHeight: 1.6 }}>
+              Статус «Черновик». Перейдите в карточку для заполнения данных.
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 34, lineHeight: 1.6 }}>
+            Статус лида обновлён.
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 13 }}>
-          <button onClick={onEdit}
-            style={{ flex: 1, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            Редактировать карточку
-          </button>
+          {clientId && (
+            <button onClick={onGoToClient}
+              style={{ flex: 1, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              Перейти к клиенту
+            </button>
+          )}
           <button onClick={onClose}
-            style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            style={{ flex: clientId ? undefined : 1, height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
             Закрыть
           </button>
         </div>
@@ -607,7 +621,7 @@ export default function LeadsPage() {
   const [createCol, setCreateCol]       = useState<LeadStatus | null>(null)
   const [dragOver, setDragOver]         = useState<LeadStatus | null>(null)
   const [ctxMenu, setCtxMenu]           = useState<{ x: number; y: number; lead: Lead } | null>(null)
-  const [clientAddedModal, setClientAddedModal] = useState<{ full_name: string; phone: string | null } | null>(null)
+  const [clientAddedModal, setClientAddedModal] = useState<{ id: string | null; full_name: string | null; phone: string | null } | null>(null)
   const [filterSource, setFilterSource] = useState('')
   const draggingRef = useRef<Lead | null>(null)
 
@@ -620,7 +634,7 @@ export default function LeadsPage() {
       'Телефон': l.phone ?? '',
       'Статус': COLUMNS.find(c => c.id === l.status)?.label ?? l.status,
       'Источник': SOURCE_LABELS[l.source] ?? l.source,
-      'Ответственный': employees.find(e => e.id === l.assigned_to)?.full_name ?? '',
+      'Ответственный': (employees.find(e => e.profile_id === l.assigned_to) ?? employees.find(e => e.id === l.assigned_to))?.full_name ?? l.assigned_profile?.full_name ?? '',
       'Дней в статусе': daysInStage(l.status_changed_at, l.created_at),
       'Создан': new Date(l.created_at).toLocaleDateString('ru-RU'),
     })))
@@ -667,8 +681,11 @@ export default function LeadsPage() {
     try {
       const result = await leadsApi.updateStatus(lead.id, colId)
       setLeads(prev => prev.map(l => l.id === lead.id ? result.lead : l))
-      if (colId === 'success' && result.client) {
-        setClientAddedModal(result.client)
+      if (colId === 'success') {
+        setClientAddedModal(result.client
+          ? { id: result.client.id, full_name: result.client.full_name, phone: result.client.phone }
+          : { id: null, full_name: null, phone: null }
+        )
       }
     } catch {
       // revert
@@ -705,7 +722,12 @@ export default function LeadsPage() {
         try {
           const result = await leadsApi.updateStatus(lead.id, c.id)
           setLeads(prev => prev.map(l => l.id === lead.id ? result.lead : l))
-          if (c.id === 'success' && result.client) setClientAddedModal(result.client)
+          if (c.id === 'success') {
+            setClientAddedModal(result.client
+              ? { id: result.client.id, full_name: result.client.full_name, phone: result.client.phone }
+              : { id: null, full_name: null, phone: null }
+            )
+          }
         } catch {
           setLeads(prev => prev.map(l => l.id === lead.id ? lead : l))
         }
@@ -865,12 +887,12 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Client added confirmation (drag-drop / context menu to success) */}
-      {clientAddedModal && (
+      {/* Success modal (drag-drop / context menu) */}
+      {clientAddedModal !== null && (
         <ClientAddedModal
+          clientId={clientAddedModal.id}
           clientName={clientAddedModal.full_name}
-          clientPhone={clientAddedModal.phone}
-          onEdit={() => { setClientAddedModal(null); navigate('/clients') }}
+          onGoToClient={() => { const cid = clientAddedModal.id; setClientAddedModal(null); if (cid) navigate(`/clients/${cid}`) }}
           onClose={() => setClientAddedModal(null)}
         />
       )}
