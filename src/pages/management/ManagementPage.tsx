@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 import {
   Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid,
   CreditCard, Package, Edit2, X, ChevronDown, Shield, Users,
@@ -677,12 +678,6 @@ const ACTION_LABELS: Record<string, string> = {
   cancel_early: 'Отмена (>24ч)', cancel_late: 'Отмена (<24ч)',
 }
 
-function nextPermState(current: PermissionState, canLock: boolean): PermissionState {
-  if (current === 'deny')   return 'allow'
-  if (current === 'allow')  return canLock ? 'locked' : 'deny'
-  return 'deny' // locked → deny, только developer сюда доходит
-}
-
 const ROLE_RANK: Partial<Record<string, number>> = {
   developer: 0, owner: 1, franchisee: 2, admin: 3, staff: 4, technical: 5,
 }
@@ -692,116 +687,182 @@ function isSetByHigherRole(override: PermissionOverride | undefined, myRole: str
   return (ROLE_RANK[override.set_by] ?? 99) < (ROLE_RANK[myRole] ?? 99)
 }
 
+const PERM_OPTIONS_DEV: { state: PermissionState; label: string; icon: string }[] = [
+  { state: 'deny',   label: 'Запрещено',     icon: '⬜' },
+  { state: 'allow',  label: 'Разрешено',     icon: '✅' },
+  { state: 'locked', label: 'Заблокировано', icon: '🔒' },
+]
+
+const PERM_OPTIONS_OTHER: { state: PermissionState; label: string; icon: string }[] = [
+  { state: 'deny',  label: 'Запрещено', icon: '⬜' },
+  { state: 'allow', label: 'Разрешено', icon: '✅' },
+]
+
+interface PermDropdown { key: string; top: number; left: number }
+
 function PermissionsTab() {
   const perm = usePermissions()
   const { overrides, refresh } = usePermissionOverrides()
   const [saving, setSaving] = useState<string | null>(null)
+  const [dropdown, setDropdown] = useState<PermDropdown | null>(null)
 
-  const handleClick = async (targetRole: PermRole, resource: string, action: string) => {
-    if (!canEditPermFn(perm.role as PermRole, targetRole)) return
-    const current = getCellState(targetRole, resource, action, overrides)
-    if (current === 'locked' && !perm.canSetLocked) return
+  useEffect(() => {
+    if (!dropdown) return
+    const close = () => setDropdown(null)
+    document.addEventListener('click', close)
+    window.addEventListener('scroll', close, true)
+    return () => {
+      document.removeEventListener('click', close)
+      window.removeEventListener('scroll', close, true)
+    }
+  }, [dropdown])
 
-    const existingOverride = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
-    if (isSetByHigherRole(existingOverride, perm.role as string)) return
+  const openDropdown = (e: React.MouseEvent<HTMLButtonElement>, key: string) => {
+    e.stopPropagation()
+    if (dropdown?.key === key) { setDropdown(null); return }
+    const rect = e.currentTarget.getBoundingClientRect()
+    setDropdown({ key, top: rect.bottom + 4, left: rect.left })
+  }
 
-    const next = nextPermState(current, perm.canSetLocked)
+  const handleSelect = async (targetRole: PermRole, resource: string, action: string, newState: PermissionState) => {
+    setDropdown(null)
     const key = `${targetRole}:${resource}:${action}`
     setSaving(key)
-
     try {
       const isInDefault = DEFAULT_PERMISSIONS[resource]?.[action]?.includes(targetRole) ?? false
       const defaultState: PermissionState = isInDefault ? 'allow' : 'deny'
-
-      if (next === defaultState) {
+      if (newState === defaultState) {
         const existing = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
         if (existing?.id) await permissionsApi.delete(existing.id)
       } else {
-        await permissionsApi.upsert({
-          role: targetRole, resource, action, state: next,
-          set_by: perm.role as PermRole, branch_id: null,
-        })
+        await permissionsApi.upsert({ role: targetRole, resource, action, state: newState, set_by: perm.role as PermRole, branch_id: null })
       }
       refresh()
     } catch { /* ignore */ }
     finally { setSaving(null) }
   }
 
-  return (
-    <div style={{ overflowX: 'auto', margin: -21 }}>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '13px 21px 8px' }}>
-        ✓ — разрешено · — — запрещено · ✕ — заблокировано (нельзя изменить пользователям). Нажмите на ячейку для изменения.
-      </div>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 660 }}>
-        <thead>
-          <tr>
-            <th style={{ ...thStyle, textAlign: 'left', width: 110 }}>Ресурс</th>
-            <th style={{ ...thStyle, textAlign: 'left', width: 140 }}>Действие</th>
-            {PERM_ROLES.map(r => (
-              <th key={r} style={{ ...thStyle, textAlign: 'center', width: 76 }}>{PERM_ROLE_LABELS[r]}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(DEFAULT_PERMISSIONS).flatMap(([resource, actions]) =>
-            Object.keys(actions).map((action, actionIdx) => {
-              const actionCount = Object.keys(actions).length
-              return (
-                <tr key={`${resource}:${action}`} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                  {actionIdx === 0 && (
-                    <td
-                      rowSpan={actionCount}
-                      style={{ ...tdStyle, fontWeight: 600, fontSize: 12, verticalAlign: 'middle', borderRight: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', whiteSpace: 'nowrap' }}
-                    >
-                      {RESOURCE_LABELS[resource] ?? resource}
-                    </td>
-                  )}
-                  <td style={{ ...tdStyle, fontSize: 12, color: 'var(--text-secondary)', borderRight: '1px solid var(--glass-border)' }}>
-                    {ACTION_LABELS[action] ?? action}
-                  </td>
-                  {PERM_ROLES.map(targetRole => {
-                    const state = getCellState(targetRole, resource, action, overrides)
-                    const canEdit = canEditPermFn(perm.role as PermRole, targetRole)
-                    const cellOverride = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
-                    const frozenByHigher = isSetByHigherRole(cellOverride, perm.role as string)
-                    const clickable = canEdit && (state !== 'locked' || perm.canSetLocked) && !frozenByHigher
-                    const isSaving = saving === `${targetRole}:${resource}:${action}`
+  const options = perm.canSetLocked ? PERM_OPTIONS_DEV : PERM_OPTIONS_OTHER
+  const [dropRole, dropResource, dropAction] = dropdown?.key.split(':') ?? []
+  const dropCurrentState = dropRole && dropResource && dropAction
+    ? getCellState(dropRole as PermRole, dropResource, dropAction, overrides)
+    : null
 
-                    return (
-                      <td key={targetRole} style={{ ...tdStyle, textAlign: 'center', padding: '4px 8px' }}>
-                        <button
-                          onClick={() => void handleClick(targetRole, resource, action)}
-                          disabled={!clickable || isSaving}
-                          title={
-                            frozenByHigher ? 'Установлено вышестоящей ролью' :
-                            !clickable ? (state === 'locked' ? 'Заблокировано' : 'Нет прав на изменение') :
-                            undefined
-                          }
-                          style={{
-                            width: 30, height: 30, borderRadius: 7, border: 'none',
-                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: clickable && !isSaving ? 'pointer' : 'not-allowed',
-                            background: state === 'allow'  ? 'rgba(2,189,182,0.12)'  :
-                                        state === 'locked' ? 'rgba(239,68,68,0.10)'  : 'transparent',
-                            color:      state === 'allow'  ? '#02BDB6' :
-                                        state === 'locked' ? '#ef4444' : 'var(--text-muted)',
-                            opacity: isSaving ? 0.4 : (!canEdit || frozenByHigher ? 0.4 : 1),
-                            fontSize: 15, fontWeight: 700,
-                            transition: 'all 0.1s',
-                          }}
-                        >
-                          {isSaving ? '·' : state === 'allow' ? '✓' : state === 'locked' ? '✕' : '—'}
-                        </button>
+  return (
+    <>
+      {dropdown && ReactDOM.createPortal(
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: 'fixed', top: dropdown.top, left: dropdown.left, zIndex: 9999,
+            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 10, overflow: 'hidden',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)', minWidth: 170,
+          }}
+        >
+          {options.map(opt => {
+            const isActive = dropCurrentState === opt.state
+            return (
+              <button
+                key={opt.state}
+                onClick={() => void handleSelect(dropRole as PermRole, dropResource, dropAction, opt.state)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  width: '100%', padding: '8px 14px', border: 'none',
+                  background: isActive ? 'var(--accent-muted)' : 'transparent',
+                  color: isActive ? 'var(--accent)' : 'var(--text)',
+                  cursor: 'pointer', fontSize: 13, textAlign: 'left', fontWeight: isActive ? 600 : 400,
+                }}
+              >
+                <span style={{ fontSize: 14, lineHeight: 1 }}>{opt.icon}</span>
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>,
+        document.body
+      )}
+
+      <div style={{ overflowX: 'auto', margin: -21 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '13px 21px 8px' }}>
+          ✓ — разрешено · — — запрещено · ✕ — заблокировано. Нажмите на ячейку для изменения.
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 660 }}>
+          <thead>
+            <tr>
+              <th style={{ ...thStyle, textAlign: 'left', width: 110 }}>Ресурс</th>
+              <th style={{ ...thStyle, textAlign: 'left', width: 140 }}>Действие</th>
+              {PERM_ROLES.map(r => (
+                <th key={r} style={{ ...thStyle, textAlign: 'center', width: 76 }}>{PERM_ROLE_LABELS[r]}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(DEFAULT_PERMISSIONS).flatMap(([resource, actions]) =>
+              Object.keys(actions).map((action, actionIdx) => {
+                const actionCount = Object.keys(actions).length
+                return (
+                  <tr key={`${resource}:${action}`} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                    {actionIdx === 0 && (
+                      <td
+                        rowSpan={actionCount}
+                        style={{ ...tdStyle, fontWeight: 600, fontSize: 12, verticalAlign: 'middle', borderRight: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', whiteSpace: 'nowrap' }}
+                      >
+                        {RESOURCE_LABELS[resource] ?? resource}
                       </td>
-                    )
-                  })}
-                </tr>
-              )
-            })
-          )}
-        </tbody>
-      </table>
-    </div>
+                    )}
+                    <td style={{ ...tdStyle, fontSize: 12, color: 'var(--text-secondary)', borderRight: '1px solid var(--glass-border)' }}>
+                      {ACTION_LABELS[action] ?? action}
+                    </td>
+                    {PERM_ROLES.map(targetRole => {
+                      const state = getCellState(targetRole, resource, action, overrides)
+                      const canEdit = canEditPermFn(perm.role as PermRole, targetRole)
+                      const cellOverride = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
+                      const frozenByHigher = isSetByHigherRole(cellOverride, perm.role as string)
+                      const isLocked = state === 'locked' && !perm.canSetLocked
+                      const clickable = canEdit && !isLocked && !frozenByHigher
+                      const isSaving = saving === `${targetRole}:${resource}:${action}`
+                      const cellKey = `${targetRole}:${resource}:${action}`
+                      const isOpen = dropdown?.key === cellKey
+
+                      return (
+                        <td key={targetRole} style={{ ...tdStyle, textAlign: 'center', padding: '4px 8px' }}>
+                          <button
+                            onClick={e => clickable && !isSaving ? openDropdown(e, cellKey) : e.stopPropagation()}
+                            title={
+                              frozenByHigher ? 'Установлено вышестоящей ролью' :
+                              isLocked       ? 'Заблокировано' :
+                              !canEdit       ? 'Нет прав на изменение' :
+                              undefined
+                            }
+                            style={{
+                              width: 30, height: 30, borderRadius: 7, border: 'none',
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: clickable && !isSaving ? 'pointer' : 'not-allowed',
+                              background: state === 'allow'  ? 'rgba(2,189,182,0.12)' :
+                                          state === 'locked' ? 'rgba(239,68,68,0.10)' : 'transparent',
+                              color:      state === 'allow'  ? '#02BDB6' :
+                                          state === 'locked' ? '#ef4444' : 'var(--text-muted)',
+                              opacity: isSaving ? 0.4 : (!clickable ? 0.5 : 1),
+                              outline: isOpen ? '2px solid var(--accent)' : 'none',
+                              outlineOffset: 2,
+                              fontSize: 15, fontWeight: 700,
+                              transition: 'all 0.1s',
+                            }}
+                          >
+                            {isSaving ? '·' : state === 'allow' ? '✓' : state === 'locked' ? '✕' : '—'}
+                          </button>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 
