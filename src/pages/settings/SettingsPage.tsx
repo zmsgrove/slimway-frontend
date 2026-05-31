@@ -273,17 +273,14 @@ function SecuritySection() {
     setVerifyLoading(true)
     setVerifyError('')
     try {
-      // Use Supabase directly to ensure session is properly updated to aal2
-      const { data: factors } = await supabase.auth.mfa.listFactors()
-      const totp = factors?.totp?.find(f => f.id === enrollData.factor_id)
-        ?? factors?.totp?.[0]
-      if (!totp) throw new Error('Factor not found')
+      // Используем factor_id напрямую — listFactors() не возвращает unverified факторы
+      const factorId = enrollData.factor_id
 
-      const { data: challenge, error: chalErr } = await supabase.auth.mfa.challenge({ factorId: totp.id })
+      const { data: challenge, error: chalErr } = await supabase.auth.mfa.challenge({ factorId })
       if (chalErr || !challenge) throw chalErr ?? new Error('Challenge failed')
 
       const { error: verErr } = await supabase.auth.mfa.verify({
-        factorId:    totp.id,
+        factorId,
         challengeId: challenge.id,
         code:        verifyCode.trim(),
       })
@@ -292,8 +289,9 @@ function SecuritySection() {
       setEnrollSuccess(true)
       await loadStatus()
     } catch (e: unknown) {
-      const msg = (e as { message?: string })?.message
-      setVerifyError(msg?.includes('Invalid') ? 'Неверный код. Попробуйте ещё раз.' : 'Ошибка подтверждения кода.')
+      const msg = (e as { message?: string })?.message ?? ''
+      const isInvalidCode = msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('incorrect') || msg.toLowerCase().includes('mfa')
+      setVerifyError(isInvalidCode ? 'Неверный код. Попробуйте ещё раз.' : 'Ошибка подтверждения. Попробуйте сначала.')
     } finally {
       setVerifyLoading(false)
     }
