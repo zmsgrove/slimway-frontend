@@ -854,9 +854,13 @@ interface PermDropdown { key: string; top: number; left: number }
 
 function PermissionsTab() {
   const perm = usePermissions()
-  const { overrides, refresh } = usePermissionOverrides()
-  const [saving, setSaving] = useState<string | null>(null)
+  const { overrides: contextOverrides, refresh } = usePermissionOverrides()
+  const [localOverrides, setLocalOverrides] = useState<PermissionOverride[]>([])
+  const [saving,   setSaving]   = useState<string | null>(null)
   const [dropdown, setDropdown] = useState<PermDropdown | null>(null)
+
+  // Sync local copy from context (after refresh or initial load)
+  useEffect(() => { setLocalOverrides(contextOverrides) }, [contextOverrides])
 
   useEffect(() => {
     if (!dropdown) return
@@ -880,24 +884,31 @@ function PermissionsTab() {
     setDropdown(null)
     const key = `${targetRole}:${resource}:${action}`
     setSaving(key)
+
+    // Optimistic update
+    setLocalOverrides(prev => {
+      const filtered = prev.filter(
+        o => !(o.role === targetRole && o.resource === resource && o.action === action)
+      )
+      if (newState === 'deny') return filtered
+      return [...filtered, { role: targetRole, resource, action, state: newState, set_by: perm.role as PermRole, branch_id: null }]
+    })
+
     try {
-      const isInDefault = DEFAULT_PERMISSIONS[resource]?.[action]?.includes(targetRole) ?? false
-      const defaultState: PermissionState = isInDefault ? 'allow' : 'deny'
-      if (newState === defaultState) {
-        const existing = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
-        if (existing?.id) await permissionsApi.delete(existing.id)
-      } else {
-        await permissionsApi.upsert({ role: targetRole, resource, action, state: newState, set_by: perm.role as PermRole, branch_id: null })
-      }
-      refresh()
-    } catch { /* ignore */ }
-    finally { setSaving(null) }
+      await api.post('/permissions', { role: targetRole, resource, action, state: newState })
+      refresh() // sync real IDs from server
+    } catch (e) {
+      console.error('[permissions save]', e)
+      setLocalOverrides(contextOverrides) // rollback
+    } finally {
+      setSaving(null)
+    }
   }
 
   const options = perm.canSetLocked ? PERM_OPTIONS_DEV : PERM_OPTIONS_OTHER
   const [dropRole, dropResource, dropAction] = dropdown?.key.split(':') ?? []
   const dropCurrentState = dropRole && dropResource && dropAction
-    ? getCellState(dropRole as PermRole, dropResource, dropAction, overrides)
+    ? getCellState(dropRole as PermRole, dropResource, dropAction, localOverrides)
     : null
 
   return (
@@ -967,9 +978,9 @@ function PermissionsTab() {
                       {ACTION_LABELS[action] ?? action}
                     </td>
                     {PERM_ROLES.map(targetRole => {
-                      const state = getCellState(targetRole, resource, action, overrides)
+                      const state = getCellState(targetRole, resource, action, localOverrides)
                       const canEdit = canEditPermFn(perm.role as PermRole, targetRole)
-                      const cellOverride = overrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
+                      const cellOverride = localOverrides.find(o => o.role === targetRole && o.resource === resource && o.action === action)
                       const frozenByHigher = isSetByHigherRole(cellOverride, perm.role as string)
                       const isLocked = state === 'locked' && !perm.canSetLocked
                       const clickable = canEdit && !isLocked && !frozenByHigher

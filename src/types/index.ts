@@ -190,6 +190,9 @@ export interface Employee {
   address: string | null
   salary_rate?: number | null
   payment_type?: 'hourly' | 'fixed' | 'percent' | null
+  base_salary?: number | null
+  kpi_amount?: number | null
+  sales_percent?: number | null
   created_at: string
   kpi?: {
     shifts_total: number
