@@ -2,7 +2,7 @@ import { api } from '../lib/api'
 import type { Lead, LeadComment, LeadStatus } from '../types'
 
 export const leadsApi = {
-  getAll: async (params?: { status?: LeadStatus; archived?: boolean }): Promise<Lead[]> => {
+  getAll: async (params?: { status?: LeadStatus; archived?: boolean; from?: string; to?: string }): Promise<Lead[]> => {
     const { data } = await api.get('/leads', { params })
     return data
   },

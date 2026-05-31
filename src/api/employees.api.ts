@@ -15,8 +15,8 @@ export interface CreateEmployeePayload {
 }
 
 export const employeesApi = {
-  getAll: async (): Promise<Employee[]> => {
-    const { data } = await api.get('/employees')
+  getAll: async (params?: { from?: string; to?: string }): Promise<Employee[]> => {
+    const { data } = await api.get('/employees', { params })
     return data
   },
 

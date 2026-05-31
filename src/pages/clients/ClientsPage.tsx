@@ -5,6 +5,7 @@ import {
   Download, Tag, Cake, Snowflake, CheckCircle2, Clock, TrendingUp,
 } from 'lucide-react'
 import { clientsApi } from '../../api/clients.api'
+import { PeriodFilter, type PeriodValue } from '../../components/ui/PeriodFilter'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { api } from '../../lib/api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
@@ -999,20 +1000,24 @@ export default function ClientsPage() {
   const [editTarget,   setEditTarget]  = useState<Client | null>(null)
   const [viewTarget,   setViewTarget]  = useState<Client | null>(null)
   const [ctxMenu,      setCtxMenu]     = useState<CtxMenu | null>(null)
+  const [period,       setPeriod]      = useState<PeriodValue | null>(null)
 
-  const load = async (q?: string) => {
+  const load = useCallback(async (q?: string) => {
     setLoading(true); setError(null)
     try {
-      setClients(await clientsApi.getAll(q))
+      setClients(await clientsApi.getAll({
+        ...(q ? { search: q } : {}),
+        ...(period ? { from: period.from, to: period.to } : {}),
+      }))
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
       setError(msg ?? 'Не удалось загрузить клиентов')
     } finally {
       setLoading(false)
     }
-  }
+  }, [period])
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => { void load() }, [load])
 
   const handleSearch = (q: string) => { setSearch(q); void load(q || undefined) }
 
@@ -1120,6 +1125,7 @@ export default function ClientsPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, flexWrap: 'wrap' }}>
+        <PeriodFilter value={period} onChange={setPeriod} />
         <select
           value={filterSource}
           onChange={e => setFilterSource(e.target.value)}

@@ -10,6 +10,7 @@ import { employeesApi } from '../../api/employees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
+import { PeriodFilter, type PeriodValue } from '../../components/ui/PeriodFilter'
 import type { Lead, LeadStatus, LeadComment, Employee } from '../../types'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -680,6 +681,7 @@ export default function LeadsPage() {
   const [clientAddedModal, setClientAddedModal] = useState<{ id: string | null; full_name: string | null; phone: string | null } | null>(null)
   const [filterSource, setFilterSource] = useState('')
   const [failReasonDrop, setFailReasonDrop] = useState<Lead | null>(null)
+  const [period, setPeriod] = useState<PeriodValue | null>(null)
   const draggingRef = useRef<Lead | null>(null)
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin' || user?.role === 'staff'
@@ -703,7 +705,10 @@ export default function LeadsPage() {
   const loadData = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const [leadsData, empsData] = await Promise.all([leadsApi.getAll(), employeesApi.getAll()])
+      const [leadsData, empsData] = await Promise.all([
+        leadsApi.getAll(period ? { from: period.from, to: period.to } : undefined),
+        employeesApi.getAll(),
+      ])
       setLeads(leadsData)
       setEmployees(empsData)
     } catch {
@@ -711,7 +716,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [period])
 
   useEffect(() => { void loadData() }, [loadData])
 
@@ -801,14 +806,15 @@ export default function LeadsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px - 42px)', minHeight: 0 }}>
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13, flexShrink: 0, flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Лиды</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-            {leads.length} лидов · Воронка продаж
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ marginBottom: 13, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+          <div>
+            <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Лиды</h1>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+              {leads.length} лидов · Воронка продаж
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <select
             value={filterSource}
             onChange={e => setFilterSource(e.target.value)}
@@ -829,7 +835,9 @@ export default function LeadsPage() {
               <Plus size={16} />Новый лид
             </button>
           )}
+          </div>
         </div>
+        <PeriodFilter value={period} onChange={setPeriod} />
       </div>
 
       {error && (

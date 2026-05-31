@@ -2,8 +2,8 @@ import { api } from '../lib/api'
 import type { Client, ClientDetail } from '../types'
 
 export const clientsApi = {
-  getAll: async (search?: string): Promise<Client[]> => {
-    const { data } = await api.get('/clients', { params: { search } })
+  getAll: async (params?: { search?: string; from?: string; to?: string }): Promise<Client[]> => {
+    const { data } = await api.get('/clients', { params })
     return data
   },
 

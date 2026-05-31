@@ -13,6 +13,7 @@ import { employeesApi } from '../../api/employees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
+import { PeriodFilter, type PeriodValue } from '../../components/ui/PeriodFilter'
 import type {
   Task, TaskStatus, TaskPriority,
   TaskChecklistItem, TaskChecklistGroup, TaskComment, Employee,
@@ -867,15 +868,18 @@ export default function TasksPage() {
   const [search,       setSearch]       = useState('')
   const [filterPri,    setFilterPri]    = useState<TaskPriority | null>(null)
   const [myFilter,     setMyFilter]     = useState<MyFilter>('all')
+  const [period,       setPeriod]       = useState<PeriodValue | null>(null)
+  const [dateField,    setDateField]    = useState<'created_at' | 'deadline'>('created_at')
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   const loadTasks = useCallback(async () => {
     try {
-      const data = await tasksApi.getAll()
+      const params = period ? { from: period.from, to: period.to, date_field: dateField } : undefined
+      const data = await tasksApi.getAll(params)
       setTasks(data)
     } catch { /* ignore */ } finally { setLoading(false) }
-  }, [])
+  }, [period, dateField])
 
   useEffect(() => {
     void loadTasks()
@@ -1023,6 +1027,19 @@ export default function TasksPage() {
           >
             <Plus size={15} />Задача
           </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+          <PeriodFilter value={period} onChange={p => { setPeriod(p) }} />
+          {period && (
+            <div style={{ display: 'flex', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
+              {(['created_at', 'deadline'] as const).map(f => (
+                <button key={f} onClick={() => setDateField(f)}
+                  style={{ height: 30, padding: '0 10px', background: dateField === f ? 'rgba(2,189,182,0.15)' : 'transparent', border: 'none', borderRight: f === 'created_at' ? '1px solid var(--glass-border)' : 'none', color: dateField === f ? '#02BDB6' : 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
+                  {f === 'created_at' ? 'По дате создания' : 'По дедлайну'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

@@ -140,7 +140,7 @@ function ClientSearch({ value, onChange }: ClientSearchProps) {
     setQ(val); clearTimeout(timer.current)
     if (!val.trim()) { setRes([]); setOpen(false); return }
     timer.current = setTimeout(async () => {
-      try { const d = await clientsApi.getAll(val); setRes(d.slice(0, 8)); setOpen(true) } catch { /* */ }
+      try { const d = await clientsApi.getAll({ search: val }); setRes(d.slice(0, 8)); setOpen(true) } catch { /* */ }
     }, 300)
   }
 

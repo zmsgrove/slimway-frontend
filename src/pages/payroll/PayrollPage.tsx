@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { DollarSign, CheckCircle, Clock, X } from 'lucide-react'
+import { DollarSign, CheckCircle, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { employeesApi } from '../../api/employees.api'
 import { usePermissions } from '../../hooks/usePermissions'
 import type { Employee } from '../../types'
+
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
 
 const inputStyle: React.CSSProperties = {
   width: '100%', height: 36, padding: '0 13px',
@@ -113,15 +115,31 @@ export default function PayrollPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading,   setLoading]   = useState(true)
   const [editEmp,   setEditEmp]   = useState<Employee | null>(null)
+  const [year,  setYear]  = useState(() => new Date().getFullYear())
+  const [month, setMonth] = useState(() => new Date().getMonth())
 
   const canEdit = can('employees', 'edit')
 
+  const monthFrom = `${year}-${String(month + 1).padStart(2, '0')}-01`
+  const monthTo   = `${year}-${String(month + 1).padStart(2, '0')}-${String(new Date(year, month + 1, 0).getDate()).padStart(2, '0')}`
+
+  const prevMonth = () => {
+    if (month === 0) { setMonth(11); setYear(y => y - 1) }
+    else setMonth(m => m - 1)
+  }
+  const nextMonth = () => {
+    if (month === 11) { setMonth(0); setYear(y => y + 1) }
+    else setMonth(m => m + 1)
+  }
+  const isCurrentMonth = year === new Date().getFullYear() && month === new Date().getMonth()
+
   useEffect(() => {
-    employeesApi.getAll()
+    setLoading(true)
+    employeesApi.getAll({ from: monthFrom, to: monthTo })
       .then(setEmployees)
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [])
+  }, [monthFrom, monthTo])
 
   const handleSaved = (updated: Employee) => {
     setEmployees(prev => prev.map(e => e.id === updated.id ? { ...e, ...updated } : e))
@@ -145,11 +163,24 @@ export default function PayrollPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 21 }}>
-        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Зарплата</h1>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-          {employees.length} сотрудников · Расчёт оплаты труда
-        </p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13, flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Зарплата</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+            {employees.length} сотрудников · Расчёт оплаты труда
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '4px 6px', backdropFilter: 'blur(12px)' }}>
+          <button onClick={prevMonth} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: 'transparent', border: 'none', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <ChevronLeft size={16} />
+          </button>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', minWidth: 120, textAlign: 'center' }}>
+            {MONTHS_RU[month]} {year}
+          </span>
+          <button onClick={nextMonth} disabled={isCurrentMonth} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: 'transparent', border: 'none', borderRadius: 6, color: isCurrentMonth ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: isCurrentMonth ? 'not-allowed' : 'pointer', opacity: isCurrentMonth ? 0.4 : 1 }}>
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
 
       <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
