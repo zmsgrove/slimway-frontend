@@ -19,6 +19,8 @@ import SalePage from './pages/sale/SalePage'
 import WarehousePage from './pages/warehouse/WarehousePage'
 import ManagementPage from './pages/management/ManagementPage'
 import PayrollPage from './pages/payroll/PayrollPage'
+import ClientPortalPage from './pages/client-portal/ClientPortalPage'
+import BookingPage from './pages/book/BookingPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +51,11 @@ function InnerApp() {
     <ThemeProvider userId={user?.id ?? null}>
       <BrowserRouter>
         <Routes>
+          {/* Public routes — no auth required */}
+          <Route path="/client"        element={<ClientPortalPage />} />
+          <Route path="/client/:token" element={<ClientPortalPage />} />
+          <Route path="/book/:slug"    element={<BookingPage />} />
+
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/"

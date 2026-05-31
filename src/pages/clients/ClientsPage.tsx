@@ -3,11 +3,13 @@ import {
   Users, Search, Plus, X, AlertCircle, Phone, Mail, Calendar,
   Edit2, Trash2, CreditCard, Eye, FileText, MoreVertical, History,
   Download, Tag, Cake, Snowflake, CheckCircle2, Clock, TrendingUp,
+  MessageCircle, Link, QrCode, Copy, Send,
 } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { clientsApi } from '../../api/clients.api'
+import { api } from '../../lib/api'
 import { PeriodFilter, type PeriodValue } from '../../components/ui/PeriodFilter'
 import { subscriptionsApi } from '../../api/subscriptions.api'
-import { api } from '../../lib/api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { useAuth } from '../../hooks/useAuth'
 import type { Client, ClientDetail, ClientBooking, Subscription, AuditLogEntry, SubscriptionRenewal } from '../../types'
@@ -223,7 +225,7 @@ function SubProgressBar({ used, total, color }: { used: number; total: number | 
 
 // ─── ClientDetailModal ────────────────────────────────────────────────────────
 
-type DetailTab = 'profile' | 'visits' | 'subs' | 'history'
+type DetailTab = 'profile' | 'visits' | 'subs' | 'history' | 'chat'
 
 const CANCELLATION_REASONS = [
   { value: 'changed_mind', label: 'Клиент передумал' },
@@ -248,6 +250,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   reschedule_booking: 'Бронь перенесена',
 }
 
+interface ClientMsg { id: string; sender: string; text: string; created_at: string; is_read: boolean }
+
 function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailModalProps) {
   const { user } = useAuth()
   const [tab,             setTab]          = useState<DetailTab>('profile')
@@ -255,6 +259,14 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
   const [loadingDetail,   setLoadingDetail] = useState(true)
   const [auditLog,        setAuditLog]     = useState<AuditLogEntry[] | null>(null)
   const [loadingAudit,    setLoadAudit]    = useState(false)
+  const [messages,        setMessages]     = useState<ClientMsg[] | null>(null)
+  const [msgText,         setMsgText]      = useState('')
+  const [sendingMsg,      setSendingMsg]   = useState(false)
+  const [clientToken,     setClientToken]  = useState<string | null>(null)
+  const [tokenLoading,    setTokenLoading] = useState(false)
+  const [showQR,          setShowQR]       = useState(false)
+  const [copied,          setCopied]       = useState(false)
+  const msgEndRef = useRef<HTMLDivElement>(null)
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
 
@@ -289,6 +301,47 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
   useEffect(() => {
     if (tab === 'history') loadAuditLog()
   }, [tab, loadAuditLog])
+
+  const loadMessages = useCallback(async () => {
+    try {
+      const res = await api.get(`/client-messages/${client.id}`)
+      setMessages((res.data as ClientMsg[]) ?? [])
+    } catch { setMessages([]) }
+  }, [client.id])
+
+  useEffect(() => {
+    if (tab === 'chat') void loadMessages()
+  }, [tab, loadMessages])
+
+  useEffect(() => {
+    msgEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const handleSendMsg = async () => {
+    if (!msgText.trim() || sendingMsg) return
+    setSendingMsg(true)
+    try {
+      await api.post(`/client-messages/${client.id}`, { text: msgText.trim() })
+      setMsgText('')
+      await loadMessages()
+    } finally { setSendingMsg(false) }
+  }
+
+  const handleGetToken = async () => {
+    if (clientToken) return
+    setTokenLoading(true)
+    try {
+      const res = await api.post(`/clients/${client.id}/portal-token`)
+      setClientToken((res.data as { token: string }).token)
+    } catch { /* ignore */ } finally { setTokenLoading(false) }
+  }
+
+  const portalUrl = clientToken ? `${window.location.origin}/client/${clientToken}` : ''
+
+  const handleCopy = () => {
+    if (!portalUrl) return
+    navigator.clipboard.writeText(portalUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
 
   const handleUnfreezeSub = async (subId: string) => {
     try {
@@ -350,6 +403,10 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               </div>
             </div>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <button onClick={() => { void handleGetToken(); setTab('profile') }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                <Link size={12} />Кабинет
+              </button>
               <button onClick={onEdit}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                 <Edit2 size={12} />Изменить
@@ -360,10 +417,11 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', borderRadius: 10, padding: 4 }}>
-            {tabBtn('profile', 'Профиль', <Eye size={12} />)}
-            {tabBtn('visits',  'Визиты',  <CheckCircle2 size={12} />)}
-            {tabBtn('subs',    'Абонементы', <CreditCard size={12} />)}
-            {tabBtn('history', 'История', <FileText size={12} />)}
+            {tabBtn('profile', 'Профиль',   <Eye size={12} />)}
+            {tabBtn('visits',  'Визиты',    <CheckCircle2 size={12} />)}
+            {tabBtn('subs',    'Абонем.',   <CreditCard size={12} />)}
+            {tabBtn('history', 'История',   <FileText size={12} />)}
+            {tabBtn('chat',    'Чат',       <MessageCircle size={12} />)}
           </div>
         </div>
 
@@ -610,6 +668,75 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
             )}
           </div>
         )}
+        {/* Chat tab */}
+        {!loadingDetail && tab === 'chat' && (
+          <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 460 }}>
+            {/* Portal link row */}
+            <div style={{ padding: '10px 21px', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => { void handleGetToken() }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 7, color: '#02BDB6', fontSize: 11, cursor: 'pointer' }}>
+                <Link size={11} />{tokenLoading ? 'Генерация...' : 'Ссылка кабинета'}
+              </button>
+              {clientToken && (
+                <>
+                  <button onClick={handleCopy}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 7, color: copied ? '#10b981' : 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
+                    <Copy size={11} />{copied ? 'Скопировано!' : 'Копировать'}
+                  </button>
+                  <button onClick={() => setShowQR(v => !v)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 7, color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
+                    <QrCode size={11} />QR
+                  </button>
+                </>
+              )}
+            </div>
+            {showQR && clientToken && (
+              <div style={{ padding: '13px 21px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ padding: 12, background: '#fff', borderRadius: 12, display: 'inline-block' }}>
+                  <QRCodeSVG value={portalUrl} size={160} />
+                </div>
+              </div>
+            )}
+            {/* Messages */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '13px 21px', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
+              {messages === null && <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', padding: 21 }}>Загрузка...</div>}
+              {messages?.length === 0 && <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', padding: 21 }}>Сообщений пока нет</div>}
+              {messages?.map(m => (
+                <div key={m.id} style={{ display: 'flex', justifyContent: m.sender === 'manager' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{
+                    maxWidth: '75%', padding: '8px 12px', fontSize: 13, lineHeight: 1.4,
+                    borderRadius: m.sender === 'manager' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                    background: m.sender === 'manager' ? '#02BDB6' : 'var(--bg-surface)',
+                    color: m.sender === 'manager' ? '#fff' : 'var(--text-primary)',
+                    border: m.sender === 'manager' ? 'none' : '1px solid var(--glass-border)',
+                  }}>
+                    {m.sender === 'client' && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Клиент</div>}
+                    {m.text}
+                    <div style={{ fontSize: 10, color: m.sender === 'manager' ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)', marginTop: 3, textAlign: 'right' }}>
+                      {new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div ref={msgEndRef} />
+            </div>
+            {/* Input */}
+            <div style={{ padding: '10px 21px', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 8 }}>
+              <input
+                style={{ flex: 1, height: 36, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+                placeholder="Написать клиенту..."
+                value={msgText}
+                onChange={e => setMsgText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSendMsg() } }}
+              />
+              <button onClick={() => void handleSendMsg()} disabled={!msgText.trim() || sendingMsg}
+                style={{ width: 36, height: 36, background: msgText.trim() ? '#02BDB6' : 'transparent', border: msgText.trim() ? 'none' : '1px solid var(--glass-border)', borderRadius: 8, cursor: msgText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Send size={14} color={msgText.trim() ? '#fff' : 'var(--text-muted)'} />
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
 
