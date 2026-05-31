@@ -414,14 +414,18 @@ function SecuritySection() {
                   Откройте <strong>Google Authenticator</strong> (или любое TOTP-приложение) и отсканируйте QR-код.
                 </div>
 
-                {/* QR code */}
+                {/* QR code — prefer uri+QRCodeSVG (reliable), fall back to qr_code as img */}
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 21 }}>
-                  {enrollData.qr_code ? (
-                    <img src={enrollData.qr_code} alt="QR code" style={{ width: 180, height: 180, borderRadius: 13, border: '1px solid var(--border)', background: '#fff', padding: 8 }} />
-                  ) : qrValue ? (
+                  {qrValue ? (
                     <div style={{ padding: 13, background: '#fff', borderRadius: 13, border: '1px solid var(--border)' }}>
                       <QRCodeSVG value={qrValue} size={156} />
                     </div>
+                  ) : enrollData.qr_code ? (
+                    <img
+                      src={enrollData.qr_code.startsWith('data:') ? enrollData.qr_code : `data:image/png;base64,${enrollData.qr_code}`}
+                      alt="QR code"
+                      style={{ width: 180, height: 180, borderRadius: 13, border: '1px solid var(--border)', background: '#fff', padding: 8 }}
+                    />
                   ) : null}
                 </div>
 
