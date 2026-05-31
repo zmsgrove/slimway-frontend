@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom'
 import {
   Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid,
   CreditCard, Package, Edit2, X, ChevronDown, Shield, Users, Tag, ClipboardList,
-  Globe, Zap,
+  Globe, Zap, Clock, Copy, QrCode,
 } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { usePermissions } from '../../hooks/usePermissions'
@@ -1467,6 +1468,373 @@ function AuditLogSection() {
   )
 }
 
+// ─── OnlineBookingTab ────────────────────────────────────────────────────────
+
+interface BookingLink {
+  id: string
+  branch_id: string
+  slug: string
+  is_active: boolean
+  created_at: string
+}
+
+const PORTAL_BASE = 'https://slimway-frontend.onrender.com'
+
+function OnlineBookingTab() {
+  const [link,    setLink]    = useState<BookingLink | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [slug,    setSlug]    = useState('')
+  const [saving,  setSaving]  = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
+  const [copied,  setCopied]  = useState(false)
+  const [showQR,  setShowQR]  = useState(false)
+
+  useEffect(() => {
+    api.get('/booking-link')
+      .then(r => { setLink(r.data as BookingLink | null); if ((r.data as BookingLink)?.slug) setSlug((r.data as BookingLink).slug) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const bookingUrl = link?.slug ? `${PORTAL_BASE}/book/${link.slug}` : ''
+
+  const handleCreate = async () => {
+    if (!slug.trim()) { setError('Введите slug'); return }
+    setSaving(true); setError(null)
+    try {
+      const { data } = await api.post('/booking-link', { slug: slug.trim(), is_active: true })
+      setLink(data as BookingLink)
+    } catch (e: unknown) {
+      setError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
+    } finally { setSaving(false) }
+  }
+
+  const handleSaveSlug = async () => {
+    if (!slug.trim()) { setError('Введите slug'); return }
+    setSaving(true); setError(null)
+    try {
+      const { data } = await api.patch('/booking-link', { slug: slug.trim() })
+      setLink(data as BookingLink)
+    } catch (e: unknown) {
+      setError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
+    } finally { setSaving(false) }
+  }
+
+  const handleToggleActive = async () => {
+    if (!link) return
+    try {
+      const { data } = await api.patch('/booking-link', { is_active: !link.is_active })
+      setLink(data as BookingLink)
+    } catch { /* ignore */ }
+  }
+
+  const handleCopy = () => {
+    void navigator.clipboard.writeText(bookingUrl)
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (loading) return <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>Загрузка...</div>
+
+  const slugInputRow = (onAction: () => void, btnLabel: string, btnDisabled: boolean) => (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
+        <span style={{ padding: '0 10px', fontSize: 12, color: 'var(--text-muted)', background: 'var(--bg-surface)', height: 36, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' as const, borderRight: '1px solid var(--glass-border)', flexShrink: 0 }}>/book/</span>
+        <input style={{ ...inputStyle, border: 'none', borderRadius: 0, flex: 1 }}
+          placeholder="studio-almaty"
+          value={slug}
+          onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} />
+      </div>
+      <button onClick={onAction} disabled={saving || btnDisabled}
+        style={{ height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving || btnDisabled ? 'not-allowed' : 'pointer', opacity: saving || btnDisabled ? 0.55 : 1, flexShrink: 0 }}>
+        {saving ? '...' : btnLabel}
+      </button>
+    </div>
+  )
+
+  if (!link) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Создайте ссылку для онлайн-записи клиентов</div>
+        {error && <div style={{ fontSize: 12, color: '#ef4444' }}>{error}</div>}
+        <div>
+          <label style={labelStyle}>Адрес страницы (slug)</label>
+          {slugInputRow(() => void handleCreate(), 'Создать', !slug.trim())}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {/* Toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg-elevated)', borderRadius: 12, border: '1px solid var(--glass-border)' }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>Принимать онлайн-записи</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{link.is_active ? 'Клиенты могут записываться' : 'Страница недоступна'}</div>
+        </div>
+        <button onClick={() => void handleToggleActive()}
+          style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: link.is_active ? '#02BDB6' : 'rgba(255,255,255,0.15)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+          <span style={{ position: 'absolute', top: 2, left: link.is_active ? 22 : 2, width: 20, height: 20, borderRadius: 10, background: '#fff', transition: 'left 0.2s', display: 'block' }} />
+        </button>
+      </div>
+
+      {/* Link row */}
+      <div>
+        <label style={labelStyle}>Ссылка для клиентов</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ flex: 1, padding: '8px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+            {bookingUrl}
+          </div>
+          <button onClick={handleCopy}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 12px', background: 'transparent', border: `1px solid ${copied ? 'rgba(2,189,182,0.4)' : 'var(--glass-border)'}`, borderRadius: 8, color: copied ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}>
+            <Copy size={13} />{copied ? 'Скопировано' : 'Копировать'}
+          </button>
+          <button onClick={() => setShowQR(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 12px', background: showQR ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${showQR ? 'rgba(2,189,182,0.4)' : 'var(--glass-border)'}`, borderRadius: 8, color: showQR ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>
+            <QrCode size={13} />QR
+          </button>
+        </div>
+        {showQR && (
+          <div style={{ marginTop: 12, padding: 16, background: '#fff', borderRadius: 12, display: 'inline-block' }}>
+            <QRCodeSVG value={bookingUrl} size={180} />
+            <div style={{ fontSize: 11, color: '#555', textAlign: 'center', marginTop: 8 }}>Сканируйте для записи</div>
+          </div>
+        )}
+      </div>
+
+      {/* Edit slug */}
+      <div>
+        <label style={labelStyle}>Изменить адрес страницы</label>
+        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 6 }}>{error}</div>}
+        {slugInputRow(() => void handleSaveSlug(), 'Сохранить', slug === link.slug || !slug.trim())}
+      </div>
+    </div>
+  )
+}
+
+// ─── AutomationTab ────────────────────────────────────────────────────────────
+
+interface AutomationRule {
+  id: string
+  branch_id: string
+  trigger: string
+  trigger_days: number | null
+  task_title_template: string
+  task_priority: 'low' | 'medium' | 'high' | 'critical'
+  assign_to_role: string
+  is_active: boolean
+  created_at: string
+}
+
+const TRIGGER_LABELS: Record<string, string> = {
+  lead_created:          'Новый лид',
+  lead_no_activity:      'Нет активности по лиду',
+  subscription_expiring: 'Абонемент истекает',
+}
+const TRIGGER_ICONS: Record<string, React.ReactNode> = {
+  lead_created:          <Zap size={15} color="#02BDB6" />,
+  lead_no_activity:      <Clock size={15} color="#f59e0b" />,
+  subscription_expiring: <AlertCircle size={15} color="#f97316" />,
+}
+const AUTO_PRIORITY_LABELS: Record<string, string> = {
+  low: 'Низкий', medium: 'Средний', high: 'Высокий', critical: 'Критический',
+}
+const AUTO_PRIORITY_COLORS: Record<string, string> = {
+  low: '#71717A', medium: '#f59e0b', high: '#f97316', critical: '#ef4444',
+}
+
+function AutomationTab() {
+  const [rules,     setRules]     = useState<AutomationRule[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [editRule,  setEditRule]  = useState<AutomationRule | null>(null)
+
+  const [trigger,       setTrigger]       = useState('lead_created')
+  const [triggerDays,   setTriggerDays]   = useState('3')
+  const [titleTemplate, setTitleTemplate] = useState('')
+  const [priority,      setPriority]      = useState<AutomationRule['task_priority']>('medium')
+  const [assignRole,    setAssignRole]    = useState('staff')
+  const [saving,        setSaving]        = useState(false)
+  const [formError,     setFormError]     = useState<string | null>(null)
+
+  useEffect(() => {
+    api.get('/automation')
+      .then(r => setRules(Array.isArray(r.data) ? (r.data as AutomationRule[]) : []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const resetForm = () => {
+    setTrigger('lead_created'); setTriggerDays('3'); setTitleTemplate('')
+    setPriority('medium'); setAssignRole('staff'); setFormError(null)
+  }
+
+  const openCreate = () => { setEditRule(null); resetForm(); setShowModal(true) }
+
+  const openEdit = (rule: AutomationRule) => {
+    setEditRule(rule); setTrigger(rule.trigger)
+    setTriggerDays(rule.trigger_days != null ? String(rule.trigger_days) : '3')
+    setTitleTemplate(rule.task_title_template); setPriority(rule.task_priority)
+    setAssignRole(rule.assign_to_role); setFormError(null); setShowModal(true)
+  }
+
+  const handleSave = async () => {
+    if (!titleTemplate.trim()) { setFormError('Введите шаблон заголовка'); return }
+    setSaving(true); setFormError(null)
+    const payload = {
+      trigger,
+      trigger_days: ['lead_no_activity', 'subscription_expiring'].includes(trigger) ? Number(triggerDays) : null,
+      task_title_template: titleTemplate.trim(),
+      task_priority: priority,
+      assign_to_role: assignRole,
+    }
+    try {
+      if (editRule) {
+        const { data } = await api.patch(`/automation/${editRule.id}`, payload)
+        setRules(prev => prev.map(r => r.id === editRule.id ? (data as AutomationRule) : r))
+      } else {
+        const { data } = await api.post('/automation', payload)
+        setRules(prev => [(data as AutomationRule), ...prev])
+      }
+      setShowModal(false)
+    } catch (e: unknown) {
+      setFormError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
+    } finally { setSaving(false) }
+  }
+
+  const handleToggle = async (rule: AutomationRule) => {
+    try {
+      const { data } = await api.patch(`/automation/${rule.id}`, { is_active: !rule.is_active })
+      setRules(prev => prev.map(r => r.id === rule.id ? (data as AutomationRule) : r))
+    } catch { /* ignore */ }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Удалить правило?')) return
+    try { await api.delete(`/automation/${id}`); setRules(prev => prev.filter(r => r.id !== id)) }
+    catch { /* ignore */ }
+  }
+
+  if (loading) return <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>Загрузка...</div>
+
+  const needsDays = ['lead_no_activity', 'subscription_expiring'].includes(trigger)
+
+  return (
+    <div>
+      {rules.length === 0 ? (
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>
+          Правил нет. Создайте первое правило.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 13 }}>
+          {rules.map(rule => (
+            <div key={rule.id} style={{ padding: '12px 14px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flexShrink: 0 }}>{TRIGGER_ICONS[rule.trigger] ?? <Zap size={15} />}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 3 }}>
+                  {TRIGGER_LABELS[rule.trigger] ?? rule.trigger}
+                  {rule.trigger_days != null && (
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}> · {rule.trigger_days} дн.</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const }}>
+                  <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 20, background: (AUTO_PRIORITY_COLORS[rule.task_priority] ?? '#71717A') + '18', color: AUTO_PRIORITY_COLORS[rule.task_priority] ?? '#71717A', border: `1px solid ${(AUTO_PRIORITY_COLORS[rule.task_priority] ?? '#71717A')}33` }}>
+                    {AUTO_PRIORITY_LABELS[rule.task_priority] ?? rule.task_priority}
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{rule.task_title_template}</span>
+                </div>
+              </div>
+              <button onClick={() => void handleToggle(rule)}
+                style={{ width: 38, height: 22, borderRadius: 11, border: 'none', background: rule.is_active ? '#02BDB6' : 'rgba(255,255,255,0.15)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <span style={{ position: 'absolute', top: 1, left: rule.is_active ? 17 : 1, width: 20, height: 20, borderRadius: 10, background: '#fff', transition: 'left 0.2s', display: 'block' }} />
+              </button>
+              <button onClick={() => openEdit(rule)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                <Edit2 size={12} strokeWidth={1.75} />
+              </button>
+              <button onClick={() => void handleDelete(rule.id)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                <Trash2 size={12} strokeWidth={1.75} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button onClick={openCreate}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+        <Plus size={14} strokeWidth={2} />Добавить правило
+      </button>
+
+      {showModal && ReactDOM.createPortal(
+        <div onClick={() => setShowModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 460, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{editRule ? 'Редактировать правило' : 'Новое правило'}</div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
+            </div>
+            {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{formError}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Триггер</label>
+                <select style={selectStyle} value={trigger} onChange={e => setTrigger(e.target.value)}>
+                  <option value="lead_created">Новый лид</option>
+                  <option value="lead_no_activity">Нет активности N дней</option>
+                  <option value="subscription_expiring">Абонемент истекает через N дней</option>
+                </select>
+              </div>
+              {needsDays && (
+                <div>
+                  <label style={labelStyle}>Количество дней</label>
+                  <input type="number" min={1} max={365} style={inputStyle} value={triggerDays} onChange={e => setTriggerDays(e.target.value)} />
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>Шаблон заголовка задачи</label>
+                <input style={inputStyle} placeholder="Связаться с {lead_name}" value={titleTemplate} onChange={e => setTitleTemplate(e.target.value)} />
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{'Подсказки: {lead_name}, {client_name}, {days}'}</div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={labelStyle}>Приоритет</label>
+                  <select style={selectStyle} value={priority} onChange={e => setPriority(e.target.value as AutomationRule['task_priority'])}>
+                    <option value="low">Низкий</option>
+                    <option value="medium">Средний</option>
+                    <option value="high">Высокий</option>
+                    <option value="critical">Критический</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Назначить роли</label>
+                  <select style={selectStyle} value={assignRole} onChange={e => setAssignRole(e.target.value)}>
+                    <option value="staff">Менеджер</option>
+                    <option value="admin">Администратор</option>
+                    <option value="franchisee">Франчайзи</option>
+                    <option value="owner">Владелец</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+              <button onClick={() => void handleSave()} disabled={saving}
+                style={{ flex: 1, height: 38, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                {saving ? 'Сохранение...' : editRule ? 'Сохранить' : 'Создать'}
+              </button>
+              <button onClick={() => setShowModal(false)}
+                style={{ height: 38, padding: '0 16px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users' | 'audit' | 'branch_settings' | 'booking' | 'automation'
@@ -1498,10 +1866,11 @@ export default function ManagementPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 4, maxWidth: 700 }}>
+      <style>{'.mgmt-tabs::-webkit-scrollbar{display:none}'}</style>
+      <div className="mgmt-tabs" style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 4, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, height: 34, borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-elevated)' : 'transparent', color: tab === t.id ? 'var(--text-primary)' : 'var(--text-muted)', justifyContent: 'center', transition: 'all 0.15s' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, height: 34, padding: '0 10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-elevated)' : 'transparent', color: tab === t.id ? 'var(--text-primary)' : 'var(--text-muted)', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
             {t.icon}{t.label}
           </button>
         ))}
@@ -1542,14 +1911,14 @@ export default function ManagementPage() {
       {tab === 'booking' && isFranchiseeOrAbove && (
         <div style={{ maxWidth: 700 }}>
           <Section title="Онлайн-запись" icon={<Globe size={15} strokeWidth={1.75} color="#02BDB6" />}>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>Раздел в разработке</div>
+            <OnlineBookingTab />
           </Section>
         </div>
       )}
       {tab === 'automation' && isFranchiseeOrAbove && (
         <div style={{ maxWidth: 700 }}>
           <Section title="Автоворонка" icon={<Zap size={15} strokeWidth={1.75} color="#02BDB6" />}>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>Раздел в разработке</div>
+            <AutomationTab />
           </Section>
         </div>
       )}
