@@ -1021,7 +1021,7 @@ function PermissionsTab() {
 // ─── UsersTab ────────────────────────────────────────────────────────────────
 
 interface EmployeeWithRole extends Employee {
-  profiles?: { role: string } | null
+  profile?: { role: string; full_name?: string } | null
 }
 
 const USER_ROLES: string[] = ['owner', 'franchisee', 'admin', 'staff', 'technical']
@@ -1036,6 +1036,12 @@ function UsersTab() {
   const [loading,   setLoading]   = useState(true)
   const [saving,    setSaving]    = useState<string | null>(null)
   const [error,     setError]     = useState<string | null>(null)
+  const [toast,     setToast]     = useState<{ msg: string; ok: boolean } | null>(null)
+
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok })
+    setTimeout(() => setToast(null), 2500)
+  }
 
   useEffect(() => {
     Promise.all([
@@ -1047,95 +1053,109 @@ function UsersTab() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleRoleChange = async (emp: EmployeeWithRole, newRole: string) => {
-    const key = `role:${emp.id}`
+  const handleRoleChange = async (employeeId: string, newRole: string) => {
+    const key = `role:${employeeId}`
     setSaving(key)
     try {
-      await employeesApi.patchRole(emp.id, { role: newRole, branch_id: emp.branch_id })
-      setEmployees(prev => prev.map(e => e.id === emp.id
-        ? { ...e, profiles: { ...(e.profiles ?? {}), role: newRole } }
-        : e
+      await api.patch(`/employees/${employeeId}/role`, { role: newRole })
+      setEmployees(prev => prev.map(e =>
+        e.id === employeeId
+          ? { ...e, profile: { ...(e.profile ?? {}), role: newRole } }
+          : e
       ))
-    } catch { /* ignore */ }
-    finally { setSaving(null) }
+      showToast('Роль обновлена', true)
+    } catch (e) {
+      console.error('[role change]', e)
+      showToast('Ошибка при смене роли', false)
+    } finally { setSaving(null) }
   }
 
   const handleBranchChange = async (emp: EmployeeWithRole, newBranchId: string) => {
     const key = `branch:${emp.id}`
     setSaving(key)
     try {
-      const role = emp.profiles?.role ?? 'staff'
-      await employeesApi.patchRole(emp.id, { role, branch_id: newBranchId || null })
+      const role = emp.profile?.role ?? 'staff'
+      await api.patch(`/employees/${emp.id}/role`, { role, branch_id: newBranchId || null })
       setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, branch_id: newBranchId } : e))
-    } catch { /* ignore */ }
-    finally { setSaving(null) }
+      showToast('Филиал обновлён', true)
+    } catch (e) {
+      console.error('[branch change]', e)
+      showToast('Ошибка при смене филиала', false)
+    } finally { setSaving(null) }
   }
 
   if (loading) return <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '21px 0', textAlign: 'center' }}>Загрузка...</div>
   if (error)   return <div style={{ fontSize: 13, color: '#ef4444', padding: '13px 0' }}>{error}</div>
 
   return (
-    <div style={{ overflowX: 'auto', margin: -21 }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
-        <thead>
-          <tr>
-            <th style={{ ...thStyle, textAlign: 'left' }}>Сотрудник</th>
-            <th style={{ ...thStyle, textAlign: 'left', width: 170 }}>Роль</th>
-            <th style={{ ...thStyle, textAlign: 'left', width: 190 }}>Филиал</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.map(emp => {
-            const currentRole = emp.profiles?.role ?? ''
-            const isSavingRole   = saving === `role:${emp.id}`
-            const isSavingBranch = saving === `branch:${emp.id}`
+    <div>
+      {toast && (
+        <div style={{ marginBottom: 10, padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: toast.ok ? '#02BDB618' : '#ef444418', color: toast.ok ? '#02BDB6' : '#ef4444', border: `1px solid ${toast.ok ? '#02BDB640' : '#ef444440'}` }}>
+          {toast.msg}
+        </div>
+      )}
+      <div style={{ overflowX: 'auto', margin: -21, marginTop: toast ? -10 : -21 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+          <thead>
+            <tr>
+              <th style={{ ...thStyle, textAlign: 'left' }}>Сотрудник</th>
+              <th style={{ ...thStyle, textAlign: 'left', width: 170 }}>Роль</th>
+              <th style={{ ...thStyle, textAlign: 'left', width: 190 }}>Филиал</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employees.map(emp => {
+              const currentRole    = emp.profile?.role ?? ''
+              const isSavingRole   = saving === `role:${emp.id}`
+              const isSavingBranch = saving === `branch:${emp.id}`
 
-            return (
-              <tr key={emp.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                <td style={tdStyle}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{emp.full_name}</div>
-                  {emp.phone && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.phone}</div>}
-                </td>
-                <td style={{ ...tdStyle, padding: '6px 8px' }}>
-                  <select
-                    value={currentRole}
-                    disabled={isSavingRole}
-                    onChange={e => void handleRoleChange(emp, e.target.value)}
-                    style={{ ...selectStyle, opacity: isSavingRole ? 0.6 : 1, fontSize: 12 }}
-                  >
-                    {currentRole && !USER_ROLES.includes(currentRole) && (
-                      <option value={currentRole}>{currentRole}</option>
-                    )}
-                    {USER_ROLES.map(r => (
-                      <option key={r} value={r}>{USER_ROLE_LABELS[r]}</option>
-                    ))}
-                  </select>
-                </td>
-                <td style={{ ...tdStyle, padding: '6px 8px' }}>
-                  <select
-                    value={emp.branch_id ?? ''}
-                    disabled={isSavingBranch}
-                    onChange={e => void handleBranchChange(emp, e.target.value)}
-                    style={{ ...selectStyle, opacity: isSavingBranch ? 0.6 : 1, fontSize: 12 }}
-                  >
-                    <option value="">— Нет —</option>
-                    {branches.map(b => (
-                      <option key={b.id} value={b.id}>{b.name}{b.city ? ` (${b.city})` : ''}</option>
-                    ))}
-                  </select>
+              return (
+                <tr key={emp.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                  <td style={tdStyle}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{emp.full_name}</div>
+                    {emp.phone && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.phone}</div>}
+                  </td>
+                  <td style={{ ...tdStyle, padding: '6px 8px' }}>
+                    <select
+                      value={currentRole}
+                      disabled={isSavingRole}
+                      onChange={e => void handleRoleChange(emp.id, e.target.value)}
+                      style={{ ...selectStyle, opacity: isSavingRole ? 0.6 : 1, fontSize: 12 }}
+                    >
+                      {currentRole && !USER_ROLES.includes(currentRole) && (
+                        <option value={currentRole}>{currentRole}</option>
+                      )}
+                      {USER_ROLES.map(r => (
+                        <option key={r} value={r}>{USER_ROLE_LABELS[r]}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td style={{ ...tdStyle, padding: '6px 8px' }}>
+                    <select
+                      value={emp.branch_id ?? ''}
+                      disabled={isSavingBranch}
+                      onChange={e => void handleBranchChange(emp, e.target.value)}
+                      style={{ ...selectStyle, opacity: isSavingBranch ? 0.6 : 1, fontSize: 12 }}
+                    >
+                      <option value="">— Нет —</option>
+                      {branches.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}{b.city ? ` (${b.city})` : ''}</option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              )
+            })}
+            {employees.length === 0 && (
+              <tr>
+                <td colSpan={3} style={{ ...tdStyle, textAlign: 'center', color: 'var(--text-muted)', padding: '34px 0' }}>
+                  Сотрудники не найдены
                 </td>
               </tr>
-            )
-          })}
-          {employees.length === 0 && (
-            <tr>
-              <td colSpan={3} style={{ ...tdStyle, textAlign: 'center', color: 'var(--text-muted)', padding: '34px 0' }}>
-                Сотрудники не найдены
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -1143,8 +1163,8 @@ function UsersTab() {
 // ─── BranchSettingsSection ───────────────────────────────────────────────────
 
 interface BranchSettings {
-  working_hours_start: string | null
-  working_hours_end: string | null
+  work_time_start: string | null
+  work_time_end: string | null
   timezone: string | null
   currency: string | null
   contact_phone: string | null
@@ -1155,43 +1175,92 @@ interface BranchSettings {
   max_bookings_per_day: number | null
 }
 
+const SETTINGS_DEFAULTS: BranchSettings = {
+  work_time_start: '08:00', work_time_end: '22:00',
+  timezone: 'UTC+5', currency: 'KZT',
+  contact_phone: '', contact_email: '', website: '', address: '',
+  booking_interval_min: 60, max_bookings_per_day: null,
+}
+
+const TIMEZONES_LIST = [
+  { value: 'UTC+3',  label: 'UTC+3 — Москва' },
+  { value: 'UTC+4',  label: 'UTC+4 — Самара, Баку' },
+  { value: 'UTC+5',  label: 'UTC+5 — Астана, Ташкент' },
+  { value: 'UTC+6',  label: 'UTC+6 — Алматы, Омск' },
+  { value: 'UTC+7',  label: 'UTC+7 — Красноярск, Бангкок' },
+  { value: 'UTC+8',  label: 'UTC+8 — Иркутск' },
+  { value: 'UTC+9',  label: 'UTC+9 — Якутск' },
+  { value: 'UTC+10', label: 'UTC+10 — Владивосток' },
+  { value: 'UTC+11', label: 'UTC+11 — Магадан' },
+  { value: 'UTC+12', label: 'UTC+12 — Камчатка' },
+]
+
 function BranchSettingsSection() {
-  const [settings, setSettings] = useState<BranchSettings>({
-    working_hours_start: '09:00', working_hours_end: '22:00',
-    timezone: 'Asia/Almaty', currency: 'KZT',
-    contact_phone: '', contact_email: '', website: '', address: '',
-    booking_interval_min: 60, max_bookings_per_day: null,
-  })
-  const [saving, setSaving]   = useState(false)
-  const [saved, setSaved]     = useState(false)
-  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const isDeveloperOrOwner = user?.role === 'developer' || user?.role === 'owner'
+
+  const [branches,    setBranches]   = useState<BranchRaw[]>([])
+  const [branchId,    setBranchId]   = useState(localStorage.getItem('activeBranchId') ?? '')
+  const [settings,    setSettings]   = useState<BranchSettings>(SETTINGS_DEFAULTS)
+  const [saving,      setSaving]     = useState(false)
+  const [saved,       setSaved]      = useState(false)
+  const [loading,     setLoading]    = useState(true)
 
   useEffect(() => {
-    api.get('/branch-settings').then(r => {
-      const d = r.data
-      setSettings({
-        working_hours_start: d.working_hours_start ?? '09:00',
-        working_hours_end:   d.working_hours_end   ?? '22:00',
-        timezone:            d.timezone            ?? 'Asia/Almaty',
-        currency:            d.currency            ?? 'KZT',
-        contact_phone:       d.contact_phone       ?? '',
-        contact_email:       d.contact_email       ?? '',
-        website:             d.website             ?? '',
-        address:             d.address             ?? '',
-        booking_interval_min: d.booking_interval_min ?? 60,
-        max_bookings_per_day: d.max_bookings_per_day ?? null,
+    if (!isDeveloperOrOwner) return
+    branchesApi.getAll().then(brs => {
+      setBranches(brs)
+      if (!branchId && brs.length > 0) setBranchId(brs[0].id)
+    }).catch(() => {})
+  }, [isDeveloperOrOwner])
+
+  const loadSettings = useCallback((bid: string) => {
+    setLoading(true)
+    const prev = localStorage.getItem('activeBranchId')
+    if (bid) localStorage.setItem('activeBranchId', bid)
+    api.get('/branch-settings')
+      .then(r => {
+        const d = r.data
+        setSettings({
+          work_time_start:      d.work_time_start      ?? '08:00',
+          work_time_end:        d.work_time_end        ?? '22:00',
+          timezone:             d.timezone             ?? 'UTC+5',
+          currency:             d.currency             ?? 'KZT',
+          contact_phone:        d.contact_phone        ?? '',
+          contact_email:        d.contact_email        ?? '',
+          website:              d.website              ?? '',
+          address:              d.address              ?? '',
+          booking_interval_min: d.booking_interval_min ?? 60,
+          max_bookings_per_day: d.max_bookings_per_day ?? null,
+        })
       })
-    }).catch(() => {}).finally(() => setLoading(false))
+      .catch(() => {})
+      .finally(() => {
+        if (prev !== null) localStorage.setItem('activeBranchId', prev)
+        else localStorage.removeItem('activeBranchId')
+        setLoading(false)
+      })
   }, [])
+
+  useEffect(() => {
+    if (branchId) loadSettings(branchId)
+    else if (!isDeveloperOrOwner) loadSettings('')
+  }, [branchId, loadSettings, isDeveloperOrOwner])
 
   const save = async () => {
     setSaving(true)
+    const prev = localStorage.getItem('activeBranchId')
+    if (branchId) localStorage.setItem('activeBranchId', branchId)
     try {
       await api.patch('/branch-settings', settings)
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => setSaved(false), 2500)
     } catch { /* ignore */ }
-    finally { setSaving(false) }
+    finally {
+      if (prev !== null) localStorage.setItem('activeBranchId', prev)
+      else localStorage.removeItem('activeBranchId')
+      setSaving(false)
+    }
   }
 
   const field = (key: keyof BranchSettings) => ({
@@ -1200,7 +1269,6 @@ function BranchSettingsSection() {
       setSettings(s => ({ ...s, [key]: e.target.value || null })),
   })
 
-  const TIMEZONES = ['Asia/Almaty', 'Asia/Tashkent', 'Europe/Moscow', 'Europe/Kiev', 'UTC']
   const CURRENCIES = ['KZT', 'RUB', 'USD', 'EUR']
   const INTERVALS  = [15, 20, 30, 45, 60, 90]
 
@@ -1208,19 +1276,33 @@ function BranchSettingsSection() {
 
   return (
     <div>
+      {/* Branch selector for owner/developer */}
+      {isDeveloperOrOwner && branches.length > 1 && (
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Филиал</label>
+          <select value={branchId} onChange={e => setBranchId(e.target.value)} style={selectStyle}>
+            {branches.map(b => (
+              <option key={b.id} value={b.id}>{b.name}{b.city ? ` (${b.city})` : ''}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13, marginBottom: 13 }}>
         <div>
           <label style={labelStyle}>Начало работы</label>
-          <input type="time" style={inputStyle} {...field('working_hours_start')} />
+          <input type="time" style={inputStyle} {...field('work_time_start')} />
         </div>
         <div>
           <label style={labelStyle}>Конец работы</label>
-          <input type="time" style={inputStyle} {...field('working_hours_end')} />
+          <input type="time" style={inputStyle} {...field('work_time_end')} />
         </div>
         <div>
           <label style={labelStyle}>Часовой пояс</label>
           <select style={selectStyle} {...field('timezone')}>
-            {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
+            {TIMEZONES_LIST.map(tz => (
+              <option key={tz.value} value={tz.value}>{tz.label}</option>
+            ))}
           </select>
         </div>
         <div>
