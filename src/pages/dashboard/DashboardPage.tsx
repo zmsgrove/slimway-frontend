@@ -4,11 +4,33 @@ import {
   AlertTriangle, TrendingUp, Cake,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts'
 import { analyticsApi } from '../../api/analytics.api'
 import { clientsApi } from '../../api/clients.api'
 import { useAuth } from '../../hooks/useAuth'
 import { BranchSelector } from '../../components/ui/BranchSelector'
 import type { AnalyticsOverview, AnalyticsBranchRow, Client } from '../../types'
+
+const FUNNEL_LABELS: Record<string, string> = {
+  new:     'Новый',
+  in_work: 'В работе',
+  waiting: 'Ждём',
+  success: 'Успешно',
+  fail:    'Отказ',
+}
+
+const FUNNEL_COLORS: Record<string, string> = {
+  new:     '#3b82f6',
+  in_work: '#f59e0b',
+  waiting: '#f97316',
+  success: '#10b981',
+  fail:    '#ef4444',
+}
+
+const PIE_COLORS = ['#02BDB6', '#263CD9', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899']
 
 function isTodayBirthday(birthDate: string | null | undefined): boolean {
   if (!birthDate) return false
@@ -69,6 +91,22 @@ function StatRow({ label, value, color }: { label: string; value: string | numbe
   )
 }
 
+function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: subtitle ? 4 : 13 }}>{title}</div>
+      {subtitle && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 13 }}>{subtitle}</div>}
+      {children}
+    </div>
+  )
+}
+
+function fmtMonth(m: string) {
+  const [y, mon] = m.split('-')
+  const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+  return `${months[parseInt(mon) - 1]} ${y.slice(2)}`
+}
+
 export default function DashboardPage() {
   const { user } = useAuth()
   const [overview,        setOverview]        = useState<AnalyticsOverview | null>(null)
@@ -100,6 +138,15 @@ export default function DashboardPage() {
   const v = (n: number | undefined) => (loading ? '...' : (n ?? 0))
 
   const byBranch: AnalyticsBranchRow[] = overview?.by_branch ?? []
+
+  const clientsByMonth = (overview?.clients_by_month ?? []).map(d => ({ ...d, month: fmtMonth(d.month) }))
+  const revenueByMonth = (overview?.revenue_by_month ?? []).map(d => ({ ...d, month: fmtMonth(d.month) }))
+  const leadsBySource  = (overview?.leads_by_source ?? []).map(d => ({ name: d.source, value: d.count }))
+  const leadsFunnel    = (overview?.leads_funnel ?? []).map(d => ({
+    name: FUNNEL_LABELS[d.status] ?? d.status,
+    count: d.count,
+    fill: FUNNEL_COLORS[d.status] ?? '#999',
+  }))
 
   return (
     <div>
@@ -172,7 +219,80 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Two-column layout */}
+      {/* Charts row 1: Clients by month + Revenue by month */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13, marginBottom: 13 }}>
+        <ChartCard title="Новые клиенты" subtitle="За последние 6 месяцев">
+          {clientsByMonth.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={clientsByMonth}>
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, fontSize: 12 }} />
+                <Line type="monotone" dataKey="count" stroke="#02BDB6" strokeWidth={2} dot={{ fill: '#02BDB6', r: 3 }} name="Клиентов" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text-muted)' }}>Нет данных</div>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Выручка по месяцам" subtitle="Сумма проданных абонементов">
+          {revenueByMonth.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={revenueByMonth}>
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} width={48} tickFormatter={v => v >= 1000 ? `${Math.round(v/1000)}k` : String(v)} />
+                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, fontSize: 12 }} formatter={(v: unknown) => [`${Number(v).toLocaleString('ru-RU')} ₸`, 'Выручка']} />
+                <Bar dataKey="revenue" fill="#263CD9" radius={[4, 4, 0, 0]} name="Выручка" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text-muted)' }}>Нет данных</div>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Charts row 2: Leads funnel + Leads by source */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13, marginBottom: 13 }}>
+        <ChartCard title="Воронка лидов" subtitle="Распределение по статусам">
+          {leadsFunnel.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={leadsFunnel} layout="vertical">
+                <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} width={60} />
+                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, fontSize: 12 }} />
+                <Bar dataKey="count" radius={[0, 4, 4, 0]} name="Лидов">
+                  {leadsFunnel.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text-muted)' }}>Нет данных</div>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Лиды по источникам">
+          {leadsBySource.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie data={leadsBySource} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} paddingAngle={3}>
+                  {leadsBySource.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, fontSize: 12 }} />
+                <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text-muted)' }}>Нет данных</div>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Two-column layout: Subscriptions + Quick stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 13, alignItems: 'start' }}>
         {/* Left: Subscriptions stats */}
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21 }}>
@@ -208,6 +328,12 @@ export default function DashboardPage() {
           <StatRow label="Лидов в работе"     value={v(overview?.leads_new)}      color={overview?.leads_new ? '#f59e0b' : undefined} />
           <StatRow label="Мало на складе"     value={v(overview?.low_stock_items)} color={overview?.low_stock_items ? '#ef4444' : undefined} />
           <StatRow label="Абонем. 30 дней"    value={v(overview?.subscriptions_expiring_30d)} />
+          {overview?.leads_conversion !== undefined && (
+            <StatRow label="Конверсия лидов" value={`${overview.leads_conversion}%`} color={overview.leads_conversion >= 30 ? '#10b981' : '#f59e0b'} />
+          )}
+          {overview?.avg_ltv !== undefined && overview.avg_ltv > 0 && (
+            <StatRow label="Средний LTV" value={`${overview.avg_ltv.toLocaleString('ru-RU')} ₸`} color="#02BDB6" />
+          )}
           {overview?.low_stock_items ? (
             <div style={{ marginTop: 13, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Package size={13} color="#ef4444" />

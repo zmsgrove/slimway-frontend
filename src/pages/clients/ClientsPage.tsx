@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Users, Search, Plus, X, AlertCircle, Phone, Mail, Calendar,
   Edit2, Trash2, CreditCard, Eye, FileText, MoreVertical, History,
-  Download, Tag, Cake,
+  Download, Tag, Cake, Snowflake, CheckCircle2, Clock, TrendingUp,
 } from 'lucide-react'
 import { clientsApi } from '../../api/clients.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { api } from '../../lib/api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { useAuth } from '../../hooks/useAuth'
-import type { Client, Subscription, AuditLogEntry, SubscriptionRenewal } from '../../types'
+import type { Client, ClientDetail, ClientBooking, Subscription, AuditLogEntry, SubscriptionRenewal } from '../../types'
 
 const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
@@ -222,7 +222,7 @@ function SubProgressBar({ used, total, color }: { used: number; total: number | 
 
 // ─── ClientDetailModal ────────────────────────────────────────────────────────
 
-type DetailTab = 'profile' | 'subs' | 'history'
+type DetailTab = 'profile' | 'visits' | 'subs' | 'history'
 
 const CANCELLATION_REASONS = [
   { value: 'changed_mind', label: 'Клиент передумал' },
@@ -249,26 +249,32 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
 
 function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailModalProps) {
   const { user } = useAuth()
-  const [tab,          setTab]       = useState<DetailTab>('profile')
-  const [subs,         setSubs]      = useState<Subscription[] | null>(null)
-  const [loadingSubs,  setLoadSubs]  = useState(false)
-  const [auditLog,     setAuditLog]  = useState<AuditLogEntry[] | null>(null)
-  const [loadingAudit, setLoadAudit] = useState(false)
+  const [tab,             setTab]          = useState<DetailTab>('profile')
+  const [detail,          setDetail]       = useState<ClientDetail | null>(null)
+  const [loadingDetail,   setLoadingDetail] = useState(true)
+  const [auditLog,        setAuditLog]     = useState<AuditLogEntry[] | null>(null)
+  const [loadingAudit,    setLoadAudit]    = useState(false)
 
-  const canDeleteSub = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
+  const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
 
-  const [freezeTarget,   setFreezeTarget]   = useState<Subscription | null>(null)
-  const [cancelSubId,    setCancelSubId]    = useState<string | null>(null)
-  const [renewalsTarget, setRenewalsTarget] = useState<Subscription | null>(null)
+  const [freezeSubTarget, setFreezeSubTarget] = useState<Subscription | null>(null)
+  const [cancelSubId,     setCancelSubId]     = useState<string | null>(null)
+  const [renewalsTarget,  setRenewalsTarget]  = useState<Subscription | null>(null)
+  const [showFreezeClient, setShowFreezeClient] = useState(false)
 
-  const loadSubs = useCallback(() => {
-    if (subs !== null || loadingSubs) return
-    setLoadSubs(true)
-    subscriptionsApi.getAll({ client_id: client.id })
-      .then(data => setSubs(data.sort((a, b) => b.created_at.localeCompare(a.created_at))))
-      .catch(() => setSubs([]))
-      .finally(() => setLoadSubs(false))
-  }, [client.id, subs, loadingSubs])
+  const loadDetail = useCallback(async () => {
+    setLoadingDetail(true)
+    try {
+      const d = await clientsApi.getById(client.id)
+      setDetail(d)
+    } catch {
+      setDetail(null)
+    } finally {
+      setLoadingDetail(false)
+    }
+  }, [client.id])
+
+  useEffect(() => { void loadDetail() }, [loadDetail])
 
   const loadAuditLog = useCallback(() => {
     if (auditLog !== null || loadingAudit) return
@@ -280,24 +286,32 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
   }, [client.id, auditLog, loadingAudit])
 
   useEffect(() => {
-    if (tab === 'subs') loadSubs()
     if (tab === 'history') loadAuditLog()
-  }, [tab, loadSubs, loadAuditLog])
+  }, [tab, loadAuditLog])
 
-  const handleDeleteSub = (subId: string) => {
-    setCancelSubId(subId)
-  }
-
-  const handleUnfreeze = async (subId: string) => {
+  const handleUnfreezeSub = async (subId: string) => {
     try {
-      const updated = await subscriptionsApi.unfreeze(subId)
-      setSubs(prev => prev ? prev.map(s => s.id === subId ? updated : s) : prev)
+      await subscriptionsApi.unfreeze(subId)
+      await loadDetail()
     } catch { /* ignore */ }
   }
 
-  const initials   = client.full_name.charAt(0).toUpperCase()
-  const activeSubs = subs?.filter(s => s.status === 'active') ?? []
-  const pastSubs   = subs?.filter(s => s.status !== 'active') ?? []
+  const currentClient = detail ?? client
+  const subs        = detail?.subscriptions ?? []
+  const bookings    = detail?.bookings      ?? []
+  const leadCmts    = detail?.lead_comments ?? []
+  const activeSubs  = subs.filter(s => s.status === 'active')
+  const pastSubs    = subs.filter(s => s.status !== 'active')
+
+  // Stats
+  const totalVisits    = bookings.length
+  const attendedVisits = bookings.filter(b => b.attended).length
+  const lastVisit      = bookings[0]?.date ?? null
+  const totalSpent     = subs.reduce((acc, s) => acc + (s.price ?? 0), 0)
+  const activeSubEnd   = activeSubs[0]?.date_end ?? null
+
+  const initials = client.full_name.charAt(0).toUpperCase()
+  const isFrozen = currentClient.status === 'frozen'
 
   const tabBtn = (t: DetailTab, label: string, icon: React.ReactNode) => (
     <button onClick={() => setTab(t)} style={{
@@ -315,19 +329,23 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
     <>
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 520, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 540, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
 
         {/* Header */}
         <div style={{ padding: 34, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 13, marginBottom: 21 }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(2,189,182,0.12)', border: '2px solid rgba(2,189,182,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: '#02BDB6', flexShrink: 0 }}>
-              {initials}
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: isFrozen ? 'rgba(99,102,241,0.12)' : 'rgba(2,189,182,0.12)', border: `2px solid ${isFrozen ? 'rgba(99,102,241,0.3)' : 'rgba(2,189,182,0.3)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: isFrozen ? '#6366f1' : '#02BDB6', flexShrink: 0 }}>
+              {isFrozen ? <Snowflake size={22} /> : initials}
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{client.full_name}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                {client.full_name}
+                {isFrozen && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', color: '#6366f1' }}>Заморожен</span>}
+              </div>
               {client.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>{client.phone}</div>}
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                 В базе с {new Date(client.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {isFrozen && currentClient.freeze_until && ` · заморожен до ${new Date(currentClient.freeze_until + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`}
               </div>
             </div>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
@@ -341,15 +359,50 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', borderRadius: 10, padding: 4 }}>
-            {tabBtn('profile', 'Профиль',  <Eye size={12} />)}
+            {tabBtn('profile', 'Профиль', <Eye size={12} />)}
+            {tabBtn('visits',  'Визиты',  <CheckCircle2 size={12} />)}
             {tabBtn('subs',    'Абонементы', <CreditCard size={12} />)}
-            {tabBtn('history', 'История',   <FileText size={12} />)}
+            {tabBtn('history', 'История', <FileText size={12} />)}
           </div>
         </div>
 
+        {loadingDetail && (
+          <div style={{ padding: 34, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        )}
+
         {/* Profile tab */}
-        {tab === 'profile' && (
-          <div style={{ padding: 34, display: 'flex', flexDirection: 'column', gap: 13 }}>
+        {!loadingDetail && tab === 'profile' && (
+          <div style={{ padding: 34, display: 'flex', flexDirection: 'column', gap: 13, maxHeight: 460, overflowY: 'auto' }}>
+            {/* Stats block */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#02BDB6' }}>{totalVisits}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Визитов</div>
+              </div>
+              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>{activeSubs.length}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Активных</div>
+              </div>
+              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {lastVisit ? new Date(lastVisit + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : '—'}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Посл. визит</div>
+              </div>
+              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {totalSpent > 0 ? `${totalSpent.toLocaleString('ru-RU')}` : '—'}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Потрачено ₸</div>
+              </div>
+            </div>
+            {activeSubEnd && (
+              <div style={{ padding: '8px 13px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Clock size={12} />
+                Активный абонемент до {new Date(activeSubEnd + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>
               {client.phone && (
                 <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
@@ -402,22 +455,76 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                 </div>
               </div>
             )}
+
             {/* Quick actions */}
-            <div style={{ display: 'flex', gap: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)' }}>
+            <div style={{ display: 'flex', gap: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
               <button onClick={onSellSub}
-                style={{ flex: 1, height: 36, background: 'rgba(2,189,182,0.10)', border: '1px solid rgba(2,189,182,0.25)', borderRadius: 8, color: '#02BDB6', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                style={{ flex: 1, minWidth: 140, height: 36, background: 'rgba(2,189,182,0.10)', border: '1px solid rgba(2,189,182,0.25)', borderRadius: 8, color: '#02BDB6', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 <CreditCard size={13} />Продать абонемент
               </button>
+              {canManage && !isFrozen && (
+                <button onClick={() => setShowFreezeClient(true)}
+                  style={{ height: 36, padding: '0 13px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 8, color: '#6366f1', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Snowflake size={13} />Заморозить
+                </button>
+              )}
+              {canManage && isFrozen && (
+                <button onClick={async () => { await clientsApi.unfreeze(client.id); await loadDetail() }}
+                  style={{ height: 36, padding: '0 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, color: '#10b981', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <TrendingUp size={13} />Разморозить
+                </button>
+              )}
             </div>
           </div>
         )}
 
+        {/* Visits tab */}
+        {!loadingDetail && tab === 'visits' && (
+          <div style={{ padding: 34, maxHeight: 460, overflowY: 'auto' }}>
+            {bookings.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
+                <CheckCircle2 size={24} strokeWidth={1.5} color="var(--text-muted)" />
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Визитов пока нет</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
+                  {attendedVisits} из {totalVisits} посещено
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {bookings.map((b: ClientBooking) => {
+                    const deviceLabel = b.slot?.device ? DEVICE_TYPE_LABELS[b.slot.device.type] ?? b.slot.device.type : null
+                    const timeLabel   = b.slot ? `${b.slot.time_start.slice(0, 5)}–${b.slot.time_end.slice(0, 5)}` : null
+                    return (
+                      <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: b.attended ? 'rgba(16,185,129,0.12)' : b.attended === false ? 'rgba(239,68,68,0.10)' : 'rgba(113,113,122,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <CheckCircle2 size={14} color={b.attended ? '#10b981' : b.attended === false ? '#ef4444' : '#71717A'} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {new Date(b.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 8 }}>
+                            {timeLabel && <span>{timeLabel}</span>}
+                            {deviceLabel && <span>· {deviceLabel} {b.slot?.device?.number && `#${b.slot.device.number}`}</span>}
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: b.attended ? 'rgba(16,185,129,0.10)' : b.attended === false ? 'rgba(239,68,68,0.08)' : 'rgba(113,113,122,0.08)', color: b.attended ? '#10b981' : b.attended === false ? '#ef4444' : '#71717A', border: `1px solid ${b.attended ? 'rgba(16,185,129,0.2)' : b.attended === false ? 'rgba(239,68,68,0.2)' : 'rgba(113,113,122,0.2)'}` }}>
+                          {b.attended ? 'Посетил' : b.attended === false ? 'Не пришёл' : 'Запись'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Subscriptions tab */}
-        {tab === 'subs' && (
-          <div style={{ padding: 34, maxHeight: 420, overflowY: 'auto' }}>
-            {loadingSubs ? (
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Загрузка...</div>
-            ) : !subs || subs.length === 0 ? (
+        {!loadingDetail && tab === 'subs' && (
+          <div style={{ padding: 34, maxHeight: 460, overflowY: 'auto' }}>
+            {subs.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
                 <CreditCard size={24} strokeWidth={1.5} color="var(--text-muted)" />
                 <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Абонементов нет</div>
@@ -429,9 +536,9 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                 )}
                 {activeSubs.map(sub => (
                   <SubCard key={sub.id} sub={sub}
-                    onDelete={canDeleteSub ? () => handleDeleteSub(sub.id) : undefined}
-                    onFreeze={canDeleteSub ? setFreezeTarget : undefined}
-                    onUnfreeze={canDeleteSub ? (id) => void handleUnfreeze(id) : undefined}
+                    onDelete={canManage ? () => setCancelSubId(sub.id) : undefined}
+                    onFreeze={canManage ? setFreezeSubTarget : undefined}
+                    onUnfreeze={canManage ? (id) => void handleUnfreezeSub(id) : undefined}
                     onShowRenewals={setRenewalsTarget}
                   />
                 ))}
@@ -440,7 +547,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                 )}
                 {pastSubs.map(sub => (
                   <SubCard key={sub.id} sub={sub}
-                    onDelete={canDeleteSub ? () => handleDeleteSub(sub.id) : undefined}
+                    onDelete={canManage ? () => setCancelSubId(sub.id) : undefined}
                     onShowRenewals={setRenewalsTarget}
                   />
                 ))}
@@ -450,18 +557,33 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
         )}
 
         {/* History tab */}
-        {tab === 'history' && (
-          <div style={{ padding: 34, maxHeight: 420, overflowY: 'auto' }}>
-            {loadingAudit ? (
+        {!loadingDetail && tab === 'history' && (
+          <div style={{ padding: 34, maxHeight: 460, overflowY: 'auto' }}>
+            {(loadingAudit && leadCmts.length === 0) ? (
               <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Загрузка...</div>
-            ) : !auditLog || auditLog.length === 0 ? (
+            ) : (auditLog?.length === 0 && leadCmts.length === 0) ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
                 <History size={24} strokeWidth={1.5} color="var(--text-muted)" />
                 <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>История пуста</div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {auditLog.map(entry => {
+                {leadCmts.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Комментарии менеджеров</div>
+                    {leadCmts.map(c => (
+                      <div key={c.id} style={{ padding: '10px 13px', background: 'rgba(2,189,182,0.04)', borderRadius: 10, border: '1px solid rgba(2,189,182,0.15)' }}>
+                        <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.5 }}>{c.text}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                          {new Date(c.created_at).toLocaleDateString('ru-RU')}
+                          {c.profiles?.full_name && ` · ${c.profiles.full_name}`}
+                        </div>
+                      </div>
+                    ))}
+                    {(auditLog ?? []).length > 0 && <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 4 }}>Действия</div>}
+                  </>
+                )}
+                {(auditLog ?? []).map(entry => {
                   const d = new Date(entry.created_at)
                   const dateStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
                   const timeStr = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -490,30 +612,30 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
       </div>
     </div>
 
-    {/* Sub modals rendered above the main modal */}
-    {freezeTarget && (
+    {/* Sub modals */}
+    {freezeSubTarget && (
       <FreezeModal
-        sub={freezeTarget}
-        onClose={() => setFreezeTarget(null)}
-        onFrozen={updated => {
-          setSubs(prev => prev ? prev.map(s => s.id === updated.id ? updated : s) : prev)
-          setFreezeTarget(null)
-        }}
+        sub={freezeSubTarget}
+        onClose={() => setFreezeSubTarget(null)}
+        onFrozen={async () => { setFreezeSubTarget(null); await loadDetail() }}
       />
     )}
     {cancelSubId && (
       <CancelSubModal
         subId={cancelSubId}
         onClose={() => setCancelSubId(null)}
-        onCancelled={() => {
-          setSubs(null)
-          setCancelSubId(null)
-          setAuditLog(null)
-        }}
+        onCancelled={async () => { setCancelSubId(null); setAuditLog(null); await loadDetail() }}
       />
     )}
     {renewalsTarget && (
       <RenewalsModal sub={renewalsTarget} onClose={() => setRenewalsTarget(null)} />
+    )}
+    {showFreezeClient && (
+      <FreezeClientModal
+        client={client}
+        onClose={() => setShowFreezeClient(false)}
+        onFrozen={async () => { setShowFreezeClient(false); await loadDetail() }}
+      />
     )}
     </>
   )
@@ -593,7 +715,7 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
 
 // ─── FreezeModal ─────────────────────────────────────────────────────────────
 
-function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: () => void; onFrozen: (s: Subscription) => void }) {
+function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: () => void; onFrozen: () => void }) {
   const today = new Date()
   const maxDate = new Date(today); maxDate.setDate(today.getDate() + 30)
   const [frozenUntil, setFrozenUntil] = useState('')
@@ -604,8 +726,8 @@ function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: (
     if (!frozenUntil) { setError('Выберите дату окончания заморозки'); return }
     setSaving(true); setError(null)
     try {
-      const updated = await subscriptionsApi.freeze(sub.id, frozenUntil)
-      onFrozen(updated)
+      await subscriptionsApi.freeze(sub.id, frozenUntil)
+      onFrozen()
     } catch { setError('Ошибка при заморозке') } finally { setSaving(false) }
   }
 
@@ -720,6 +842,54 @@ function RenewalsModal({ sub, onClose }: { sub: Subscription; onClose: () => voi
               ))}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── FreezeClientModal ───────────────────────────────────────────────────────
+
+function FreezeClientModal({ client, onClose, onFrozen }: { client: Client; onClose: () => void; onFrozen: () => void }) {
+  const today = new Date()
+  const maxDate = new Date(today); maxDate.setDate(today.getDate() + 90)
+  const [freezeUntil, setFreezeUntil] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handle = async () => {
+    if (!freezeUntil) { setError('Выберите дату окончания заморозки'); return }
+    setSaving(true); setError(null)
+    try {
+      await clientsApi.freeze(client.id, freezeUntil)
+      onFrozen()
+    } catch { setError('Ошибка при заморозке клиента') } finally { setSaving(false) }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Заморозить клиента</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 13 }}>{client.full_name}</div>
+        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8 }}>{error}</div>}
+        <div style={{ marginBottom: 21 }}>
+          <label style={labelStyle}>Заморозить до (макс. 90 дней)</label>
+          <input type="date" style={inputStyle}
+            min={today.toISOString().split('T')[0]}
+            max={maxDate.toISOString().split('T')[0]}
+            value={freezeUntil}
+            onChange={e => setFreezeUntil(e.target.value)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => void handle()} disabled={saving} style={{ flex: 1, height: 40, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.35)', borderRadius: 8, color: '#6366f1', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Snowflake size={13} />{saving ? 'Заморозка...' : 'Заморозить'}
+          </button>
+          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
         </div>
       </div>
     </div>

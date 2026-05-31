@@ -19,6 +19,7 @@ import {
   Wrench,
   Shield,
   X,
+  DollarSign,
 } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 import { api } from '../../lib/api'
@@ -27,6 +28,7 @@ import { useTheme } from '../../lib/ThemeContext'
 import { usePermissions } from '../../hooks/usePermissions'
 import { PermissionsProvider } from '../../hooks/usePermissionOverrides'
 import { HotkeyHelp } from '../ui/HotkeyHelp'
+import { GlobalSearch } from '../GlobalSearch'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
 import { badgesApi } from '../../api/badges.api'
 import type { Badges } from '../../types'
@@ -306,6 +308,9 @@ function AppLayoutInner() {
 
         {/* Bottom */}
         <div style={{ padding: '8px 6px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {perm.can('employees', 'view') && (
+            <NavButton to="/payroll" icon={DollarSign} label="Зарплата" />
+          )}
           {perm.can('management', 'view') && (
             <NavButton to="/management" icon={Wrench} label="Управление" />
           )}
@@ -409,6 +414,7 @@ function AppLayoutInner() {
         </main>
       </div>
       <HotkeyHelp />
+      <GlobalSearch />
     </div>
   )
 }

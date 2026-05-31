@@ -203,6 +203,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   const [saving, setSaving]     = useState(false)
   const [movingTo, setMovingTo] = useState<LeadStatus | null>(null)
   const [showClientAdded, setShowClientAdded] = useState<{ id: string | null; full_name: string | null; phone: string | null } | null>(null)
+  const [failReasonPending, setFailReasonPending] = useState(false)
   const commentsEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -232,10 +233,14 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
     finally { setSaving(false) }
   }
 
-  const handleStatusChange = async (status: LeadStatus) => {
+  const handleStatusChange = async (status: LeadStatus, fail_reason?: string) => {
+    if (status === 'fail' && fail_reason === undefined) {
+      setFailReasonPending(true)
+      return
+    }
     setMovingTo(status)
     try {
-      const result = await leadsApi.updateStatus(detail.id, status)
+      const result = await leadsApi.updateStatus(detail.id, status, fail_reason)
       const updated = result.lead
       setDetail(updated)
       onUpdate(updated)
@@ -266,6 +271,12 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
 
   return (
     <>
+    {failReasonPending && (
+      <FailReasonModal
+        onConfirm={reason => { setFailReasonPending(false); void handleStatusChange('fail', reason) }}
+        onClose={() => setFailReasonPending(false)}
+      />
+    )}
     {showClientAdded !== null && (
       <ClientAddedModal
         clientId={showClientAdded.id}
@@ -422,6 +433,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
                   <InfoRow label="Статус" value={col?.label ?? detail.status} />
                   <InfoRow label="Ответственный" value={assignedEmp?.full_name ?? 'Не назначен'} />
                   {detail.notes && <InfoRow label="Заметки" value={detail.notes} />}
+                  {detail.fail_reason && <InfoRow label="Причина отказа" value={detail.fail_reason} />}
                   <InfoRow label="Создан" value={fmtDateTime(detail.created_at)} />
                   <InfoRow label="Обновлён" value={fmtDateTime(detail.updated_at)} />
                 </div>
@@ -558,6 +570,50 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
   )
 }
 
+// ─── FailReasonModal ──────────────────────────────────────────────────────────
+
+interface FailReasonModalProps {
+  onConfirm: (reason: string) => void
+  onClose: () => void
+}
+
+function FailReasonModal({ onConfirm, onClose }: FailReasonModalProps) {
+  const [reason, setReason] = useState('')
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 420, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Причина отказа</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 13 }}>
+          Укажите причину, по которой лид не был успешно закрыт.
+        </div>
+        <textarea
+          style={textareaStyle}
+          placeholder="Например: не дозвонились, передумал, не подошла цена..."
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          rows={4}
+          autoFocus
+        />
+        <div style={{ display: 'flex', gap: 13, marginTop: 21 }}>
+          <button onClick={() => onConfirm(reason.trim())}
+            style={{ flex: 1, height: 40, background: '#ef4444', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            Подтвердить отказ
+          </button>
+          <button onClick={onClose}
+            style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            Отмена
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── ClientAddedModal ─────────────────────────────────────────────────────────
 
 interface ClientAddedModalProps {
@@ -623,6 +679,7 @@ export default function LeadsPage() {
   const [ctxMenu, setCtxMenu]           = useState<{ x: number; y: number; lead: Lead } | null>(null)
   const [clientAddedModal, setClientAddedModal] = useState<{ id: string | null; full_name: string | null; phone: string | null } | null>(null)
   const [filterSource, setFilterSource] = useState('')
+  const [failReasonDrop, setFailReasonDrop] = useState<Lead | null>(null)
   const draggingRef = useRef<Lead | null>(null)
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin' || user?.role === 'staff'
@@ -670,16 +727,10 @@ export default function LeadsPage() {
     setDragOver(colId)
   }
 
-  const handleDrop = async (e: React.DragEvent, colId: LeadStatus) => {
-    e.preventDefault()
-    setDragOver(null)
-    const lead = draggingRef.current
-    draggingRef.current = null
-    if (!lead || lead.status === colId) return
-    // Optimistic update
+  const doStatusUpdate = async (lead: Lead, colId: LeadStatus, fail_reason?: string) => {
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: colId } : l))
     try {
-      const result = await leadsApi.updateStatus(lead.id, colId)
+      const result = await leadsApi.updateStatus(lead.id, colId, fail_reason)
       setLeads(prev => prev.map(l => l.id === lead.id ? result.lead : l))
       if (colId === 'success') {
         setClientAddedModal(result.client
@@ -688,9 +739,21 @@ export default function LeadsPage() {
         )
       }
     } catch {
-      // revert
       setLeads(prev => prev.map(l => l.id === lead.id ? lead : l))
     }
+  }
+
+  const handleDrop = (e: React.DragEvent, colId: LeadStatus) => {
+    e.preventDefault()
+    setDragOver(null)
+    const lead = draggingRef.current
+    draggingRef.current = null
+    if (!lead || lead.status === colId) return
+    if (colId === 'fail') {
+      setFailReasonDrop(lead)
+      return
+    }
+    void doStatusUpdate(lead, colId)
   }
 
   const handleLeadUpdate = (updated: Lead) => {
@@ -717,20 +780,9 @@ export default function LeadsPage() {
     { separator: true } as ContextMenuEntry,
     ...COLUMNS.filter(c => c.id !== lead.status).map(c => ({
       label: `→ ${c.label}`,
-      onClick: async () => {
-        setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: c.id } : l))
-        try {
-          const result = await leadsApi.updateStatus(lead.id, c.id)
-          setLeads(prev => prev.map(l => l.id === lead.id ? result.lead : l))
-          if (c.id === 'success') {
-            setClientAddedModal(result.client
-              ? { id: result.client.id, full_name: result.client.full_name, phone: result.client.phone }
-              : { id: null, full_name: null, phone: null }
-            )
-          }
-        } catch {
-          setLeads(prev => prev.map(l => l.id === lead.id ? lead : l))
-        }
+      onClick: () => {
+        if (c.id === 'fail') { setFailReasonDrop(lead); return }
+        void doStatusUpdate(lead, c.id)
       },
     })),
     { separator: true } as ContextMenuEntry,
@@ -894,6 +946,14 @@ export default function LeadsPage() {
           clientName={clientAddedModal.full_name}
           onGoToClient={() => { const cid = clientAddedModal.id; setClientAddedModal(null); if (cid) navigate(`/clients/${cid}`) }}
           onClose={() => setClientAddedModal(null)}
+        />
+      )}
+
+      {/* Fail reason modal (drag-drop / context menu) */}
+      {failReasonDrop && (
+        <FailReasonModal
+          onConfirm={reason => { const l = failReasonDrop; setFailReasonDrop(null); void doStatusUpdate(l, 'fail', reason) }}
+          onClose={() => { setFailReasonDrop(null) }}
         />
       )}
     </div>

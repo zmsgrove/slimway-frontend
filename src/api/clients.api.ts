@@ -1,5 +1,5 @@
 import { api } from '../lib/api'
-import type { Client } from '../types'
+import type { Client, ClientDetail } from '../types'
 
 export const clientsApi = {
   getAll: async (search?: string): Promise<Client[]> => {
@@ -7,7 +7,7 @@ export const clientsApi = {
     return data
   },
 
-  getById: async (id: string): Promise<Client> => {
+  getById: async (id: string): Promise<ClientDetail> => {
     const { data } = await api.get(`/clients/${id}`)
     return data
   },
@@ -24,5 +24,15 @@ export const clientsApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/clients/${id}`)
-  }
+  },
+
+  freeze: async (id: string, freeze_until: string): Promise<Client> => {
+    const { data } = await api.post(`/clients/${id}/freeze`, { freeze_until })
+    return data
+  },
+
+  unfreeze: async (id: string): Promise<Client> => {
+    const { data } = await api.post(`/clients/${id}/unfreeze`)
+    return data
+  },
 }

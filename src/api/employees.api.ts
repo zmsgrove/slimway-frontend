@@ -35,6 +35,8 @@ export const employeesApi = {
     position: string | null
     department: string | null
     address: string | null
+    salary_rate: number | null
+    payment_type: 'hourly' | 'fixed' | 'percent' | null
   }>): Promise<Employee> => {
     const { data } = await api.patch(`/employees/${id}`, payload)
     return data

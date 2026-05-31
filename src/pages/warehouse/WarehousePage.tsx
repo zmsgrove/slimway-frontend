@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2, Plus, Download, Truck } from 'lucide-react'
+import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2, Plus, Download, Truck, ShoppingCart } from 'lucide-react'
 import { warehouseApi } from '../../api/warehouse.api'
 import { catalogApi } from '../../api/catalog.api'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
@@ -8,7 +8,7 @@ import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu
 import { BranchSelector } from '../../components/ui/BranchSelector'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
-import type { WarehouseItem, WarehouseMovement, WarehouseCategory, CatalogItem, Supplier } from '../../types'
+import type { WarehouseItem, WarehouseMovement, WarehouseCategory, CatalogItem, Supplier, SupplierOrder, SupplierOrderStatus } from '../../types'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -46,6 +46,7 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
   const [movements, setMovements] = useState<WarehouseMovement[]>([])
   const [loading,   setLoading]   = useState(true)
   const [showIn,    setShowIn]    = useState(false)
+  const [showSell,  setShowSell]  = useState(false)
   const [qty,       setQty]       = useState('')
   const [notes,     setNotes]     = useState('')
   const [saving,    setSaving]    = useState(false)
@@ -69,6 +70,20 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
     setSaving(true); setError(null)
     try {
       await warehouseApi.addMovement(item.id, { type: 'in', quantity: q, notes: notes.trim() || undefined })
+      onMovement()
+      onClose()
+    } catch (e: unknown) {
+      setError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
+    } finally { setSaving(false) }
+  }
+
+  const handleSell = async () => {
+    const q = parseInt(qty, 10)
+    if (!q || q <= 0) { setError('Укажите количество'); return }
+    if (q > item.quantity) { setError('Недостаточно на складе'); return }
+    setSaving(true); setError(null)
+    try {
+      await warehouseApi.addMovement(item.id, { type: 'out', quantity: q, notes: notes.trim() || 'Продажа' })
       onMovement()
       onClose()
     } catch (e: unknown) {
@@ -125,7 +140,7 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
             </div>
           </div>
 
-          {/* Intake form */}
+          {/* Action forms */}
           {showIn ? (
             <div style={{ background: 'var(--bg-surface)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 13, padding: 13, marginBottom: 21 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#10b981', marginBottom: 10 }}>Приход</div>
@@ -136,7 +151,20 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
                 <button onClick={() => void handleIn()} disabled={saving} style={{ height: 36, padding: '0 13px', background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
                   {saving ? '...' : 'OK'}
                 </button>
-                <button onClick={() => { setShowIn(false); setError(null) }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                <button onClick={() => { setShowIn(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+              </div>
+            </div>
+          ) : showSell ? (
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 13, padding: 13, marginBottom: 21 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', marginBottom: 10 }}>Продажа</div>
+              {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{error}</div>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input type="number" min={1} max={item.quantity} style={{ ...inputStyle, width: 100 }} value={qty} onChange={e => setQty(e.target.value)} placeholder="Кол-во" />
+                <input style={inputStyle} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Примечание" />
+                <button onClick={() => void handleSell()} disabled={saving} style={{ height: 36, padding: '0 13px', background: '#ef4444', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+                  {saving ? '...' : 'OK'}
+                </button>
+                <button onClick={() => { setShowSell(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
               </div>
             </div>
           ) : (
@@ -144,6 +172,11 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
               <button onClick={() => setShowIn(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, color: '#10b981', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
                 <ArrowDown size={14} />Приход
               </button>
+              {item.quantity > 0 && (
+                <button onClick={() => setShowSell(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+                  <ShoppingCart size={14} />Продажа
+                </button>
+              )}
               {canEdit && (
                 <>
                   <button onClick={() => { onEdit(); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
@@ -520,6 +553,166 @@ function SupplierModal({ initial, onClose, onSave }: { initial?: Supplier | null
   )
 }
 
+// ─── SupplierOrdersTab ────────────────────────────────────────────────────────
+
+const ORDER_STATUS_LABELS: Record<SupplierOrderStatus, string> = {
+  pending:   'Ожидает',
+  confirmed: 'Подтверждён',
+  delivered: 'Доставлен',
+  cancelled: 'Отменён',
+}
+const ORDER_STATUS_COLORS: Record<SupplierOrderStatus, string> = {
+  pending:   '#f59e0b',
+  confirmed: '#263CD9',
+  delivered: '#10b981',
+  cancelled: '#71717A',
+}
+
+function SupplierOrdersTab({ orders, suppliers, canEdit, onReload }: {
+  orders: SupplierOrder[]
+  suppliers: Supplier[]
+  canEdit: boolean
+  onReload: () => Promise<void>
+}) {
+  const [showForm,    setShowForm]    = useState(false)
+  const [suppId,      setSuppId]      = useState('')
+  const [notes,       setNotes]       = useState('')
+  const [orderedAt,   setOrderedAt]   = useState(new Date().toISOString().slice(0, 10))
+  const [saving,      setSaving]      = useState(false)
+
+  const handleCreate = async () => {
+    setSaving(true)
+    try {
+      const { api } = await import('../../lib/api')
+      await api.post('/supplier-orders', { supplier_id: suppId || null, notes: notes || null, ordered_at: orderedAt })
+      await onReload()
+      setShowForm(false); setSuppId(''); setNotes(''); setOrderedAt(new Date().toISOString().slice(0, 10))
+    } catch { /* ignore */ } finally { setSaving(false) }
+  }
+
+  const handleStatus = async (id: string, status: SupplierOrderStatus) => {
+    try {
+      const { api } = await import('../../lib/api')
+      await api.patch(`/supplier-orders/${id}`, { status })
+      await onReload()
+    } catch { /* ignore */ }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Удалить заказ?')) return
+    try {
+      const { api } = await import('../../lib/api')
+      await api.delete(`/supplier-orders/${id}`)
+      await onReload()
+    } catch { /* ignore */ }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 13 }}>
+        {canEdit && !showForm && (
+          <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <Plus size={15} />Новый заказ
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 21, marginBottom: 13 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Новый заказ поставщику</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8, alignItems: 'end' }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Поставщик</div>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={suppId} onChange={e => setSuppId(e.target.value)}>
+                <option value="">Не выбран</option>
+                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Дата</div>
+              <input type="date" style={inputStyle} value={orderedAt} onChange={e => setOrderedAt(e.target.value)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Заметка</div>
+              <input style={inputStyle} placeholder="Примечание" value={notes} onChange={e => setNotes(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => void handleCreate()} disabled={saving} style={{ height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                {saving ? '...' : 'Создать'}
+              </button>
+              <button onClick={() => setShowForm(false)} style={{ height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer' }}>✕</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {orders.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 55, color: 'var(--text-muted)' }}>
+          <Truck size={40} strokeWidth={1} style={{ marginBottom: 13, opacity: 0.3 }} />
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Нет заказов</div>
+          <div style={{ fontSize: 13 }}>Создайте первый заказ поставщику</div>
+        </div>
+      ) : (
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                {['Поставщик', 'Дата', 'Статус', 'Заметки', ''].map(h => (
+                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((o, i) => (
+                <tr key={o.id} style={{ borderBottom: i < orders.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {o.suppliers?.name ?? 'Не указан'}
+                  </td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>
+                    {new Date(o.ordered_at).toLocaleDateString('ru-RU')}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: ORDER_STATUS_COLORS[o.status] + '18', color: ORDER_STATUS_COLORS[o.status], border: `1px solid ${ORDER_STATUS_COLORS[o.status]}33`, fontWeight: 600 }}>
+                      {ORDER_STATUS_LABELS[o.status]}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {o.notes ?? '—'}
+                  </td>
+                  <td style={{ padding: '8px 16px' }}>
+                    {canEdit && (
+                      <div style={{ display: 'flex', gap: 5 }}>
+                        {o.status === 'pending' && (
+                          <button onClick={() => void handleStatus(o.id, 'confirmed')} style={{ height: 28, padding: '0 10px', background: 'rgba(37,60,217,0.1)', border: '1px solid rgba(37,60,217,0.25)', borderRadius: 6, color: '#263CD9', fontSize: 11, cursor: 'pointer' }}>
+                            Подтвердить
+                          </button>
+                        )}
+                        {o.status === 'confirmed' && (
+                          <button onClick={() => void handleStatus(o.id, 'delivered')} style={{ height: 28, padding: '0 10px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 6, color: '#10b981', fontSize: 11, cursor: 'pointer' }}>
+                            Доставлен
+                          </button>
+                        )}
+                        {(o.status === 'pending' || o.status === 'confirmed') && (
+                          <button onClick={() => void handleStatus(o.id, 'cancelled')} style={{ height: 28, padding: '0 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, color: '#ef4444', fontSize: 11, cursor: 'pointer' }}>
+                            Отмена
+                          </button>
+                        )}
+                        <button onClick={() => void handleDelete(o.id)} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }}>
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export default function WarehousePage() {
@@ -531,9 +724,11 @@ export default function WarehousePage() {
   const [editItem,           setEditItem]           = useState<WarehouseItem | null>(null)
   const [ctxMenu,            setCtxMenu]            = useState<{ item: WarehouseItem; x: number; y: number } | null>(null)
   const [filterCat,          setFilterCat]          = useState<WarehouseCategory | 'all'>('all')
-  const [activeTab,          setActiveTab]          = useState<'items' | 'suppliers'>('items')
+  const [activeTab,          setActiveTab]          = useState<'items' | 'suppliers' | 'orders'>('items')
   const [suppliers,          setSuppliers]          = useState<Supplier[]>([])
   const [suppModal,          setSuppModal]          = useState<Supplier | null | 'new'>()
+  const [orders,             setOrders]             = useState<SupplierOrder[]>([])
+  const [showOrderForm,      setShowOrderForm]      = useState(false)
   const [selectedBranchIds,  setSelectedBranchIds]  = useState<string[]>(() => {
     const id = localStorage.getItem('activeBranchId')
     return id ? [id] : []
@@ -552,6 +747,16 @@ export default function WarehousePage() {
   useEffect(() => {
     suppliersApi.getAll().then(setSuppliers).catch(() => { /* ignore */ })
   }, [])
+
+  const loadOrders = useCallback(async () => {
+    try {
+      const { api } = await import('../../lib/api')
+      const { data } = await api.get('/supplier-orders')
+      setOrders(data ?? [])
+    } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => { if (activeTab === 'orders') void loadOrders() }, [activeTab, loadOrders])
 
   const handleExport = async () => {
     const XLSX = await import('xlsx')
@@ -653,12 +858,15 @@ export default function WarehousePage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', borderRadius: 10, padding: 4, marginBottom: 13, width: 'fit-content' }}>
-        {[{ id: 'items', label: 'Товары' }, { id: 'suppliers', label: 'Поставщики' }].map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id as 'items' | 'suppliers')}
+        {[
+          { id: 'items',     label: 'Товары',      count: items.length },
+          { id: 'suppliers', label: 'Поставщики',  count: suppliers.length },
+          { id: 'orders',    label: 'Заказы',      count: orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length },
+        ].map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id as 'items' | 'suppliers' | 'orders')}
             style={{ height: 32, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: activeTab === t.id ? 600 : 400, background: activeTab === t.id ? 'rgba(2,189,182,0.12)' : 'transparent', border: 'none', color: activeTab === t.id ? '#02BDB6' : 'var(--text-secondary)', cursor: 'pointer' }}>
             {t.label}
-            {t.id === 'items' && items.length > 0 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700 }}>({items.length})</span>}
-            {t.id === 'suppliers' && suppliers.length > 0 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700 }}>({suppliers.length})</span>}
+            {t.count > 0 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700 }}>({t.count})</span>}
           </button>
         ))}
       </div>
@@ -731,6 +939,16 @@ export default function WarehousePage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Orders tab */}
+      {activeTab === 'orders' && (
+        <SupplierOrdersTab
+          orders={orders}
+          suppliers={suppliers}
+          canEdit={canEdit || canIntake}
+          onReload={loadOrders}
+        />
       )}
 
       {/* Table (items tab) */}

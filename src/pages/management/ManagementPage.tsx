@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import ReactDOM from 'react-dom'
 import {
   Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid,
-  CreditCard, Package, Edit2, X, ChevronDown, Shield, Users,
+  CreditCard, Package, Edit2, X, ChevronDown, Shield, Users, Tag, ClipboardList,
 } from 'lucide-react'
+import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { usePermissions } from '../../hooks/usePermissions'
 import { usePermissionOverrides } from '../../hooks/usePermissionOverrides'
@@ -658,6 +659,157 @@ function CatalogSection() {
   )
 }
 
+// ─── PromoCodesSection ───────────────────────────────────────────────────────
+
+interface PromoCode {
+  id: string
+  branch_id: string
+  code: string
+  discount_type: 'fixed' | 'percent'
+  discount_value: number
+  max_uses: number | null
+  uses_count: number
+  expires_at: string | null
+  is_active: boolean
+  created_at: string
+}
+
+function PromoCodesSection() {
+  const [codes,    setCodes]    = useState<PromoCode[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [error,    setError]    = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [saving,   setSaving]   = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const [code,          setCode]          = useState('')
+  const [discountType,  setDiscountType]  = useState<'fixed' | 'percent'>('fixed')
+  const [discountValue, setDiscountValue] = useState('')
+  const [maxUses,       setMaxUses]       = useState('')
+  const [expiresAt,     setExpiresAt]     = useState('')
+
+  const { api: apiLib } = { api: null }
+
+  useEffect(() => {
+    import('../../lib/api').then(m => {
+      m.api.get('/promo-codes')
+        .then(r => setCodes((r.data as PromoCode[]) ?? []))
+        .catch(() => setError('Не удалось загрузить промокоды'))
+        .finally(() => setLoading(false))
+    })
+  }, [])
+
+  const resetForm = () => { setCode(''); setDiscountType('fixed'); setDiscountValue(''); setMaxUses(''); setExpiresAt(''); setFormError(null) }
+
+  const handleCreate = async () => {
+    if (!code.trim()) { setFormError('Введите код'); return }
+    if (!discountValue || Number(discountValue) <= 0) { setFormError('Укажите размер скидки'); return }
+    setSaving(true); setFormError(null)
+    try {
+      const { api: a } = await import('../../lib/api')
+      const { data } = await a.post('/promo-codes', {
+        code: code.trim(),
+        discount_type: discountType,
+        discount_value: Number(discountValue),
+        max_uses: maxUses ? Number(maxUses) : null,
+        expires_at: expiresAt || null,
+      })
+      setCodes(prev => [data as PromoCode, ...prev])
+      setShowForm(false); resetForm()
+    } catch (e: unknown) {
+      setFormError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
+    } finally { setSaving(false) }
+  }
+
+  const handleToggle = async (promo: PromoCode) => {
+    try {
+      const { api: a } = await import('../../lib/api')
+      const { data } = await a.patch(`/promo-codes/${promo.id}`, { is_active: !promo.is_active })
+      setCodes(prev => prev.map(c => c.id === promo.id ? data as PromoCode : c))
+    } catch { /* ignore */ }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Удалить промокод?')) return
+    try {
+      const { api: a } = await import('../../lib/api')
+      await a.delete(`/promo-codes/${id}`)
+      setCodes(prev => prev.filter(c => c.id !== id))
+    } catch { /* ignore */ }
+  }
+
+  return (
+    <Section title="Промокоды" icon={<Tag size={15} strokeWidth={1.75} color="#02BDB6" />}>
+      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
+        <>
+          {codes.map(promo => (
+            <div key={promo.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'monospace', letterSpacing: 1 }}>{promo.code}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: promo.discount_type === 'percent' ? 'rgba(139,92,246,0.10)' : 'rgba(2,189,182,0.10)', color: promo.discount_type === 'percent' ? '#8b5cf6' : '#02BDB6', border: `1px solid ${promo.discount_type === 'percent' ? 'rgba(139,92,246,0.25)' : 'rgba(2,189,182,0.25)'}` }}>
+                    -{promo.discount_value}{promo.discount_type === 'percent' ? '%' : ' ₸'}
+                  </span>
+                  {!promo.is_active && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, background: 'rgba(113,113,122,0.10)', color: '#71717A', border: '1px solid rgba(113,113,122,0.2)' }}>Неактивен</span>}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <span>Использовано: {promo.uses_count}{promo.max_uses ? `/${promo.max_uses}` : ''}</span>
+                  {promo.expires_at && <span>До {new Date(promo.expires_at + 'T00:00:00').toLocaleDateString('ru-RU')}</span>}
+                </div>
+              </div>
+              <button onClick={() => void handleToggle(promo)} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: promo.is_active ? '1px solid rgba(2,189,182,0.3)' : '1px solid var(--glass-border)', background: promo.is_active ? 'rgba(2,189,182,0.08)' : 'transparent', color: promo.is_active ? '#02BDB6' : 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                {promo.is_active ? 'Активен' : 'Включить'}
+              </button>
+              <button onClick={() => void handleDelete(promo.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                <Trash2 size={12} strokeWidth={1.75} />
+              </button>
+            </div>
+          ))}
+          {codes.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Промокодов нет</div>}
+
+          {showForm && (
+            <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-elevated)', borderRadius: 13, border: '1px solid var(--glass-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Новый промокод</div>
+                <button onClick={() => { setShowForm(false); resetForm() }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={14} /></button>
+              </div>
+              {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{formError}</div>}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div><label style={labelStyle}>Код *</label><input style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase' }} placeholder="SUMMER25" value={code} onChange={e => setCode(e.target.value.toUpperCase())} /></div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div><label style={labelStyle}>Тип скидки</label>
+                    <select style={selectStyle} value={discountType} onChange={e => setDiscountType(e.target.value as 'fixed' | 'percent')}>
+                      <option value="fixed">Фиксированная (₸)</option>
+                      <option value="percent">Процент (%)</option>
+                    </select>
+                  </div>
+                  <div><label style={labelStyle}>Размер скидки *</label><input type="number" min={0} style={inputStyle} placeholder={discountType === 'percent' ? '10' : '5000'} value={discountValue} onChange={e => setDiscountValue(e.target.value)} /></div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div><label style={labelStyle}>Макс. использований</label><input type="number" min={1} style={inputStyle} placeholder="∞" value={maxUses} onChange={e => setMaxUses(e.target.value)} /></div>
+                  <div><label style={labelStyle}>Действует до</label><input type="date" style={inputStyle} value={expiresAt} onChange={e => setExpiresAt(e.target.value)} /></div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
+                <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Создание...' : 'Создать'}</button>
+                <button onClick={() => { setShowForm(false); resetForm() }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+              </div>
+            </div>
+          )}
+          {!showForm && (
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                <Plus size={14} strokeWidth={2} />Добавить промокод
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </Section>
+  )
+}
+
 // ─── PermissionsTab ──────────────────────────────────────────────────────────
 
 const PERM_ROLES: PermRole[] = ['owner', 'franchisee', 'admin', 'staff', 'technical']
@@ -988,9 +1140,242 @@ function UsersTab() {
   )
 }
 
+// ─── BranchSettingsSection ───────────────────────────────────────────────────
+
+interface BranchSettings {
+  working_hours_start: string | null
+  working_hours_end: string | null
+  timezone: string | null
+  currency: string | null
+  contact_phone: string | null
+  contact_email: string | null
+  website: string | null
+  address: string | null
+  booking_interval_min: number | null
+  max_bookings_per_day: number | null
+}
+
+function BranchSettingsSection() {
+  const [settings, setSettings] = useState<BranchSettings>({
+    working_hours_start: '09:00', working_hours_end: '22:00',
+    timezone: 'Asia/Almaty', currency: 'KZT',
+    contact_phone: '', contact_email: '', website: '', address: '',
+    booking_interval_min: 60, max_bookings_per_day: null,
+  })
+  const [saving, setSaving]   = useState(false)
+  const [saved, setSaved]     = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get('/branch-settings').then(r => {
+      const d = r.data
+      setSettings({
+        working_hours_start: d.working_hours_start ?? '09:00',
+        working_hours_end:   d.working_hours_end   ?? '22:00',
+        timezone:            d.timezone            ?? 'Asia/Almaty',
+        currency:            d.currency            ?? 'KZT',
+        contact_phone:       d.contact_phone       ?? '',
+        contact_email:       d.contact_email       ?? '',
+        website:             d.website             ?? '',
+        address:             d.address             ?? '',
+        booking_interval_min: d.booking_interval_min ?? 60,
+        max_bookings_per_day: d.max_bookings_per_day ?? null,
+      })
+    }).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await api.patch('/branch-settings', settings)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch { /* ignore */ }
+    finally { setSaving(false) }
+  }
+
+  const field = (key: keyof BranchSettings) => ({
+    value: String(settings[key] ?? ''),
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setSettings(s => ({ ...s, [key]: e.target.value || null })),
+  })
+
+  const TIMEZONES = ['Asia/Almaty', 'Asia/Tashkent', 'Europe/Moscow', 'Europe/Kiev', 'UTC']
+  const CURRENCIES = ['KZT', 'RUB', 'USD', 'EUR']
+  const INTERVALS  = [15, 20, 30, 45, 60, 90]
+
+  if (loading) return <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>
+
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13, marginBottom: 13 }}>
+        <div>
+          <label style={labelStyle}>Начало работы</label>
+          <input type="time" style={inputStyle} {...field('working_hours_start')} />
+        </div>
+        <div>
+          <label style={labelStyle}>Конец работы</label>
+          <input type="time" style={inputStyle} {...field('working_hours_end')} />
+        </div>
+        <div>
+          <label style={labelStyle}>Часовой пояс</label>
+          <select style={selectStyle} {...field('timezone')}>
+            {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Валюта</label>
+          <select style={selectStyle} {...field('currency')}>
+            {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Интервал записи (мин)</label>
+          <select style={selectStyle} {...field('booking_interval_min')}>
+            {INTERVALS.map(i => <option key={i} value={i}>{i} мин</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Макс. записей в день</label>
+          <input type="number" min={1} max={999} style={inputStyle}
+            value={settings.max_bookings_per_day ?? ''}
+            onChange={e => setSettings(s => ({ ...s, max_bookings_per_day: e.target.value ? Number(e.target.value) : null }))} />
+        </div>
+        <div>
+          <label style={labelStyle}>Контактный телефон</label>
+          <input type="text" style={inputStyle} {...field('contact_phone')} placeholder="+7 700 000 0000" />
+        </div>
+        <div>
+          <label style={labelStyle}>Email</label>
+          <input type="email" style={inputStyle} {...field('contact_email')} placeholder="studio@example.com" />
+        </div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={labelStyle}>Сайт</label>
+          <input type="text" style={inputStyle} {...field('website')} placeholder="https://example.com" />
+        </div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={labelStyle}>Адрес</label>
+          <input type="text" style={inputStyle} {...field('address')} placeholder="г. Алматы, ул. Примерная, 1" />
+        </div>
+      </div>
+
+      <button onClick={save} disabled={saving}
+        style={{ height: 36, padding: '0 21px', background: saved ? '#02BDB6' : 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>
+        {saving ? 'Сохранение...' : saved ? 'Сохранено!' : 'Сохранить'}
+      </button>
+    </div>
+  )
+}
+
+// ─── AuditLogSection ─────────────────────────────────────────────────────────
+
+interface AuditEntry {
+  id: string
+  entity_type: string | null
+  entity_id: string | null
+  action: string
+  actor_id: string | null
+  details: Record<string, unknown> | null
+  created_at: string
+}
+
+const ACTION_COLORS: Record<string, string> = {
+  create: '#02BDB6', update: '#8b5cf6', delete: '#ef4444',
+  status_change: '#f59e0b', follow_up_reminder: '#3b82f6', deadline_reminder: '#f97316',
+}
+
+function AuditLogSection() {
+  const [entries, setEntries]     = useState<AuditEntry[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [entityType, setEntityType] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ limit: '150' })
+      if (entityType) params.set('entity_type', entityType)
+      const { data } = await api.get(`/audit-log?${params}`)
+      setEntries(data ?? [])
+    } catch { /* ignore */ }
+    finally { setLoading(false) }
+  }, [entityType])
+
+  useEffect(() => { load() }, [load])
+
+  const tdS: React.CSSProperties = { padding: '9px 12px', fontSize: 12, borderBottom: '1px solid var(--glass-border)', verticalAlign: 'middle' }
+
+  const ENTITY_TYPES = ['client', 'lead', 'task', 'subscription', 'employee', 'shift', 'booking', 'warehouse_item', 'supplier_order']
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 13, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select value={entityType} onChange={e => setEntityType(e.target.value)}
+          style={{ fontSize: 12, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer' }}>
+          <option value="">Все типы</option>
+          {ENTITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <button onClick={load} style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer' }}>
+          Обновить
+        </button>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 'auto' }}>{entries.length} записей</span>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>
+      ) : entries.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 13 }}>Записей нет</div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: 'var(--bg-surface)' }}>
+                {['Время', 'Тип', 'ID объекта', 'Действие', 'Актор'].map(h => (
+                  <th key={h} style={{ ...tdS, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'left' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map(e => {
+                const color = ACTION_COLORS[e.action] ?? '#6b7280'
+                const dt = new Date(e.created_at)
+                const dateStr = dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })
+                const timeStr = dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                return (
+                  <tr key={e.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                    <td style={tdS}>
+                      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{timeStr}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{dateStr}</div>
+                    </td>
+                    <td style={tdS}>
+                      <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}>
+                        {e.entity_type ?? '—'}
+                      </span>
+                    </td>
+                    <td style={{ ...tdS, fontFamily: 'monospace', fontSize: 10, color: 'var(--text-muted)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {e.entity_id ? e.entity_id.slice(0, 8) + '…' : '—'}
+                    </td>
+                    <td style={tdS}>
+                      <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: color + '18', color }}>
+                        {e.action}
+                      </span>
+                    </td>
+                    <td style={{ ...tdS, fontFamily: 'monospace', fontSize: 10, color: 'var(--text-muted)' }}>
+                      {e.actor_id ? e.actor_id.slice(0, 8) + '…' : 'system'}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users'
+type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users' | 'audit' | 'branch_settings'
 
 export default function ManagementPage() {
   const { user } = useAuth()
@@ -1004,6 +1389,8 @@ export default function ManagementPage() {
     ...(isDeveloperOrOwner ? [{ id: 'catalog' as ManagementTab, label: 'Каталог', icon: <Package size={14} strokeWidth={1.75} /> }] : []),
     ...(perm.can('permissions', 'view') ? [{ id: 'permissions' as ManagementTab, label: 'Права доступа', icon: <Shield size={14} strokeWidth={1.75} /> }] : []),
     ...(user?.role === 'developer' ? [{ id: 'users' as ManagementTab, label: 'Пользователи', icon: <Users size={14} strokeWidth={1.75} /> }] : []),
+    ...(isDeveloperOrOwner || user?.role === 'admin' ? [{ id: 'audit' as ManagementTab, label: 'Аудит', icon: <ClipboardList size={14} strokeWidth={1.75} /> }] : []),
+    ...(isDeveloperOrOwner || user?.role === 'admin' ? [{ id: 'branch_settings' as ManagementTab, label: 'Настройки', icon: <Cpu size={14} strokeWidth={1.75} /> }] : []),
   ]
 
   return (
@@ -1031,7 +1418,7 @@ export default function ManagementPage() {
           {isDeveloperOrOwner && <BranchesSection />}
         </div>
       )}
-      {tab === 'subscriptions' && <div style={{ maxWidth: 700 }}><SubscriptionTemplatesSection /></div>}
+      {tab === 'subscriptions' && <div style={{ maxWidth: 700 }}><SubscriptionTemplatesSection /><PromoCodesSection /></div>}
       {tab === 'catalog' && isDeveloperOrOwner && <div style={{ maxWidth: 700 }}><CatalogSection /></div>}
       {tab === 'permissions' && perm.can('permissions', 'view') && (
         <Section title="Матрица прав доступа" icon={<Shield size={15} strokeWidth={1.75} color="#02BDB6" />}>
@@ -1042,6 +1429,18 @@ export default function ManagementPage() {
         <Section title="Пользователи" icon={<Users size={15} strokeWidth={1.75} color="#02BDB6" />}>
           <UsersTab />
         </Section>
+      )}
+      {tab === 'audit' && (isDeveloperOrOwner || user?.role === 'admin') && (
+        <Section title="Журнал аудита" icon={<ClipboardList size={15} strokeWidth={1.75} color="#02BDB6" />}>
+          <AuditLogSection />
+        </Section>
+      )}
+      {tab === 'branch_settings' && (isDeveloperOrOwner || user?.role === 'admin') && (
+        <div style={{ maxWidth: 700 }}>
+          <Section title="Настройки филиала" icon={<Cpu size={15} strokeWidth={1.75} color="#02BDB6" />}>
+            <BranchSettingsSection />
+          </Section>
+        </div>
       )}
     </div>
   )

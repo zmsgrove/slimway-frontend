@@ -599,15 +599,16 @@ interface QuickCreateModalProps {
 }
 
 function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps) {
-  const [deviceId,   setDeviceId]   = useState(devices[0]?.id ?? '')
-  const [dateStart,  setDateStart]  = useState(() => toISO(new Date()))
-  const [dateEnd,    setDateEnd]    = useState(() => toISO(new Date()))
-  const [timeStart,  setTimeStart]  = useState('09:00')
-  const [timeEnd,    setTimeEnd]    = useState('09:30')
-  const [repeat,     setRepeat]     = useState<RepeatMode>('every_day')
-  const [everyN,     setEveryN]     = useState(2)
-  const [saving,     setSaving]     = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
+  const [deviceId,    setDeviceId]    = useState(devices[0]?.id ?? '')
+  const [dateStart,   setDateStart]   = useState(() => toISO(new Date()))
+  const [dateEnd,     setDateEnd]     = useState(() => toISO(new Date()))
+  const [timeStart,   setTimeStart]   = useState('09:00')
+  const [timeEnd,     setTimeEnd]     = useState('09:30')
+  const [repeat,      setRepeat]      = useState<RepeatMode>('every_day')
+  const [everyN,      setEveryN]      = useState(2)
+  const [slotStatus,  setSlotStatus]  = useState<'free' | 'blocked'>('free')
+  const [saving,      setSaving]      = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
 
   const generateDates = (): string[] => {
     const dates: string[] = []
@@ -639,7 +640,7 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
     try {
       const dates = generateDates()
       if (dates.length === 0) { setError('Нет дат для создания'); setSaving(false); return }
-      const slots = dates.map(date => ({ device_id: deviceId, date, time_start: timeStart, time_end: timeEnd }))
+      const slots = dates.map(date => ({ device_id: deviceId, date, time_start: timeStart, time_end: timeEnd, status: slotStatus }))
       const result = await scheduleSlotsApi.bulkCreate(slots)
       onCreated((result as unknown as { created: number }).created ?? slots.length)
     } catch {
@@ -720,9 +721,23 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
           )}
         </div>
 
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Тип ячеек</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => setSlotStatus('free')}
+              style={{ flex: 1, height: 34, background: slotStatus === 'free' ? 'rgba(16,185,129,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'free' ? '#10b981' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'free' ? '#10b981' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'free' ? 600 : 400, cursor: 'pointer' }}>
+              Свободные
+            </button>
+            <button onClick={() => setSlotStatus('blocked')}
+              style={{ flex: 1, height: 34, background: slotStatus === 'blocked' ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'blocked' ? '#f59e0b' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'blocked' ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'blocked' ? 600 : 400, cursor: 'pointer' }}>
+              Заблокированные
+            </button>
+          </div>
+        </div>
+
         {previewCount > 0 && (
           <div style={{ padding: '10px 13px', background: `${devColor}08`, border: `1px solid ${devColor}22`, borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-            Будет создано <strong style={{ color: devColor }}>{previewCount}</strong> ячеек
+            Будет создано <strong style={{ color: devColor }}>{previewCount}</strong> {slotStatus === 'blocked' ? 'заблокированных' : ''} ячеек
             {selectedDevice && ` для ${DEVICE_TYPE_LABELS[selectedDevice.type]} #${selectedDevice.number}`}
           </div>
         )}
@@ -730,7 +745,7 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
 
       <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
         <button onClick={() => void handleCreate()} disabled={saving || previewCount === 0}
-          style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || previewCount === 0) ? 'not-allowed' : 'pointer', opacity: (saving || previewCount === 0) ? 0.5 : 1 }}>
+          style={{ flex: 1, height: 40, background: slotStatus === 'blocked' ? '#f59e0b' : '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || previewCount === 0) ? 'not-allowed' : 'pointer', opacity: (saving || previewCount === 0) ? 0.5 : 1 }}>
           {saving ? 'Создание...' : `Создать ${previewCount} ячеек`}
         </button>
         <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>

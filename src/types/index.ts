@@ -33,7 +33,32 @@ export interface Client {
   avatar_url?: string | null
   tags?: string[] | null
   source?: string | null
+  freeze_until?: string | null
   memberships?: ClientMembership[]
+}
+
+export interface ClientBookingSlot {
+  id: string
+  date: string
+  time_start: string
+  time_end: string
+  device: { id: string; type: string; number: string } | null
+}
+
+export interface ClientBooking {
+  id: string
+  client_id: string
+  subscription_id: string
+  date: string
+  attended: boolean | null
+  created_at: string
+  slot: ClientBookingSlot | null
+}
+
+export interface ClientDetail extends Client {
+  subscriptions: Subscription[]
+  bookings: ClientBooking[]
+  lead_comments: LeadComment[]
 }
 
 export interface ClientMembership {
@@ -163,7 +188,16 @@ export interface Employee {
   position: string | null
   department: string | null
   address: string | null
+  salary_rate?: number | null
+  payment_type?: 'hourly' | 'fixed' | 'percent' | null
   created_at: string
+  kpi?: {
+    shifts_total: number
+    shifts_completed: number
+    tasks_total: number
+    tasks_done: number
+    avg_shift_hours: number
+  }
 }
 
 export type ShiftStatus = 'scheduled' | 'active' | 'completed'
@@ -223,6 +257,7 @@ export interface Lead {
   updated_at: string
   status_changed_at: string | null
   desired_template_id: string | null
+  fail_reason?: string | null
   lead_comments?: LeadComment[]
 }
 
@@ -281,6 +316,9 @@ export interface Task {
   created_by: string | null
   deadline: string | null
   created_at: string
+  related_type?: string | null
+  related_id?: string | null
+  recur_rule?: 'daily' | 'weekly' | 'monthly' | null
   task_checklist_items?: TaskChecklistItem[]
   task_checklist_groups?: TaskChecklistGroup[]
   task_comments?: TaskComment[]
@@ -347,6 +385,12 @@ export interface AnalyticsOverview {
   active_shifts: number
   low_stock_items: number
   by_branch?: AnalyticsBranchRow[]
+  clients_by_month?: { month: string; count: number }[]
+  revenue_by_month?: { month: string; revenue: number }[]
+  leads_by_source?: { source: string; count: number }[]
+  leads_funnel?: { status: string; count: number }[]
+  leads_conversion?: number
+  avg_ltv?: number
 }
 
 // ── v1.5.4 ───────────────────────────────────────────────────
@@ -371,6 +415,32 @@ export interface Supplier {
   email: string | null
   notes: string | null
   created_at: string
+}
+
+export interface SupplierOrderItem {
+  id: string
+  order_id: string
+  item_name: string
+  quantity: number
+  unit_price: number | null
+  created_at: string
+}
+
+export type SupplierOrderStatus = 'pending' | 'confirmed' | 'delivered' | 'cancelled'
+
+export interface SupplierOrder {
+  id: string
+  branch_id: string
+  supplier_id: string | null
+  status: SupplierOrderStatus
+  notes: string | null
+  total_amount: number | null
+  ordered_at: string
+  delivered_at: string | null
+  created_by: string | null
+  created_at: string
+  suppliers?: { id: string; name: string } | null
+  supplier_order_items?: SupplierOrderItem[]
 }
 
 export interface Badges {

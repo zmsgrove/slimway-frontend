@@ -63,6 +63,8 @@ function loadNotif(): NotifSettings {
 function NotificationsSection() {
   const [s, setS] = useState<NotifSettings>(loadNotif)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [pushEnabled, setPushEnabled] = useState(() => Notification?.permission === 'granted')
+  const [pushSupported] = useState(() => 'Notification' in window)
 
   const save = (patch: Partial<NotifSettings>) => {
     const next = { ...s, ...patch }
@@ -121,6 +123,31 @@ function NotificationsSection() {
           )
         })}
       </div>
+
+      {pushSupported && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0 0', marginTop: 13, borderTop: '1px solid var(--border)' }}>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text)' }}>Push-уведомления браузера</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              {Notification.permission === 'denied' ? 'Заблокировано в настройках браузера' : pushEnabled ? 'Включены' : 'Выключены'}
+            </div>
+          </div>
+          <button
+            disabled={Notification.permission === 'denied'}
+            onClick={async () => {
+              if (!pushEnabled) {
+                const perm = await Notification.requestPermission()
+                setPushEnabled(perm === 'granted')
+              } else {
+                setPushEnabled(false)
+              }
+            }}
+            style={{ width: 44, height: 24, borderRadius: 12, border: 'none', cursor: Notification.permission === 'denied' ? 'not-allowed' : 'pointer', position: 'relative', background: pushEnabled ? 'var(--accent)' : 'var(--border)', transition: 'background 0.2s', opacity: Notification.permission === 'denied' ? 0.5 : 1 }}
+          >
+            <span style={{ position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', left: pushEnabled ? 22 : 2 }} />
+          </button>
+        </div>
+      )}
     </Section>
   )
 }
