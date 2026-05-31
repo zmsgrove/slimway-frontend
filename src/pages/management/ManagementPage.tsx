@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import {
   Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid,
   CreditCard, Package, Edit2, X, ChevronDown, Shield, Users, Tag, ClipboardList,
+  Globe, Zap,
 } from 'lucide-react'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
@@ -1468,12 +1469,13 @@ function AuditLogSection() {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users' | 'audit' | 'branch_settings'
+type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users' | 'audit' | 'branch_settings' | 'booking' | 'automation'
 
 export default function ManagementPage() {
   const { user } = useAuth()
   const perm = usePermissions()
   const isDeveloperOrOwner = user?.role === 'developer' || user?.role === 'owner'
+  const isFranchiseeOrAbove = isDeveloperOrOwner || user?.role === 'franchisee'
   const [tab, setTab] = useState<ManagementTab>('general')
 
   const TABS: { id: ManagementTab; label: string; icon: React.ReactNode }[] = [
@@ -1484,6 +1486,8 @@ export default function ManagementPage() {
     ...(user?.role === 'developer' ? [{ id: 'users' as ManagementTab, label: 'Пользователи', icon: <Users size={14} strokeWidth={1.75} /> }] : []),
     ...(isDeveloperOrOwner || user?.role === 'admin' ? [{ id: 'audit' as ManagementTab, label: 'Аудит', icon: <ClipboardList size={14} strokeWidth={1.75} /> }] : []),
     ...(isDeveloperOrOwner || user?.role === 'admin' ? [{ id: 'branch_settings' as ManagementTab, label: 'Настройки', icon: <Cpu size={14} strokeWidth={1.75} /> }] : []),
+    ...(isFranchiseeOrAbove ? [{ id: 'booking' as ManagementTab, label: 'Онлайн-запись', icon: <Globe size={14} strokeWidth={1.75} /> }] : []),
+    ...(isFranchiseeOrAbove ? [{ id: 'automation' as ManagementTab, label: 'Автоворонка', icon: <Zap size={14} strokeWidth={1.75} /> }] : []),
   ]
 
   return (
@@ -1532,6 +1536,20 @@ export default function ManagementPage() {
         <div style={{ maxWidth: 700 }}>
           <Section title="Настройки филиала" icon={<Cpu size={15} strokeWidth={1.75} color="#02BDB6" />}>
             <BranchSettingsSection />
+          </Section>
+        </div>
+      )}
+      {tab === 'booking' && isFranchiseeOrAbove && (
+        <div style={{ maxWidth: 700 }}>
+          <Section title="Онлайн-запись" icon={<Globe size={15} strokeWidth={1.75} color="#02BDB6" />}>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>Раздел в разработке</div>
+          </Section>
+        </div>
+      )}
+      {tab === 'automation' && isFranchiseeOrAbove && (
+        <div style={{ maxWidth: 700 }}>
+          <Section title="Автоворонка" icon={<Zap size={15} strokeWidth={1.75} color="#02BDB6" />}>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>Раздел в разработке</div>
           </Section>
         </div>
       )}
