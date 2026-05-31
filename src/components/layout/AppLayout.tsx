@@ -14,6 +14,7 @@ import {
   MessageSquare,
   UserCheck,
   CalendarClock,
+  CalendarCheck,
   ChevronDown,
   Package,
   Wrench,
@@ -263,6 +264,7 @@ function AppLayoutInner() {
         { to: '/chat',          label: 'Чат',        icon: MessageSquare,    show: true },
         { to: '/employees',     label: 'Сотрудники', icon: UserCheck,        show: perm.can('employees', 'view') },
         { to: '/schedule-work', label: 'График',     icon: CalendarClock,    show: perm.can('shifts', 'view') },
+        { to: '/timesheet',     label: 'Табель',     icon: CalendarCheck,    show: user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' },
         { to: '/warehouse',     label: 'Склад',      icon: Package,          show: perm.can('warehouse', 'view') },
       ].filter(item => item.show)
 

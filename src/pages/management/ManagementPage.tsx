@@ -1617,11 +1617,12 @@ function OnlineBookingTab() {
 interface AutomationRule {
   id: string
   branch_id: string
-  trigger: string
-  trigger_days: number | null
+  trigger_type: string
+  trigger_value: string | null
+  action_type: string
   task_title_template: string
   task_priority: 'low' | 'medium' | 'high' | 'critical'
-  assign_to_role: string
+  assign_to_role: string | null
   is_active: boolean
   created_at: string
 }
@@ -1650,7 +1651,7 @@ function AutomationTab() {
   const [editRule,  setEditRule]  = useState<AutomationRule | null>(null)
 
   const [trigger,       setTrigger]       = useState('lead_created')
-  const [triggerDays,   setTriggerDays]   = useState('3')
+  const [triggerValue,  setTriggerValue]  = useState('3')
   const [titleTemplate, setTitleTemplate] = useState('')
   const [priority,      setPriority]      = useState<AutomationRule['task_priority']>('medium')
   const [assignRole,    setAssignRole]    = useState('staff')
@@ -1665,28 +1666,29 @@ function AutomationTab() {
   }, [])
 
   const resetForm = () => {
-    setTrigger('lead_created'); setTriggerDays('3'); setTitleTemplate('')
+    setTrigger('lead_created'); setTriggerValue('3'); setTitleTemplate('')
     setPriority('medium'); setAssignRole('staff'); setFormError(null)
   }
 
   const openCreate = () => { setEditRule(null); resetForm(); setShowModal(true) }
 
   const openEdit = (rule: AutomationRule) => {
-    setEditRule(rule); setTrigger(rule.trigger)
-    setTriggerDays(rule.trigger_days != null ? String(rule.trigger_days) : '3')
+    setEditRule(rule); setTrigger(rule.trigger_type)
+    setTriggerValue(rule.trigger_value ?? '3')
     setTitleTemplate(rule.task_title_template); setPriority(rule.task_priority)
-    setAssignRole(rule.assign_to_role); setFormError(null); setShowModal(true)
+    setAssignRole(rule.assign_to_role ?? 'staff'); setFormError(null); setShowModal(true)
   }
 
   const handleSave = async () => {
     if (!titleTemplate.trim()) { setFormError('Введите шаблон заголовка'); return }
     setSaving(true); setFormError(null)
+    const needsDaysPayload = ['lead_no_activity', 'subscription_expiring'].includes(trigger)
     const payload = {
-      trigger,
-      trigger_days: ['lead_no_activity', 'subscription_expiring'].includes(trigger) ? Number(triggerDays) : null,
+      trigger_type: trigger,
+      trigger_value: needsDaysPayload ? triggerValue : null,
       task_title_template: titleTemplate.trim(),
       task_priority: priority,
-      assign_to_role: assignRole,
+      assign_to_role: assignRole || null,
     }
     try {
       if (editRule) {
@@ -1729,12 +1731,12 @@ function AutomationTab() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 13 }}>
           {rules.map(rule => (
             <div key={rule.id} style={{ padding: '12px 14px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ flexShrink: 0 }}>{TRIGGER_ICONS[rule.trigger] ?? <Zap size={15} />}</div>
+              <div style={{ flexShrink: 0 }}>{TRIGGER_ICONS[rule.trigger_type] ?? <Zap size={15} />}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 3 }}>
-                  {TRIGGER_LABELS[rule.trigger] ?? rule.trigger}
-                  {rule.trigger_days != null && (
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}> · {rule.trigger_days} дн.</span>
+                  {TRIGGER_LABELS[rule.trigger_type] ?? rule.trigger_type}
+                  {rule.trigger_value != null && (
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}> · {rule.trigger_value} дн.</span>
                   )}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const }}>
@@ -1788,7 +1790,7 @@ function AutomationTab() {
               {needsDays && (
                 <div>
                   <label style={labelStyle}>Количество дней</label>
-                  <input type="number" min={1} max={365} style={inputStyle} value={triggerDays} onChange={e => setTriggerDays(e.target.value)} />
+                  <input type="number" min={1} max={365} style={inputStyle} value={triggerValue} onChange={e => setTriggerValue(e.target.value)} />
                 </div>
               )}
               <div>

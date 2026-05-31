@@ -19,6 +19,7 @@ import SalePage from './pages/sale/SalePage'
 import WarehousePage from './pages/warehouse/WarehousePage'
 import ManagementPage from './pages/management/ManagementPage'
 import PayrollPage from './pages/payroll/PayrollPage'
+import TimesheetPage from './pages/timesheet/TimesheetPage'
 import ClientPortalPage from './pages/client-portal/ClientPortalPage'
 import BookingPage from './pages/book/BookingPage'
 
@@ -76,6 +77,7 @@ function InnerApp() {
             <Route path="settings"      element={<SettingsPage />} />
             <Route path="management"    element={<ManagementPage />} />
             <Route path="payroll"       element={<PayrollPage />} />
+            <Route path="timesheet"     element={<TimesheetPage />} />
           </Route>
           <Route
             path="*"
