@@ -38,19 +38,17 @@ const s = {
 
 // ─── LoginScreen ──────────────────────────────────────────────────────────────
 
-function LoginScreen({ branchId, onLogin }: { branchId?: string; onLogin: (token: string) => void }) {
-  const [phone,    setPhone]    = useState('')
-  const [bid,      setBid]      = useState(branchId ?? '')
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
+function LoginScreen({ portalToken, onLogin }: { portalToken: string; onLogin: (token: string) => void }) {
+  const [phone,   setPhone]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
 
   const handleSubmit = async () => {
-    if (!phone.trim() || !bid.trim()) { setError('Введите телефон и ID филиала'); return }
+    if (!phone.trim()) { setError('Введите номер телефона'); return }
     setLoading(true); setError(null)
     try {
-      const res = await clientPortalApi.auth(phone.trim(), bid.trim())
+      const res = await clientPortalApi.auth(phone.trim(), portalToken)
       localStorage.setItem(tok_key, res.token)
-      localStorage.setItem(bid_key, bid.trim())
       onLogin(res.token)
     } catch {
       setError('Клиент не найден. Проверьте номер телефона.')
@@ -73,14 +71,9 @@ function LoginScreen({ branchId, onLogin }: { branchId?: string; onLogin: (token
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <label style={s.label}>Номер телефона</label>
-            <input style={s.input} type="tel" placeholder="+7 777 000 00 00" value={phone} onChange={e => setPhone(e.target.value)} />
+            <input style={s.input} type="tel" placeholder="+7 777 000 00 00" value={phone} onChange={e => setPhone(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') void handleSubmit() }} />
           </div>
-          {!branchId && (
-            <div>
-              <label style={s.label}>ID филиала</label>
-              <input style={s.input} placeholder="Получите у менеджера" value={bid} onChange={e => setBid(e.target.value)} />
-            </div>
-          )}
           {error && <div style={{ fontSize: 13, color: '#f87171', padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>{error}</div>}
           <button onClick={() => void handleSubmit()} disabled={loading} style={{ ...s.btn(true), width: '100%', opacity: loading ? 0.6 : 1 }}>
             {loading ? 'Вход...' : 'Войти'}
@@ -517,7 +510,6 @@ export default function ClientPortalPage() {
   const [tab,       setTab]       = useState<Tab>('home')
   const [unread,    setUnread]    = useState(0)
 
-  const branchId = new URLSearchParams(window.location.search).get('branch_id') ?? undefined
 
   const loadAll = async (t: string) => {
     setLoading(true); setError(null)
@@ -554,7 +546,7 @@ export default function ClientPortalPage() {
   }, [token])
 
   if (!token || error) {
-    return <LoginScreen branchId={branchId} onLogin={t => { setToken(t); if (urlToken) navigate(`/client/${t}`, { replace: true }) }} />
+    return <LoginScreen portalToken={urlToken ?? ''} onLogin={t => { setToken(t); navigate(`/client/${t}`, { replace: true }) }} />
   }
 
   if (loading) {

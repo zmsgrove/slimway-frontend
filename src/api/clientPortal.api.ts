@@ -3,8 +3,10 @@ import axios from 'axios'
 const BASE = import.meta.env.VITE_API_URL ?? 'https://slimway-backend.onrender.com'
 
 export const clientPortalApi = {
-  auth: async (phone: string, branch_id: string): Promise<{ token: string; client_id: string; client_name: string }> => {
-    const { data } = await axios.post(`${BASE}/api/client/auth`, { phone, branch_id })
+  auth: async (phone: string, portalToken: string): Promise<{ token: string; client_id: string; client_name: string }> => {
+    const { data } = await axios.post(`${BASE}/api/client/auth`, { phone }, {
+      headers: { Authorization: `Bearer ${portalToken}` },
+    })
     return data
   },
 
