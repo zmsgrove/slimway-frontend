@@ -30,6 +30,7 @@ export interface PromoValidateResult {
   discount_type: 'percent' | 'fixed'
   discount_value: number
   id: string
+  description: string
 }
 
 export const saleApi = {

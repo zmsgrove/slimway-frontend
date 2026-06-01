@@ -9,7 +9,7 @@ import { warehouseApi } from '../../api/warehouse.api'
 import { clientsApi } from '../../api/clients.api'
 import { saleApi, promoCodesApi } from '../../api/sale.api'
 import type { SubscriptionTemplate, Client, DeviceType, WarehouseItem } from '../../types'
-import type { CheckoutResult } from '../../api/sale.api'
+import type { CheckoutResult, PromoValidateResult } from '../../api/sale.api'
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -23,6 +23,14 @@ interface CartItem {
   price: number | null
   qty: number
   maxQty?: number
+}
+
+interface AppliedPromo {
+  code: string
+  discount_type: 'percent' | 'fixed'
+  discount_value: number
+  id: string
+  description: string
 }
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -44,6 +52,104 @@ const labelSt: React.CSSProperties = { fontSize: 11, color: 'var(--text-muted)',
 const cardSt: React.CSSProperties = {
   background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
   border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21, marginBottom: 13,
+}
+
+// ─── PromoModal ───────────────────────────────────────────────────────────────
+
+interface PromoModalProps {
+  onClose: () => void
+  onApply: (promo: AppliedPromo) => void
+}
+
+function PromoModal({ onClose, onApply }: PromoModalProps) {
+  const [input,      setInput]      = useState('')
+  const [validating, setValidating] = useState(false)
+  const [result,     setResult]     = useState<PromoValidateResult | null>(null)
+  const [error,      setError]      = useState<string | null>(null)
+
+  const handleValidate = async () => {
+    const code = input.trim().toUpperCase()
+    if (!code) return
+    setValidating(true); setError(null); setResult(null)
+    try {
+      const data = await promoCodesApi.validate(code)
+      setResult(data)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Неверный промокод')
+    } finally { setValidating(false) }
+  }
+
+  const handleConfirm = () => {
+    if (!result) return
+    onApply({
+      code: input.trim().toUpperCase(),
+      discount_type: result.discount_type,
+      discount_value: result.discount_value,
+      id: result.id,
+      description: result.description,
+    })
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Tag size={16} color="#02BDB6" />
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Промокод</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}><X size={16} /></button>
+        </div>
+
+        {/* Input + apply button */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <input
+            style={{ ...inputSt, flex: 1, letterSpacing: 1 }}
+            placeholder="Введите код"
+            value={input}
+            onChange={e => { setInput(e.target.value.toUpperCase()); setError(null); setResult(null) }}
+            onKeyDown={e => { if (e.key === 'Enter') void handleValidate() }}
+            autoFocus
+          />
+          <button
+            onClick={() => void handleValidate()}
+            disabled={validating || !input.trim()}
+            style={{ height: 40, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (validating || !input.trim()) ? 'not-allowed' : 'pointer', opacity: (validating || !input.trim()) ? 0.6 : 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
+            {validating ? '...' : 'Применить'}
+          </button>
+        </div>
+
+        {/* Status */}
+        {error && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#ef4444', marginBottom: 16 }}>
+            <AlertCircle size={13} />{error}
+          </div>
+        )}
+        {result && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, fontSize: 13, color: '#10b981', marginBottom: 16 }}>
+            <Check size={13} />{result.description}
+          </div>
+        )}
+        {!error && !result && <div style={{ marginBottom: 16 }} />}
+
+        {/* Footer */}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={onClose}
+            style={{ height: 38, padding: '0 16px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            Закрыть
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!result}
+            style={{ height: 38, padding: '0 18px', background: result ? '#10b981' : 'var(--bg-elevated)', border: `1px solid ${result ? '#10b981' : 'var(--glass-border)'}`, borderRadius: 8, color: result ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: result ? 'pointer' : 'not-allowed', opacity: result ? 1 : 0.5 }}>
+            Подтвердить
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── ClientSearch ─────────────────────────────────────────────────────────────
@@ -188,13 +294,12 @@ export default function SalePage() {
   const [stage,       setStage]       = useState<Stage>('catalog')
 
   // cart stage
-  const [client,        setClient]        = useState<Client | null>(null)
-  const [creatingName,  setCreatingName]  = useState<string | null>(null)
-  const [promoCode,     setPromoCode]     = useState('')
-  const [promoCodeError,setPromoCodeError]= useState<string | null>(null)
-  const [validatingPromo,setValidatingPromo]= useState(false)
-  const [dateStart,     setDateStart]     = useState(new Date().toISOString().slice(0, 10))
-  const [cartError,     setCartError]     = useState<string | null>(null)
+  const [client,          setClient]        = useState<Client | null>(null)
+  const [creatingName,    setCreatingName]  = useState<string | null>(null)
+  const [promoModalOpen,  setPromoModalOpen]= useState(false)
+  const [appliedPromo,    setAppliedPromo]  = useState<AppliedPromo | null>(null)
+  const [dateStart,       setDateStart]     = useState(new Date().toISOString().slice(0, 10))
+  const [cartError,       setCartError]     = useState<string | null>(null)
 
   // payment stage
   const [payMethod,   setPayMethod]   = useState<PaymentMethod>('cash')
@@ -250,6 +355,12 @@ export default function SalePage() {
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0)
   const subtotal  = cart.reduce((s, c) => s + (c.price ?? 0) * c.qty, 0)
+  const discount  = appliedPromo
+    ? appliedPromo.discount_type === 'percent'
+      ? Math.round(subtotal * appliedPromo.discount_value / 100)
+      : Math.min(subtotal, appliedPromo.discount_value)
+    : 0
+  const total = Math.max(0, subtotal - discount)
 
   // ── checkout ─────────────────────────────────────────────────────────────────
 
@@ -266,7 +377,7 @@ export default function SalePage() {
           quantity: c.qty,
         })),
         payment_method: payMethod,
-        promo_code: promoCode.trim() || undefined,
+        promo_code: appliedPromo?.code || undefined,
         date_start: dateStart,
       })
       setReceipt(result)
@@ -276,7 +387,8 @@ export default function SalePage() {
       const msg  = err?.response?.data?.error
       const code = err?.response?.data?.code
       if (code && code.startsWith('PROMO_')) {
-        setPromoCodeError(msg ?? 'Ошибка промокода')
+        setAppliedPromo(null)
+        setCartError(msg ?? 'Ошибка промокода — промокод сброшен')
         setStage('cart')
       } else {
         setPayError(msg ?? 'Ошибка при оформлении продажи')
@@ -288,8 +400,8 @@ export default function SalePage() {
     setCart([])
     setClient(null)
     setCreatingName(null)
-    setPromoCode('')
-    setPromoCodeError(null)
+    setAppliedPromo(null)
+    setPromoModalOpen(false)
     setDateStart(new Date().toISOString().slice(0, 10))
     setCartError(null)
     setPayMethod('cash')
@@ -380,14 +492,26 @@ export default function SalePage() {
             <span>Товаров: {cart.reduce((s, c) => s + c.qty, 0)}</span>
             <span>Клиент: {client?.full_name}</span>
           </div>
+          {discount > 0 && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', marginBottom: 2 }}>
+                <span>Без скидки:</span>
+                <span>{fmt(subtotal)} ₸</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#10b981', marginBottom: 4 }}>
+                <span>Скидка ({appliedPromo?.code}):</span>
+                <span>−{fmt(discount)} ₸</span>
+              </div>
+            </>
+          )}
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-            Итого: {fmt(subtotal)} ₸
+            Итого: {fmt(total)} ₸
           </div>
         </div>
 
         <button onClick={() => void handlePay()} disabled={paying}
           style={{ width: '100%', height: 48, background: '#02BDB6', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: paying ? 'not-allowed' : 'pointer', opacity: paying ? 0.7 : 1 }}>
-          {paying ? 'Оформление...' : `Подтвердить оплату · ${fmt(subtotal)} ₸`}
+          {paying ? 'Оформление...' : `Подтвердить оплату · ${fmt(total)} ₸`}
         </button>
       </div>
     )
@@ -399,6 +523,13 @@ export default function SalePage() {
     const canProceed = cart.length > 0 && client !== null && creatingName === null
     return (
       <div style={{ maxWidth: 640 }}>
+        {promoModalOpen && (
+          <PromoModal
+            onClose={() => setPromoModalOpen(false)}
+            onApply={promo => { setAppliedPromo(promo); setPromoModalOpen(false) }}
+          />
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21 }}>
           <button onClick={() => setStage('catalog')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', padding: 0 }}>
             <ArrowLeft size={16} />Каталог
@@ -450,11 +581,31 @@ export default function SalePage() {
                 ))}
               </tbody>
               <tfoot>
-                <tr>
-                  <td colSpan={3} style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>Итого:</td>
-                  <td style={{ padding: '10px 8px', fontSize: 15, fontWeight: 700, color: '#02BDB6', textAlign: 'center' }}>{fmt(subtotal)} ₸</td>
-                  <td />
-                </tr>
+                {appliedPromo && discount > 0 ? (
+                  <>
+                    <tr>
+                      <td colSpan={3} style={{ padding: '8px 8px 2px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'right' }}>Без скидки:</td>
+                      <td style={{ padding: '8px 8px 2px', fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>{fmt(subtotal)} ₸</td>
+                      <td />
+                    </tr>
+                    <tr>
+                      <td colSpan={3} style={{ padding: '2px 8px', fontSize: 12, color: '#10b981', textAlign: 'right' }}>Скидка ({appliedPromo.code}):</td>
+                      <td style={{ padding: '2px 8px', fontSize: 13, fontWeight: 600, color: '#10b981', textAlign: 'center' }}>−{fmt(discount)} ₸</td>
+                      <td />
+                    </tr>
+                    <tr>
+                      <td colSpan={3} style={{ padding: '2px 8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>Итого:</td>
+                      <td style={{ padding: '2px 8px 10px', fontSize: 15, fontWeight: 700, color: '#02BDB6', textAlign: 'center' }}>{fmt(total)} ₸</td>
+                      <td />
+                    </tr>
+                  </>
+                ) : (
+                  <tr>
+                    <td colSpan={3} style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>Итого:</td>
+                    <td style={{ padding: '10px 8px', fontSize: 15, fontWeight: 700, color: '#02BDB6', textAlign: 'center' }}>{fmt(subtotal)} ₸</td>
+                    <td />
+                  </tr>
+                )}
               </tfoot>
             </table>
           )}
@@ -471,20 +622,23 @@ export default function SalePage() {
 
         {/* Promo code */}
         <div style={cardSt}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Промокод (необязательно)</div>
-          <div style={{ position: 'relative' }}>
-            <Tag size={14} color={promoCodeError ? '#ef4444' : 'var(--text-muted)'} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
-            <input
-              style={{ ...inputSt, paddingLeft: 32, borderColor: promoCodeError ? 'rgba(239,68,68,0.5)' : undefined }}
-              placeholder="Введите промокод"
-              value={promoCode}
-              onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoCodeError(null) }}
-            />
-          </div>
-          {promoCodeError && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12, color: '#ef4444' }}>
-              <AlertCircle size={12} />{promoCodeError}
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Промокод</div>
+          {appliedPromo ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 40, padding: '0 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Check size={14} color="#10b981" />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#10b981', letterSpacing: 0.5 }}>{appliedPromo.code}</span>
+                <span style={{ fontSize: 12, color: '#10b981' }}>· {appliedPromo.description}</span>
+              </div>
+              <button onClick={() => setAppliedPromo(null)} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', padding: 0 }}><X size={13} /></button>
             </div>
+          ) : (
+            <button
+              onClick={() => setPromoModalOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13, width: '100%' }}>
+              <Tag size={14} color="var(--text-muted)" />
+              Ввести промокод
+            </button>
           )}
         </div>
 
@@ -497,27 +651,10 @@ export default function SalePage() {
         )}
 
         <button
-          onClick={async () => {
-            if (!client) { setCartError('Выберите клиента'); return }
-            setCartError(null)
-            if (promoCode.trim()) {
-              setValidatingPromo(true)
-              setPromoCodeError(null)
-              try {
-                await promoCodesApi.validate(promoCode.trim())
-              } catch (e: unknown) {
-                const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-                setPromoCodeError(msg ?? 'Неверный промокод')
-                setValidatingPromo(false)
-                return
-              }
-              setValidatingPromo(false)
-            }
-            setStage('payment')
-          }}
-          disabled={!canProceed || validatingPromo}
-          style={{ width: '100%', height: 48, background: '#02BDB6', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: (canProceed && !validatingPromo) ? 'pointer' : 'not-allowed', opacity: (canProceed && !validatingPromo) ? 1 : 0.5 }}>
-          {validatingPromo ? 'Проверка промокода...' : `Перейти к оплате · ${fmt(subtotal)} ₸`}
+          onClick={() => { if (!client) { setCartError('Выберите клиента'); return }; setCartError(null); setStage('payment') }}
+          disabled={!canProceed}
+          style={{ width: '100%', height: 48, background: '#02BDB6', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: canProceed ? 'pointer' : 'not-allowed', opacity: canProceed ? 1 : 0.5 }}>
+          Перейти к оплате · {fmt(total)} ₸
         </button>
       </div>
     )
