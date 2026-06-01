@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const BASE = import.meta.env.VITE_API_URL ?? 'https://slimway-backend.onrender.com'
+// VITE_API_URL ends with /api/v1 (used by the main axios instance).
+// Client portal routes are at /api/client/*, so strip the /api/v1 suffix.
+const RAW_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'https://slimway-backend.onrender.com'
+const BASE = RAW_URL.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '') || 'https://slimway-backend.onrender.com'
 
 export const clientPortalApi = {
   auth: async (phone: string, portalToken: string): Promise<{ token: string; client_id: string; client_name: string }> => {
