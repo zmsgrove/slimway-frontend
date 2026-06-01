@@ -2,8 +2,9 @@ import { api } from '../lib/api'
 
 export interface SaleItem {
   type: 'subscription' | 'warehouse'
-  id: string
-  qty: number
+  template_id?: string
+  item_id?: string
+  quantity: number
 }
 
 export interface CheckoutPayload {
@@ -24,9 +25,23 @@ export interface CheckoutResult {
   items_created: { type: string; id: string; name: string }[]
 }
 
+export interface PromoValidateResult {
+  valid: boolean
+  discount_type: 'percent' | 'fixed'
+  discount_value: number
+  id: string
+}
+
 export const saleApi = {
   checkout: async (payload: CheckoutPayload): Promise<CheckoutResult> => {
     const { data } = await api.post('/sale/checkout', payload)
+    return data
+  },
+}
+
+export const promoCodesApi = {
+  validate: async (code: string): Promise<PromoValidateResult> => {
+    const { data } = await api.get(`/promo-codes/validate/${encodeURIComponent(code)}`)
     return data
   },
 }

@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { branchSubscriptionTemplatesApi } from '../../api/branch-subscription-templates.api'
 import { warehouseApi } from '../../api/warehouse.api'
 import { clientsApi } from '../../api/clients.api'
-import { saleApi } from '../../api/sale.api'
+import { saleApi, promoCodesApi } from '../../api/sale.api'
 import type { SubscriptionTemplate, Client, DeviceType, WarehouseItem } from '../../types'
 import type { CheckoutResult } from '../../api/sale.api'
 
@@ -188,11 +188,13 @@ export default function SalePage() {
   const [stage,       setStage]       = useState<Stage>('catalog')
 
   // cart stage
-  const [client,      setClient]      = useState<Client | null>(null)
-  const [creatingName,setCreatingName]= useState<string | null>(null)
-  const [promoCode,   setPromoCode]   = useState('')
-  const [dateStart,   setDateStart]   = useState(new Date().toISOString().slice(0, 10))
-  const [cartError,   setCartError]   = useState<string | null>(null)
+  const [client,        setClient]        = useState<Client | null>(null)
+  const [creatingName,  setCreatingName]  = useState<string | null>(null)
+  const [promoCode,     setPromoCode]     = useState('')
+  const [promoCodeError,setPromoCodeError]= useState<string | null>(null)
+  const [validatingPromo,setValidatingPromo]= useState(false)
+  const [dateStart,     setDateStart]     = useState(new Date().toISOString().slice(0, 10))
+  const [cartError,     setCartError]     = useState<string | null>(null)
 
   // payment stage
   const [payMethod,   setPayMethod]   = useState<PaymentMethod>('cash')
@@ -258,7 +260,11 @@ export default function SalePage() {
     try {
       const result = await saleApi.checkout({
         client_id: client.id,
-        items: cart.map(c => ({ type: c.type, id: c.id, qty: c.qty })),
+        items: cart.map(c => ({
+          type: c.type,
+          ...(c.type === 'subscription' ? { template_id: c.id } : { item_id: c.id }),
+          quantity: c.qty,
+        })),
         payment_method: payMethod,
         promo_code: promoCode.trim() || undefined,
         date_start: dateStart,
@@ -266,8 +272,15 @@ export default function SalePage() {
       setReceipt(result)
       setStage('receipt')
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setPayError(msg ?? 'Ошибка при оформлении продажи')
+      const err = e as { response?: { data?: { error?: string; code?: string } } }
+      const msg  = err?.response?.data?.error
+      const code = err?.response?.data?.code
+      if (code && code.startsWith('PROMO_')) {
+        setPromoCodeError(msg ?? 'Ошибка промокода')
+        setStage('cart')
+      } else {
+        setPayError(msg ?? 'Ошибка при оформлении продажи')
+      }
     } finally { setPaying(false) }
   }
 
@@ -276,6 +289,7 @@ export default function SalePage() {
     setClient(null)
     setCreatingName(null)
     setPromoCode('')
+    setPromoCodeError(null)
     setDateStart(new Date().toISOString().slice(0, 10))
     setCartError(null)
     setPayMethod('cash')
@@ -459,9 +473,19 @@ export default function SalePage() {
         <div style={cardSt}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Промокод (необязательно)</div>
           <div style={{ position: 'relative' }}>
-            <Tag size={14} color="var(--text-muted)" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
-            <input style={{ ...inputSt, paddingLeft: 32 }} placeholder="Введите промокод" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} />
+            <Tag size={14} color={promoCodeError ? '#ef4444' : 'var(--text-muted)'} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              style={{ ...inputSt, paddingLeft: 32, borderColor: promoCodeError ? 'rgba(239,68,68,0.5)' : undefined }}
+              placeholder="Введите промокод"
+              value={promoCode}
+              onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoCodeError(null) }}
+            />
           </div>
+          {promoCodeError && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12, color: '#ef4444' }}>
+              <AlertCircle size={12} />{promoCodeError}
+            </div>
+          )}
         </div>
 
         {/* Date start for subscriptions */}
@@ -473,10 +497,27 @@ export default function SalePage() {
         )}
 
         <button
-          onClick={() => { if (!client) { setCartError('Выберите клиента'); return }; setCartError(null); setStage('payment') }}
-          disabled={!canProceed}
-          style={{ width: '100%', height: 48, background: '#02BDB6', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: canProceed ? 'pointer' : 'not-allowed', opacity: canProceed ? 1 : 0.5 }}>
-          Перейти к оплате · {fmt(subtotal)} ₸
+          onClick={async () => {
+            if (!client) { setCartError('Выберите клиента'); return }
+            setCartError(null)
+            if (promoCode.trim()) {
+              setValidatingPromo(true)
+              setPromoCodeError(null)
+              try {
+                await promoCodesApi.validate(promoCode.trim())
+              } catch (e: unknown) {
+                const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
+                setPromoCodeError(msg ?? 'Неверный промокод')
+                setValidatingPromo(false)
+                return
+              }
+              setValidatingPromo(false)
+            }
+            setStage('payment')
+          }}
+          disabled={!canProceed || validatingPromo}
+          style={{ width: '100%', height: 48, background: '#02BDB6', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: (canProceed && !validatingPromo) ? 'pointer' : 'not-allowed', opacity: (canProceed && !validatingPromo) ? 1 : 0.5 }}>
+          {validatingPromo ? 'Проверка промокода...' : `Перейти к оплате · ${fmt(subtotal)} ₸`}
         </button>
       </div>
     )
