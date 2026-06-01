@@ -34,6 +34,121 @@ import { branchesApi, type BranchRaw } from '../../api/branches.api'
 import { badgesApi } from '../../api/badges.api'
 import type { Badges } from '../../types'
 
+// ─── Weather helpers ──────────────────────────────────────────────────────────
+
+function weatherIcon(code: number): string {
+  if (code === 0) return '☀️'
+  if (code <= 3) return '⛅'
+  if (code <= 48) return '🌫️'
+  if (code <= 67) return '🌧️'
+  if (code <= 77) return '❄️'
+  if (code <= 82) return '🌦️'
+  return '⛈️'
+}
+
+interface WeatherCache { temp: number; icon: string; ts: number }
+
+async function fetchWeather(city: string): Promise<WeatherCache | null> {
+  try {
+    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ru`)
+    const geoData = await geoRes.json() as { results?: Array<{ latitude: number; longitude: number }> }
+    const loc = geoData.results?.[0]
+    if (!loc) return null
+    const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weather_code&timezone=auto`)
+    const wxData = await wxRes.json() as { current?: { temperature_2m: number; weather_code: number } }
+    if (!wxData.current) return null
+    return { temp: Math.round(wxData.current.temperature_2m), icon: weatherIcon(wxData.current.weather_code), ts: Date.now() }
+  } catch { return null }
+}
+
+// ─── ServerStatusDot ──────────────────────────────────────────────────────────
+
+type ServerStatus = 'ok' | 'slow' | 'error' | 'unknown'
+
+function ServerStatusDot({ status, latency }: { status: ServerStatus; latency: number | null }) {
+  const color = status === 'ok' ? '#10b981' : status === 'slow' ? '#f59e0b' : status === 'error' ? '#ef4444' : '#71717A'
+  const label = status === 'ok'
+    ? `Сервер работает${latency !== null ? ` (${latency}ms)` : ''}`
+    : status === 'slow'
+    ? `Высокая задержка${latency !== null ? ` (${latency}ms)` : ''}`
+    : status === 'error'
+    ? 'Сервер недоступен'
+    : 'Проверка...'
+
+  return (
+    <div title={label} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, cursor: 'default', flexShrink: 0 }}>
+      <div style={{
+        width: 8, height: 8, borderRadius: '50%', background: color,
+        animation: status === 'error' ? 'pulse 1.5s ease-in-out infinite' : undefined,
+        boxShadow: `0 0 0 2px ${color}33`,
+      }} />
+    </div>
+  )
+}
+
+// ─── WeatherTimeBlock ─────────────────────────────────────────────────────────
+
+function WeatherTimeBlock({ city, timezone }: { city: string | null; timezone: string | null }) {
+  const [timeStr, setTimeStr] = useState('')
+  const [weather, setWeather] = useState<WeatherCache | null>(null)
+
+  useEffect(() => {
+    const toIana = (tz: string): string | undefined => {
+      if (!tz || tz === 'UTC') return undefined
+      const m = tz.match(/^UTC([+-])(\d+)$/)
+      if (!m) return tz
+      const sign = m[1] === '+' ? '-' : '+'
+      return `Etc/GMT${sign}${m[2]}`
+    }
+
+    const tick = () => {
+      const ianaZone = timezone ? toIana(timezone) : undefined
+      try {
+        const str = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: ianaZone })
+        setTimeStr(str)
+      } catch {
+        setTimeStr(new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+      }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [timezone])
+
+  useEffect(() => {
+    if (!city) return
+    const CACHE_KEY = `slimway_weather_${city}`
+    const CACHE_TTL = 30 * 60 * 1000
+
+    const tryLoad = async () => {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as WeatherCache | null
+        if (cached && Date.now() - cached.ts < CACHE_TTL) { setWeather(cached); return }
+      } catch { /* ignore */ }
+      const result = await fetchWeather(city)
+      if (result) { localStorage.setItem(CACHE_KEY, JSON.stringify(result)); setWeather(result) }
+    }
+
+    void tryLoad()
+    const id = setInterval(() => void tryLoad(), 30 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [city])
+
+  if (!timeStr) return null
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+      {weather && city && (
+        <>
+          <span>{weather.icon} {weather.temp > 0 ? '+' : ''}{weather.temp}°C</span>
+          <span style={{ color: 'var(--border)', userSelect: 'none' }}>|</span>
+        </>
+      )}
+      <span style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace', fontSize: 13 }}>{timeStr}</span>
+    </div>
+  )
+}
+
 const roleLabel: Record<string, string> = {
   developer:  'Разработчик',
   owner:      'Владелец',
@@ -214,6 +329,11 @@ function AppLayoutInner() {
   const [badges, setBadges] = useState<Badges>({ leads_new: 0, tasks_overdue: 0, low_stock_items: 0 })
   const badgeTimer = useRef<ReturnType<typeof setInterval>>()
   const [showMfaBanner, setShowMfaBanner] = useState(false)
+  const [branchCity, setBranchCity] = useState<string | null>(null)
+  const [branchTimezone, setBranchTimezone] = useState<string | null>(null)
+  const [serverStatus, setServerStatus] = useState<ServerStatus>('unknown')
+  const [serverLatency, setServerLatency] = useState<number | null>(null)
+  const [serverErrorToastShown, setServerErrorToastShown] = useState(false)
 
   // Редирект для technical — только /schedule-work
   useEffect(() => {
@@ -239,6 +359,54 @@ function AppLayoutInner() {
     badgeTimer.current = setInterval(load, 5 * 60 * 1000)
     return () => clearInterval(badgeTimer.current)
   }, [])
+
+  // Загружаем город и timezone текущего филиала
+  useEffect(() => {
+    const activeBranchId = localStorage.getItem('activeBranchId')
+    if (!activeBranchId) return
+    Promise.all([
+      api.get<{ city?: string | null }>('/branches').catch(() => ({ data: [] as BranchRaw[] })),
+      api.get<{ timezone?: string | null }>('/branch-settings').catch(() => ({ data: {} })),
+    ]).then(([branchesRes, settingsRes]) => {
+      const branches = branchesRes.data as BranchRaw[]
+      const branch = Array.isArray(branches) ? branches.find(b => b.id === activeBranchId) : null
+      setBranchCity(branch?.city ?? null)
+      const settings = settingsRes.data as { timezone?: string | null }
+      setBranchTimezone(settings?.timezone ?? null)
+    }).catch(() => { /* ignore */ })
+  }, [])
+
+  // Пинг сервера каждые 30 секунд
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL as string | undefined
+    if (!API_URL) return
+
+    const checkHealth = async () => {
+      try {
+        const start = Date.now()
+        const res = await fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(5000) })
+        const latency = Date.now() - start
+        setServerLatency(latency)
+        if (!res.ok) { setServerStatus('error') }
+        else if (latency > 2000) { setServerStatus('slow') }
+        else { setServerStatus('ok'); setServerErrorToastShown(false) }
+      } catch {
+        setServerStatus('error')
+        setServerLatency(null)
+      }
+    }
+
+    void checkHealth()
+    const id = setInterval(() => void checkHealth(), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Toast при недоступности сервера
+  useEffect(() => {
+    if (serverStatus === 'error' && !serverErrorToastShown) {
+      setServerErrorToastShown(true)
+    }
+  }, [serverStatus, serverErrorToastShown])
 
   const handleSignOut = async () => {
     await signOut()
@@ -352,6 +520,10 @@ function AppLayoutInner() {
             {isDark ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
           </button>
 
+          <WeatherTimeBlock city={branchCity} timezone={branchTimezone} />
+
+          <ServerStatusDot status={serverStatus} latency={serverLatency} />
+
           {user?.role === 'developer' && (
             <span style={{
               background: 'rgba(38,60,217,0.15)', color: '#263CD9',
@@ -373,6 +545,26 @@ function AppLayoutInner() {
             )}
           </div>
         </header>
+
+        {/* Toast: сервер недоступен */}
+        {serverStatus === 'error' && serverErrorToastShown && (
+          <div style={{
+            position: 'fixed', bottom: 21, right: 21, zIndex: 9999,
+            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)',
+            borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#ef4444',
+            display: 'flex', alignItems: 'center', gap: 8,
+            boxShadow: '0 4px 16px rgba(239,68,68,0.2)',
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', animation: 'pulse 1.5s ease-in-out infinite', display: 'inline-block', flexShrink: 0 }} />
+            Сервер недоступен, проверьте соединение
+            <button
+              onClick={() => setServerErrorToastShown(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', display: 'flex', padding: 2, marginLeft: 4 }}
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
 
         {/* MFA баннер */}
         {showMfaBanner && (

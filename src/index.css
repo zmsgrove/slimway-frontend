@@ -166,6 +166,11 @@ input, textarea, select { font-family: inherit; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
 /* Login page — hide right panel on small screens */
 @media (max-width: 768px) {
   .login-panel-right { display: none !important; }

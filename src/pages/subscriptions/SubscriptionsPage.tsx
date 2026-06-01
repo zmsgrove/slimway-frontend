@@ -7,6 +7,31 @@ import { useAuth } from '../../hooks/useAuth'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { SubscriptionTemplate, BranchSubscriptionTemplate, Subscription, DeviceType } from '../../types'
 
+// ─── helpers ───────────────────────────────────────────────────────────────
+
+function getTimeUntilEnd(dateEnd: string): string {
+  const now = new Date()
+  const end = new Date(dateEnd)
+  const diffMs = end.getTime() - now.getTime()
+  if (diffMs < 0) return 'Истёк'
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  if (days > 0) return `${days} дн. ${hours} ч.`
+  return `${hours} ч.`
+}
+
+function getCountdownColor(dateEnd: string): string {
+  const now = new Date()
+  const end = new Date(dateEnd)
+  const diffMs = end.getTime() - now.getTime()
+  if (diffMs < 0) return '#71717A'
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (days >= 14) return '#10b981'
+  if (days >= 7)  return '#f59e0b'
+  if (days >= 3)  return '#f97316'
+  return '#ef4444'
+}
+
 // ─── constants ─────────────────────────────────────────────────────────────
 
 const DEVICE_TYPES: { value: DeviceType; label: string; color: string }[] = [
@@ -331,11 +356,29 @@ export default function SubscriptionsPage() {
                         </span>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 13, fontSize: 12, color: 'var(--text-muted)' }}>
+                    <div style={{ display: 'flex', gap: 13, fontSize: 12, color: 'var(--text-muted)', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span>{typeLabel(sub.slot_1_type)} · {sub.slot_1_sessions_left}/{sub.slot_1_sessions_total}</span>
                       {sub.slot_2_type && <span>{typeLabel(sub.slot_2_type!)} · {sub.slot_2_sessions_left}/{sub.slot_2_sessions_total}</span>}
                       <span>С {new Date(sub.date_start).toLocaleDateString('ru-RU')}</span>
-                      {sub.date_end && <span>По {new Date(sub.date_end).toLocaleDateString('ru-RU')}</span>}
+                      {sub.date_end && (
+                        <>
+                          <span>По {new Date(sub.date_end).toLocaleDateString('ru-RU')}</span>
+                          {sub.status === 'active' && (() => {
+                            const countdown = getTimeUntilEnd(sub.date_end)
+                            const cdColor = getCountdownColor(sub.date_end)
+                            const isUrgent = cdColor === '#ef4444' && countdown !== 'Истёк'
+                            return (
+                              <span style={{
+                                fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                                background: `${cdColor}18`, border: `1px solid ${cdColor}44`, color: cdColor,
+                                animation: isUrgent ? 'pulse 1.5s ease-in-out infinite' : undefined,
+                              }}>
+                                {countdown === 'Истёк' ? 'Истёк' : `⏱ ${countdown}`}
+                              </span>
+                            )
+                          })()}
+                        </>
+                      )}
                     </div>
                   </div>
                 )

@@ -45,6 +45,29 @@ const TAG_COLORS: Record<string, string> = {
   'Корпоративный': '#8b5cf6', 'Онлайн': '#06b6d4',
 }
 
+function getTimeUntilEnd(dateEnd: string): string {
+  const now = new Date()
+  const end = new Date(dateEnd)
+  const diffMs = end.getTime() - now.getTime()
+  if (diffMs < 0) return 'Истёк'
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  if (days > 0) return `${days} дн. ${hours} ч.`
+  return `${hours} ч.`
+}
+
+function getCountdownColor(dateEnd: string): string {
+  const now = new Date()
+  const end = new Date(dateEnd)
+  const diffMs = end.getTime() - now.getTime()
+  if (diffMs < 0) return '#71717A'
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (days >= 14) return '#10b981'
+  if (days >= 7)  return '#f59e0b'
+  if (days >= 3)  return '#f97316'
+  return '#ef4444'
+}
+
 function isTodayBirthday(birthDate: string | null): boolean {
   if (!birthDate) return false
   const bd = new Date(birthDate + 'T00:00:00')
@@ -455,12 +478,26 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Потрачено ₸</div>
               </div>
             </div>
-            {activeSubEnd && (
-              <div style={{ padding: '8px 13px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Clock size={12} />
-                Активный абонемент до {new Date(activeSubEnd + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </div>
-            )}
+            {activeSubEnd && (() => {
+              const countdown = getTimeUntilEnd(activeSubEnd)
+              const cdColor = getCountdownColor(activeSubEnd)
+              const isExpired = countdown === 'Истёк'
+              const isUrgent = !isExpired && cdColor === '#ef4444'
+              return (
+                <div style={{ padding: '8px 13px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <Clock size={12} />
+                  Активный абонемент до {new Date(activeSubEnd + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                    background: `${cdColor}18`, border: `1px solid ${cdColor}44`, color: cdColor,
+                    animation: isUrgent ? 'pulse 1.5s ease-in-out infinite' : undefined,
+                    flexShrink: 0,
+                  }}>
+                    {isExpired ? 'Истёк' : `⏱ ${countdown}`}
+                  </span>
+                </div>
+              )
+            })()}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>
               {client.phone && (
@@ -831,9 +868,27 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
           </div>
         )}
       </div>
-      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 13, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 13, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap', alignItems: 'center' }}>
         <span>С {new Date(sub.date_start).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
-        {sub.date_end && <span>По {new Date(sub.date_end).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+        {sub.date_end && (
+          <>
+            <span>По {new Date(sub.date_end).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            {sub.status === 'active' && (() => {
+              const countdown = getTimeUntilEnd(sub.date_end)
+              const cdColor = getCountdownColor(sub.date_end)
+              const isUrgent = cdColor === '#ef4444' && countdown !== 'Истёк'
+              return (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                  background: `${cdColor}18`, border: `1px solid ${cdColor}44`, color: cdColor,
+                  animation: isUrgent ? 'pulse 1.5s ease-in-out infinite' : undefined,
+                }}>
+                  {countdown === 'Истёк' ? 'Истёк' : `⏱ ${countdown}`}
+                </span>
+              )
+            })()}
+          </>
+        )}
         {sub.price != null && <span>· {sub.price.toLocaleString('ru-RU')} ₸</span>}
         {sub.cancellation_reason && <span>· Причина: {CANCELLATION_REASONS.find(r => r.value === sub.cancellation_reason)?.label ?? sub.cancellation_reason}</span>}
       </div>
