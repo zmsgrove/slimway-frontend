@@ -7,6 +7,7 @@ import {
 import { employeesApi } from '../../api/employees.api'
 import { shiftsApi } from '../../api/shifts.api'
 import { useAuth } from '../../hooks/useAuth'
+import { usePermissions } from '../../hooks/usePermissions'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { Employee, Shift } from '../../types'
 
@@ -528,6 +529,7 @@ interface EmpCtxMenu { x: number; y: number; emp: Employee }
 
 export default function EmployeesPage() {
   const { user }                  = useAuth()
+  const { canCreateEmployee }     = usePermissions()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [todayShifts, setTodayShifts] = useState<Shift[]>([])
   const [loading, setLoading]     = useState(true)
@@ -605,10 +607,10 @@ export default function EmployeesPage() {
             Управление персоналом · {onDutyIds.size > 0 ? `${onDutyIds.size} на смене сейчас` : 'нет активных смен'}
           </p>
         </div>
-        {canEdit && (
+        {canCreateEmployee('staff') && (
           <button onClick={() => setShowAdd(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-            <Plus size={15} />Добавить
+            <Plus size={15} />Добавить сотрудника
           </button>
         )}
       </div>

@@ -322,6 +322,7 @@ export interface Task {
   related_type?: string | null
   related_id?: string | null
   recur_rule?: 'daily' | 'weekly' | 'monthly' | null
+  is_auto?: boolean
   task_checklist_items?: TaskChecklistItem[]
   task_checklist_groups?: TaskChecklistGroup[]
   task_comments?: TaskComment[]

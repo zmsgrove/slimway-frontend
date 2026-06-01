@@ -230,6 +230,8 @@ function ShiftModal({ employee, date, existing, onClose, onSaved, onDeleted }: S
 
 type RepeatType = 'weekdays' | 'daily' | 'every-n'
 
+const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
 interface BulkAssignModalProps {
   employees: Employee[]
   onClose: () => void
@@ -238,49 +240,106 @@ interface BulkAssignModalProps {
 
 function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
   const todayISO = toISO(new Date())
-  const [empId, setEmpId]         = useState('all')
+  const [empId,     setEmpId]     = useState('')
   const [timeStart, setTimeStart] = useState('09:00')
-  const [timeEnd, setTimeEnd]     = useState('18:00')
+  const [timeEnd,   setTimeEnd]   = useState('18:00')
   const [shiftType, setShiftType] = useState<'shift' | 'dayoff'>('shift')
-  const [repeat, setRepeat]       = useState<RepeatType>('weekdays')
-  const [everyN, setEveryN]       = useState(2)
-  const [dateFrom, setDateFrom]   = useState(todayISO)
-  const [dateTo, setDateTo]       = useState(toISO(addDays(new Date(), 13)))
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState<string | null>(null)
+  const [repeat,    setRepeat]    = useState<RepeatType>('weekdays')
+  const [everyN,    setEveryN]    = useState(2)
+  const [workDays,  setWorkDays]  = useState(2)
+  const [offDays,   setOffDays]   = useState(2)
+  const [weekdaysMask, setWeekdaysMask] = useState<boolean[]>([true, true, true, true, true, false, false])
+  const [dateFrom,  setDateFrom]  = useState(todayISO)
+  const [dateTo,    setDateTo]    = useState(toISO(addDays(new Date(), 13)))
+  const [saving,    setSaving]    = useState(false)
+  const [clearing,  setClearing]  = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
+  const [confirmClear, setConfirmClear] = useState(false)
 
-  const generateDates = (): string[] => {
+  const toggleWeekday = (idx: number) => {
+    setWeekdaysMask(prev => { const next = [...prev]; next[idx] = !next[idx]; return next })
+  }
+
+  // Генерация дат для «будние» / «каждый день» / «каждые N»
+  const generateDatesSimple = (): string[] => {
     const from = new Date(dateFrom + 'T00:00:00')
     const to   = new Date(dateTo   + 'T00:00:00')
     const dates: string[] = []
     let cur = new Date(from), idx = 0
     while (cur <= to) {
-      const iso = toISO(cur)
-      if (repeat === 'weekdays' && !isWeekend(cur)) dates.push(iso)
-      else if (repeat === 'daily') dates.push(iso)
-      else if (repeat === 'every-n' && idx % everyN === 0) dates.push(iso)
+      const dow = weekdayIndex(cur) // 0=Пн … 6=Вс
+      if (repeat === 'weekdays') {
+        if (weekdaysMask[dow]) dates.push(toISO(cur))
+      } else if (repeat === 'daily') {
+        dates.push(toISO(cur))
+      } else if (repeat === 'every-n') {
+        if (idx % everyN === 0) dates.push(toISO(cur))
+      }
       cur = addDays(cur, 1); idx++
     }
     return dates
   }
 
-  const dates   = generateDates()
-  const empCount = empId === 'all' ? employees.length : 1
-  const total    = dates.length * empCount
+  // Генерация для режима чередования: workDays рабочих → offDays выходных
+  const generateDatesAlternating = (): Array<{ date: string; isWork: boolean }> => {
+    const from = new Date(dateFrom + 'T00:00:00')
+    const to   = new Date(dateTo   + 'T00:00:00')
+    const result: Array<{ date: string; isWork: boolean }> = []
+    let cur = new Date(from), phase = 0, phaseDay = 0
+    while (cur <= to) {
+      const isWork = phase === 0
+      result.push({ date: toISO(cur), isWork })
+      phaseDay++
+      if (isWork && phaseDay >= workDays) { phase = 1; phaseDay = 0 }
+      else if (!isWork && phaseDay >= offDays) { phase = 0; phaseDay = 0 }
+      cur = addDays(cur, 1)
+    }
+    return result
+  }
+
+  const empSelected = empId !== ''
+  const empList = empSelected ? employees.filter(e => e.id === empId) : employees
+
+  const preview = (() => {
+    if (repeat === 'every-n' && shiftType === 'shift') {
+      const alt = generateDatesAlternating()
+      const workCount = alt.filter(d => d.isWork).length
+      const offCount  = alt.filter(d => !d.isWork).length
+      return `${workCount} раб. / ${offCount} вых. × ${empList.length} сотр. = ${alt.length * empList.length} записей`
+    }
+    const dates = generateDatesSimple()
+    const total = dates.length * empList.length
+    return `${dates.length} дн. × ${empList.length} сотр. = ${total} смен`
+  })()
 
   const handleApply = async () => {
     setSaving(true); setError(null)
     try {
-      if (dates.length === 0) { setError('Нет дат для назначения'); setSaving(false); return }
-      if (total > 500) { setError('Слишком много смен (макс 500)'); setSaving(false); return }
+      let payload: Array<{ employee_id: string; date: string; time_start: string; time_end: string; status?: string }>
 
-      const empList = empId === 'all' ? employees : employees.filter(e => e.id === empId)
-      const ts = shiftType === 'dayoff' ? '00:00' : timeStart
-      const te = shiftType === 'dayoff' ? '00:00' : timeEnd
+      if (repeat === 'every-n' && shiftType === 'shift') {
+        const alt = generateDatesAlternating()
+        if (alt.length === 0) { setError('Нет дат для назначения'); setSaving(false); return }
+        payload = empList.flatMap(emp =>
+          alt.map(({ date, isWork }) => ({
+            employee_id: emp.id,
+            date,
+            time_start: isWork ? timeStart : '00:00',
+            time_end:   isWork ? timeEnd   : '00:00',
+            status: 'scheduled',
+          }))
+        )
+      } else {
+        const dates = generateDatesSimple()
+        if (dates.length === 0) { setError('Нет дат для назначения'); setSaving(false); return }
+        const ts = shiftType === 'dayoff' ? '00:00' : timeStart
+        const te = shiftType === 'dayoff' ? '00:00' : timeEnd
+        payload = empList.flatMap(emp =>
+          dates.map(date => ({ employee_id: emp.id, date, time_start: ts, time_end: te, status: 'scheduled' }))
+        )
+      }
 
-      const payload = empList.flatMap(emp =>
-        dates.map(date => ({ employee_id: emp.id, date, time_start: ts, time_end: te, status: 'scheduled' as const }))
-      )
+      if (payload.length > 500) { setError('Слишком много смен (макс 500)'); setSaving(false); return }
 
       const created = await shiftsApi.bulkCreate(payload)
       onDone(created)
@@ -290,6 +349,21 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
       setSaving(false)
     }
   }
+
+  const handleClearShifts = async () => {
+    if (!empId) return
+    setClearing(true)
+    try {
+      await shiftsApi.bulkDelete({ employee_id: empId, date_from: dateFrom, date_end: dateTo })
+      setConfirmClear(false)
+    } catch {
+      setError('Не удалось удалить смены')
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  const selectedEmp = employees.find(e => e.id === empId)
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
@@ -308,8 +382,24 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
             <AlertCircle size={13} />{error}
+          </div>
+        )}
+
+        {/* Диалог подтверждения очистки */}
+        {confirmClear && selectedEmp && (
+          <div style={{ padding: 13, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, marginBottom: 13 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 10 }}>
+              Удалить все смены <strong>{selectedEmp.full_name}</strong> с <strong>{dateFrom}</strong> по <strong>{dateTo}</strong>?
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => void handleClearShifts()} disabled={clearing}
+                style={{ height: 32, padding: '0 13px', background: '#ef4444', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: clearing ? 'not-allowed' : 'pointer', opacity: clearing ? 0.6 : 1 }}>
+                {clearing ? 'Удаление...' : 'Удалить'}
+              </button>
+              <button onClick={() => setConfirmClear(false)} style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>Отмена</button>
+            </div>
           </div>
         )}
 
@@ -318,10 +408,18 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Users size={11} />Сотрудник
           </div>
-          <select style={{ ...inputStyle, cursor: 'pointer' }} value={empId} onChange={e => setEmpId(e.target.value)}>
-            <option value="all">Все сотрудники</option>
-            {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select style={{ ...inputStyle, cursor: 'pointer', flex: 1 }} value={empId} onChange={e => setEmpId(e.target.value)}>
+              <option value="">Все сотрудники</option>
+              {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
+            </select>
+            {empSelected && dateFrom && dateTo && (
+              <button onClick={() => setConfirmClear(true)}
+                style={{ height: 36, padding: '0 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                Очистить смены
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Тип */}
@@ -341,7 +439,7 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
           </div>
         </div>
 
-        {/* Время */}
+        {/* Время (только для смен) */}
         {shiftType === 'shift' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13, marginBottom: 21 }}>
             <div>
@@ -357,7 +455,7 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
 
         {/* Повторение */}
         <div style={{ marginBottom: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Повторение</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Режим</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {(['weekdays', 'daily', 'every-n'] as RepeatType[]).map(r => (
               <button key={r} onClick={() => setRepeat(r)}
@@ -370,12 +468,49 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
               </button>
             ))}
           </div>
-          {repeat === 'every-n' && (
+
+          {/* Будние — 7 чекбоксов */}
+          {repeat === 'weekdays' && (
+            <div style={{ display: 'flex', gap: 5, marginTop: 10 }}>
+              {WEEKDAY_LABELS.map((label, idx) => (
+                <button key={idx} onClick={() => toggleWeekday(idx)}
+                  style={{ flex: 1, height: 32, borderRadius: 7, border: '1px solid', fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+                    background: weekdaysMask[idx] ? 'rgba(2,189,182,0.12)' : 'transparent',
+                    borderColor: weekdaysMask[idx] ? 'rgba(2,189,182,0.4)' : 'var(--glass-border)',
+                    color: weekdaysMask[idx] ? '#02BDB6' : 'var(--text-muted)',
+                  }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Каждые N — обычное поле */}
+          {repeat === 'every-n' && shiftType !== 'shift' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Каждые</span>
               <input type="number" min={1} max={30} style={{ ...inputStyle, width: 72 }} value={everyN}
                 onChange={e => setEveryN(Math.max(1, parseInt(e.target.value) || 1))} />
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>дней</span>
+            </div>
+          )}
+
+          {/* Каждые N + смена → чередование */}
+          {repeat === 'every-n' && shiftType === 'shift' && (
+            <div style={{ marginTop: 10, padding: 10, background: 'rgba(2,189,182,0.06)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>График чередования</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Рабочих дней</div>
+                  <input type="number" min={1} max={30} style={{ ...inputStyle, height: 32 }} value={workDays}
+                    onChange={e => setWorkDays(Math.max(1, parseInt(e.target.value) || 1))} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Выходных дней</div>
+                  <input type="number" min={1} max={30} style={{ ...inputStyle, height: 32 }} value={offDays}
+                    onChange={e => setOffDays(Math.max(1, parseInt(e.target.value) || 1))} />
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -393,16 +528,14 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
               <input type="date" style={inputStyle} value={dateTo} onChange={e => setDateTo(e.target.value)} />
             </div>
           </div>
-          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>
-            {dates.length} дн. × {empCount} сотр. = {total} смен
-          </div>
+          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>{preview}</div>
         </div>
 
         {/* Footer */}
         <div style={{ display: 'flex', gap: 13 }}>
-          <button onClick={() => void handleApply()} disabled={saving || total === 0}
-            style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || total === 0) ? 'not-allowed' : 'pointer', opacity: (saving || total === 0) ? 0.6 : 1 }}>
-            {saving ? 'Создание...' : `Создать ${total} смен`}
+          <button onClick={() => void handleApply()} disabled={saving}
+            style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            {saving ? 'Создание...' : 'Применить'}
           </button>
           <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
             Отмена

@@ -870,6 +870,7 @@ export default function TasksPage() {
   const [myFilter,     setMyFilter]     = useState<MyFilter>('all')
   const [period,       setPeriod]       = useState<PeriodValue | null>(null)
   const [dateField,    setDateField]    = useState<'created_at' | 'deadline'>('created_at')
+  const [showAutoOnly, setShowAutoOnly] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
@@ -902,6 +903,7 @@ export default function TasksPage() {
         if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
         if (myFilter === 'my' && t.assigned_to !== userId) return false
         if (myFilter === 'observing' && (!userId || !t.observer_ids.includes(userId))) return false
+        if (showAutoOnly && !t.is_auto) return false
         return true
       })
       .sort((a, b) => {
@@ -1039,6 +1041,13 @@ export default function TasksPage() {
                 </button>
               ))}
             </div>
+          )}
+          {user?.role === 'developer' && (
+            <button
+              onClick={() => setShowAutoOnly(v => !v)}
+              style={{ height: 30, padding: '0 10px', background: showAutoOnly ? 'rgba(139,92,246,0.15)' : 'transparent', border: `1px solid ${showAutoOnly ? '#8b5cf6' : 'var(--glass-border)'}`, borderRadius: 8, color: showAutoOnly ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 11, fontWeight: showAutoOnly ? 600 : 400, cursor: 'pointer' }}>
+              Автозадачи
+            </button>
           )}
         </div>
       </div>

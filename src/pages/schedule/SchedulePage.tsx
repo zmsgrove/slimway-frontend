@@ -592,6 +592,8 @@ function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: Delet
 
 type RepeatMode = 'every_day' | 'weekdays' | 'every_n'
 
+const STEP_OPTIONS = [20, 30, 45, 60, 90]
+
 interface QuickCreateModalProps {
   devices: Device[]
   onClose: () => void
@@ -599,23 +601,31 @@ interface QuickCreateModalProps {
 }
 
 function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps) {
-  const [deviceId,    setDeviceId]    = useState(devices[0]?.id ?? '')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(devices.map(d => d.id)))
   const [dateStart,   setDateStart]   = useState(() => toISO(new Date()))
   const [dateEnd,     setDateEnd]     = useState(() => toISO(new Date()))
-  const [timeStart,   setTimeStart]   = useState('09:00')
-  const [timeEnd,     setTimeEnd]     = useState('09:30')
+  const [dayStart,    setDayStart]    = useState('09:00')
+  const [dayEnd,      setDayEnd]      = useState('22:00')
+  const [step,        setStep]        = useState(30)
   const [repeat,      setRepeat]      = useState<RepeatMode>('every_day')
   const [everyN,      setEveryN]      = useState(2)
   const [slotStatus,  setSlotStatus]  = useState<'free' | 'blocked'>('free')
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState<string | null>(null)
 
+  const toggleDevice = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
   const generateDates = (): string[] => {
     const dates: string[] = []
     const start = new Date(dateStart + 'T00:00:00')
     const end   = new Date(dateEnd   + 'T00:00:00')
-    let cur = new Date(start)
-    let nIdx = 0
+    let cur = new Date(start), nIdx = 0
     while (cur <= end) {
       const dow = cur.getDay()
       if (repeat === 'every_day') {
@@ -631,16 +641,38 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
     return dates
   }
 
+  const generateTimeSlots = (): Array<{ time_start: string; time_end: string }> => {
+    const slots: Array<{ time_start: string; time_end: string }> = []
+    const [sh, sm] = dayStart.split(':').map(Number)
+    const [eh, em] = dayEnd.split(':').map(Number)
+    const endMin = eh * 60 + em
+    let cur = sh * 60 + sm
+    while (cur + step <= endMin) {
+      const ts = `${String(Math.floor(cur / 60)).padStart(2, '0')}:${String(cur % 60).padStart(2, '0')}`
+      const te = `${String(Math.floor((cur + step) / 60)).padStart(2, '0')}:${String((cur + step) % 60).padStart(2, '0')}`
+      slots.push({ time_start: ts, time_end: te })
+      cur += step
+    }
+    return slots
+  }
+
+  const dates      = generateDates()
+  const timeSlots  = generateTimeSlots()
+  const totalCells = selectedIds.size * dates.length * timeSlots.length
+
   const handleCreate = async () => {
-    if (!deviceId) { setError('Выберите тренажёр'); return }
-    if (timeStart >= timeEnd) { setError('Время начала должно быть меньше времени конца'); return }
-    if (dateStart > dateEnd) { setError('Дата начала должна быть меньше или равна дате конца'); return }
+    if (selectedIds.size === 0) { setError('Выберите хотя бы один тренажёр'); return }
+    if (dayStart >= dayEnd) { setError('Начало дня должно быть меньше конца дня'); return }
+    if (dateStart > dateEnd) { setError('Дата начала должна быть ≤ дате конца'); return }
+    if (totalCells === 0) { setError('Нет ячеек для создания'); return }
 
     setSaving(true); setError(null)
     try {
-      const dates = generateDates()
-      if (dates.length === 0) { setError('Нет дат для создания'); setSaving(false); return }
-      const slots = dates.map(date => ({ device_id: deviceId, date, time_start: timeStart, time_end: timeEnd, status: slotStatus }))
+      const slots = Array.from(selectedIds).flatMap(deviceId =>
+        dates.flatMap(date =>
+          timeSlots.map(ts => ({ device_id: deviceId, date, time_start: ts.time_start, time_end: ts.time_end, status: slotStatus }))
+        )
+      )
       const result = await scheduleSlotsApi.bulkCreate(slots)
       onCreated((result as unknown as { created: number }).created ?? slots.length)
     } catch {
@@ -650,12 +682,8 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
     }
   }
 
-  const selectedDevice = devices.find(d => d.id === deviceId)
-  const devColor = selectedDevice ? (DEVICE_TYPE_COLORS[selectedDevice.type] ?? '#02BDB6') : '#02BDB6'
-  const previewCount = generateDates().length
-
   return (
-    <ModalWrap onClose={onClose} maxWidth={500}>
+    <ModalWrap onClose={onClose} maxWidth={520}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
         <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Zap size={20} color="#02BDB6" />
@@ -667,18 +695,41 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
       </div>
 
-      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Тренажёры — мультиселект */}
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Тренажёр</div>
-          <select style={selectStyle} value={deviceId} onChange={e => setDeviceId(e.target.value)}>
-            {devices.map(d => (
-              <option key={d.id} value={d.id}>{DEVICE_TYPE_LABELS[d.type]} #{d.number} (Гр. {d.device_group})</option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8 }}>Тренажёры</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setSelectedIds(new Set(devices.map(d => d.id)))}
+                style={{ fontSize: 11, height: 24, padding: '0 8px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
+              <button onClick={() => setSelectedIds(new Set())}
+                style={{ fontSize: 11, height: 24, padding: '0 8px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer' }}>Снять</button>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 180, overflowY: 'auto' }}>
+            {devices.map(d => {
+              const checked = selectedIds.has(d.id)
+              const color = DEVICE_TYPE_COLORS[d.type] ?? '#02BDB6'
+              return (
+                <label key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', background: checked ? `${color}0d` : 'var(--bg-elevated)', border: `1px solid ${checked ? color + '44' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleDevice(d.id)} style={{ accentColor: color, width: 14, height: 14 }} />
+                  <span style={{ fontSize: 13, color: 'var(--text-primary)', flex: 1 }}>
+                    {DEVICE_TYPE_LABELS[d.type]} #{d.number}
+                  </span>
+                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: `${color}18`, color, border: `1px solid ${color}33` }}>
+                    Гр. {d.device_group}
+                  </span>
+                </label>
+              )
+            })}
+          </div>
         </div>
 
+        {/* Диапазон дат */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Дата начала</div>
@@ -688,26 +739,44 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Дата конца</div>
             <input type="date" style={inputStyle} value={dateEnd} onChange={e => setDateEnd(e.target.value)} />
           </div>
+        </div>
+
+        {/* Время дня */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Время начала</div>
-            <input type="time" style={inputStyle} value={timeStart} onChange={e => setTimeStart(e.target.value)} />
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Начало дня</div>
+            <input type="time" style={inputStyle} value={dayStart} onChange={e => setDayStart(e.target.value)} />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Время конца</div>
-            <input type="time" style={inputStyle} value={timeEnd} onChange={e => setTimeEnd(e.target.value)} />
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Конец дня</div>
+            <input type="time" style={inputStyle} value={dayEnd} onChange={e => setDayEnd(e.target.value)} />
           </div>
         </div>
 
+        {/* Шаг брони */}
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Повторение</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Шаг брони (мин)</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {STEP_OPTIONS.map(s => (
+              <button key={s} onClick={() => setStep(s)}
+                style={{ flex: 1, height: 32, background: step === s ? 'rgba(2,189,182,0.12)' : 'transparent', border: `1px solid ${step === s ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: step === s ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, fontWeight: step === s ? 600 : 400, cursor: 'pointer' }}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Повторение */}
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Дни недели</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {([
               { value: 'every_day', label: 'Каждый день' },
               { value: 'weekdays',  label: 'Будние' },
-              { value: 'every_n',   label: `Каждые N` },
+              { value: 'every_n',   label: 'Каждые N' },
             ] as { value: RepeatMode; label: string }[]).map(opt => (
               <button key={opt.value} onClick={() => setRepeat(opt.value)}
-                style={{ flex: 1, height: 34, background: repeat === opt.value ? 'rgba(2,189,182,0.12)' : 'transparent', border: `1px solid ${repeat === opt.value ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: repeat === opt.value ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, fontWeight: repeat === opt.value ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
+                style={{ flex: 1, height: 32, background: repeat === opt.value ? 'rgba(2,189,182,0.12)' : 'transparent', border: `1px solid ${repeat === opt.value ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: repeat === opt.value ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, fontWeight: repeat === opt.value ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
                 {opt.label}
               </button>
             ))}
@@ -721,32 +790,34 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
           )}
         </div>
 
+        {/* Тип ячеек */}
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Тип ячеек</div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setSlotStatus('free')}
-              style={{ flex: 1, height: 34, background: slotStatus === 'free' ? 'rgba(16,185,129,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'free' ? '#10b981' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'free' ? '#10b981' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'free' ? 600 : 400, cursor: 'pointer' }}>
+              style={{ flex: 1, height: 32, background: slotStatus === 'free' ? 'rgba(16,185,129,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'free' ? '#10b981' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'free' ? '#10b981' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'free' ? 600 : 400, cursor: 'pointer' }}>
               Свободные
             </button>
             <button onClick={() => setSlotStatus('blocked')}
-              style={{ flex: 1, height: 34, background: slotStatus === 'blocked' ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'blocked' ? '#f59e0b' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'blocked' ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'blocked' ? 600 : 400, cursor: 'pointer' }}>
+              style={{ flex: 1, height: 32, background: slotStatus === 'blocked' ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'blocked' ? '#f59e0b' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'blocked' ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'blocked' ? 600 : 400, cursor: 'pointer' }}>
               Заблокированные
             </button>
           </div>
         </div>
 
-        {previewCount > 0 && (
-          <div style={{ padding: '10px 13px', background: `${devColor}08`, border: `1px solid ${devColor}22`, borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-            Будет создано <strong style={{ color: devColor }}>{previewCount}</strong> {slotStatus === 'blocked' ? 'заблокированных' : ''} ячеек
-            {selectedDevice && ` для ${DEVICE_TYPE_LABELS[selectedDevice.type]} #${selectedDevice.number}`}
-          </div>
-        )}
+        {/* Превью */}
+        <div style={{ padding: '10px 13px', background: 'rgba(2,189,182,0.06)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+          Будет создано <strong style={{ color: '#02BDB6' }}>{totalCells}</strong> ячеек
+          {' '}для <strong style={{ color: '#02BDB6' }}>{selectedIds.size}</strong> тренажёров
+          {timeSlots.length > 0 && ` · ${timeSlots.length} слотов/день`}
+          {dates.length > 0 && ` · ${dates.length} дней`}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
-        <button onClick={() => void handleCreate()} disabled={saving || previewCount === 0}
-          style={{ flex: 1, height: 40, background: slotStatus === 'blocked' ? '#f59e0b' : '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || previewCount === 0) ? 'not-allowed' : 'pointer', opacity: (saving || previewCount === 0) ? 0.5 : 1 }}>
-          {saving ? 'Создание...' : `Создать ${previewCount} ячеек`}
+        <button onClick={() => void handleCreate()} disabled={saving || totalCells === 0 || selectedIds.size === 0}
+          style={{ flex: 1, height: 40, background: slotStatus === 'blocked' ? '#f59e0b' : '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || totalCells === 0) ? 'not-allowed' : 'pointer', opacity: (saving || totalCells === 0) ? 0.5 : 1 }}>
+          {saving ? 'Создание...' : `Создать ${totalCells} ячеек`}
         </button>
         <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
       </div>
