@@ -384,7 +384,8 @@ function AppLayoutInner() {
     const checkHealth = async () => {
       try {
         const start = Date.now()
-        const res = await fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(5000) })
+        const BASE_URL = API_URL.replace(/\/api\/v1\/?$/, '')
+        const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(5000) })
         const latency = Date.now() - start
         setServerLatency(latency)
         if (!res.ok) { setServerStatus('error') }

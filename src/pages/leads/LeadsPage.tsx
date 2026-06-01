@@ -707,7 +707,7 @@ export default function LeadsPage() {
     try {
       const [leadsData, empsData] = await Promise.all([
         leadsApi.getAll(period ? { from: period.from, to: period.to } : undefined),
-        employeesApi.getAll(),
+        employeesApi.getAll().catch(() => [] as Employee[]),
       ])
       setLeads(leadsData)
       setEmployees(empsData)
