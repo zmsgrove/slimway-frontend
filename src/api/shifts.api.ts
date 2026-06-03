@@ -51,7 +51,13 @@ export const shiftsApi = {
     await api.delete('/shifts/bulk', { data: payload })
   },
 
-  checkin: async (id: string, payload: { location?: string; is_own_shift?: boolean }): Promise<void> => {
+  checkin: async (id: string, payload: {
+    location?: string
+    geo_lat?: number
+    geo_lng?: number
+    checkin_type?: 'regular' | 'replacement' | 'day_off_work'
+    replaces_employee_id?: string
+  }): Promise<void> => {
     await api.post(`/shifts/${id}/checkin`, payload)
   },
 

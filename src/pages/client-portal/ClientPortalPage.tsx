@@ -191,6 +191,8 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
   const [booking,    setBooking]    = useState(false)
   const [bookErr,    setBookErr]    = useState<string | null>(null)
   const [cancelling, setCancelling] = useState<string | null>(null)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null)
 
   const now = toISO(new Date())
   const future = bookings.filter(b => {
@@ -230,12 +232,21 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
     }
   }
 
-  const handleCancel = async (id: string) => {
-    if (!confirm('Отменить запись?')) return
-    setCancelling(id)
+  const handleCancel = (id: string) => {
+    setCancelError(null)
+    setConfirmCancel(id)
+  }
+
+  const doCancel = async () => {
+    if (!confirmCancel) return
+    setCancelling(confirmCancel)
+    setConfirmCancel(null)
     try {
-      await clientPortalApi.cancelBooking(token, id)
+      await clientPortalApi.cancelBooking(token, confirmCancel)
       onRefresh()
+    } catch (e: unknown) {
+      const errMsg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка при отмене'
+      setCancelError(errMsg)
     } finally {
       setCancelling(null)
     }
@@ -296,6 +307,27 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
         </div>
       )}
 
+      {/* Модал подтверждения отмены */}
+      {confirmCancel && (
+        <div style={{ ...s.card, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Отменить запись?</div>
+          <div style={{ ...s.muted, marginBottom: 12 }}>Это действие нельзя отменить.</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => void doCancel()} style={{ ...s.btn(), background: 'rgba(239,68,68,0.8)', color: '#fff', border: 'none', flex: 1 }}>Отменить запись</button>
+            <button onClick={() => setConfirmCancel(null)} style={{ ...s.btn(), flex: 1 }}>Назад</button>
+          </div>
+        </div>
+      )}
+
+      {/* Ошибка отмены */}
+      {cancelError && (
+        <div style={{ ...s.card, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6, color: '#f87171' }}>Отмена невозможна</div>
+          <div style={{ fontSize: 13, color: '#f87171', marginBottom: 10 }}>{cancelError}</div>
+          <button onClick={() => setCancelError(null)} style={{ ...s.btn(), width: '100%' }}>Понятно</button>
+        </div>
+      )}
+
       {future.length === 0 && !showNew && (
         <div style={{ ...s.card, textAlign: 'center', padding: 32, color: '#888' }}>
           Предстоящих записей нет
@@ -304,8 +336,14 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
       )}
 
       {future.map(b => {
-        const slot = b.schedule_slots as Record<string, unknown> | null
-        const dev  = slot ? (slot.devices as Record<string, unknown> | null) : null
+        const slot   = b.schedule_slots as Record<string, unknown> | null
+        const dev    = slot ? (slot.devices as Record<string, unknown> | null) : null
+        const status = b.status as string | undefined
+        const statusLabel = status === 'pending' ? '⏳ Ожидает подтверждения'
+          : status === 'confirmed' ? '✅ Подтверждено'
+          : status === 'cancelled' ? '❌ Отменено'
+          : undefined
+        const statusColor = status === 'pending' ? '#f59e0b' : status === 'confirmed' ? '#10b981' : '#ef4444'
         return (
           <div key={b.id as string} style={{ ...s.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -314,11 +352,14 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
                 {slot ? `${slot.time_start as string} — ${slot.time_end as string}` : ''}
                 {dev ? ` · ${DEVICE_LABELS[dev.type as string] ?? dev.type}` : ''}
               </div>
+              {statusLabel && <div style={{ fontSize: 11, color: statusColor, marginTop: 4 }}>{statusLabel}</div>}
             </div>
-            <button onClick={() => void handleCancel(b.id as string)} disabled={cancelling === b.id}
-              style={{ height: 34, padding: '0 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontSize: 12, cursor: 'pointer' }}>
-              {cancelling === b.id ? '...' : 'Отменить'}
-            </button>
+            {status !== 'cancelled' && (
+              <button onClick={() => handleCancel(b.id as string)} disabled={cancelling === b.id}
+                style={{ height: 34, padding: '0 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontSize: 12, cursor: 'pointer' }}>
+                {cancelling === b.id ? '...' : 'Отменить'}
+              </button>
+            )}
           </div>
         )
       })}

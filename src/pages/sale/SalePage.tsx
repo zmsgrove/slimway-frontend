@@ -704,6 +704,19 @@ export default function SalePage() {
                               {DEVICE_LABELS[tpl.slot_2_type]} · {tpl.slot_2_sessions_total} сеансов
                             </span>
                           )}
+                          {tpl.slot_3_type && tpl.slot_3_sessions_total && (
+                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(139,92,246,0.10)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)' }}>
+                              {DEVICE_LABELS[tpl.slot_3_type]} · {tpl.slot_3_sessions_total} сеансов
+                            </span>
+                          )}
+                          {tpl.slot_4_type && tpl.slot_4_sessions_total && (
+                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(245,158,11,0.10)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}>
+                              {DEVICE_LABELS[tpl.slot_4_type]} · {tpl.slot_4_sessions_total} сеансов
+                            </span>
+                          )}
+                          {tpl.is_trial && (
+                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontWeight: 600 }}>ТЕСТ</span>
+                          )}
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>

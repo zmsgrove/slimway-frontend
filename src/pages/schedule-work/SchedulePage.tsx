@@ -647,7 +647,7 @@ export default function ScheduleWorkPage() {
     try {
       let location: string | undefined
       try { location = await getLocation() } catch { /* skip */ }
-      await shiftsApi.checkin(shift.id, { location, is_own_shift: true })
+      await shiftsApi.checkin(shift.id, { location, checkin_type: 'regular' })
       showNotif(`${shift.employees?.full_name ?? 'Сотрудник'} отметился на смене`)
       await loadData()
     } catch {
@@ -782,10 +782,10 @@ export default function ScheduleWorkPage() {
       ) : (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
           <div ref={gridContainerRef} style={{ overflowX: 'auto' }}>
-            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: 160 + visibleDays * 52 }}>
               <colgroup>
                 <col style={{ width: 160, minWidth: 160 }} />
-                {twoWeekDays.map((_, i) => <col key={i} style={{ width: 64, minWidth: 64 }} />)}
+                {twoWeekDays.map((_, i) => <col key={i} />)}
               </colgroup>
               <thead>
                 <tr>

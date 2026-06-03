@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2, Layers, Lock, Unlock, Eye, Zap, CalendarDays, RefreshCw } from 'lucide-react'
-import { scheduleSlotsApi, bookingsV2Api, type BookingV2Error, type BookingInfo } from '../../api/schedule-slots.api'
+import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2, Layers, Lock, Unlock, Eye, Zap, CalendarDays, RefreshCw, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { scheduleSlotsApi, bookingsV2Api, type BookingV2Error, type BookingInfo, type PendingBooking } from '../../api/schedule-slots.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { devicesApi } from '../../api/devices.api'
 import { clientsApi } from '../../api/clients.api'
@@ -21,7 +21,7 @@ const SLOT_WIDTH   = 64   // px per time column
 const DEVICE_WIDTH = 160  // px for device name column
 const CELL_HEIGHT  = 60   // px
 
-const DURATIONS = [15, 20, 25, 30, 45, 60]
+const DURATIONS = [5, 15, 20, 25, 30, 45, 60]
 
 const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
@@ -592,7 +592,7 @@ function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: Delet
 
 type RepeatMode = 'every_day' | 'weekdays' | 'every_n'
 
-const STEP_OPTIONS = [20, 30, 45, 60, 90]
+const STEP_OPTIONS = [5, 15, 20, 30, 45, 60]
 
 interface QuickCreateModalProps {
   devices: Device[]
@@ -970,12 +970,17 @@ export default function SchedulePage() {
   const [showQuickCreate,   setShowQuickCreate]  = useState(false)
   const [rescheduleTarget,  setRescheduleTarget] = useState<BookingInfo | null>(null)
   const [timeLeft,          setTimeLeft]         = useState<number | null>(currentTimeLeft)
+  const [activeTab,         setActiveTab]        = useState<'schedule' | 'pending'>('schedule')
+  const [pendingBookings,   setPendingBookings]  = useState<PendingBooking[]>([])
+  const [pendingLoading,    setPendingLoading]   = useState(false)
+  const [actionId,          setActionId]         = useState<string | null>(null)
   const notifTimer  = useRef<ReturnType<typeof setTimeout> | undefined>()
   const isDragging  = useRef(false)
   const dragMoved   = useRef(false)
   const isToday     = date === toISO(new Date())
 
-  const canManageSlots = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
+  const canManageSlots  = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
+  const canConfirmBookings = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee'
 
   useEffect(() => {
     const interval = setInterval(() => setTimeLeft(currentTimeLeft()), 60_000)
@@ -1022,7 +1027,58 @@ export default function SchedulePage() {
     }
   }, [])
 
+  const loadPending = useCallback(async () => {
+    if (!canConfirmBookings) return
+    setPendingLoading(true)
+    try {
+      const list = await bookingsV2Api.getPending()
+      setPendingBookings(list)
+    } catch {
+      /* ignore */
+    } finally {
+      setPendingLoading(false)
+    }
+  }, [canConfirmBookings])
+
+  const handleConfirm = async (id: string) => {
+    setActionId(id)
+    try {
+      await bookingsV2Api.confirm(id)
+      setPendingBookings(prev => prev.filter(b => b.id !== id))
+      showNotification('Бронь подтверждена')
+    } catch {
+      showNotification('Ошибка при подтверждении')
+    } finally {
+      setActionId(null)
+    }
+  }
+
+  const handleReject = async (id: string) => {
+    setActionId(id)
+    try {
+      await bookingsV2Api.reject(id)
+      setPendingBookings(prev => prev.filter(b => b.id !== id))
+      showNotification('Бронь отклонена')
+    } catch {
+      showNotification('Ошибка при отклонении')
+    } finally {
+      setActionId(null)
+    }
+  }
+
   useEffect(() => { void loadData(date) }, [date, loadData])
+
+  useEffect(() => {
+    if (canConfirmBookings) void loadPending()
+  }, [canConfirmBookings, loadPending])
+
+  const pendingSlotIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const b of pendingBookings) {
+      if (b.schedule_slots?.id) ids.add(b.schedule_slots.id)
+    }
+    return ids
+  }, [pendingBookings])
 
   const showNotification = (msg: string) => {
     setNotification(msg); clearTimeout(notifTimer.current)
@@ -1130,7 +1186,31 @@ export default function SchedulePage() {
         <button onClick={nextDay} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><ChevronRight size={14} /></button>
       </div>
 
+      {/* Tabs */}
+      {canConfirmBookings && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 13 }}>
+          <button
+            onClick={() => setActiveTab('schedule')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'schedule' ? '#02BDB6' : 'var(--glass-border)'}`, background: activeTab === 'schedule' ? 'rgba(2,189,182,0.12)' : 'transparent', color: activeTab === 'schedule' ? '#02BDB6' : 'var(--text-secondary)', transition: 'all 0.15s' }}
+          >
+            <CalendarDays size={14} />Расписание
+          </button>
+          <button
+            onClick={() => { setActiveTab('pending'); void loadPending() }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'pending' ? '#f59e0b' : 'var(--glass-border)'}`, background: activeTab === 'pending' ? 'rgba(245,158,11,0.12)' : 'transparent', color: activeTab === 'pending' ? '#f59e0b' : 'var(--text-secondary)', transition: 'all 0.15s' }}
+          >
+            <Clock size={14} />Ожидают подтверждения
+            {pendingBookings.length > 0 && (
+              <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
+                {pendingBookings.length}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Legend */}
+      {activeTab === 'schedule' && (
       <div style={{ display: 'flex', gap: 13, marginBottom: 13, flexWrap: 'wrap' }}>
         {Object.entries(STATUS_LABELS).map(([k, v]) => (
           <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -1145,6 +1225,7 @@ export default function SchedulePage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Notifications */}
       {notification && (
@@ -1158,7 +1239,65 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {loading ? (
+      {activeTab === 'pending' ? (
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+          {pendingLoading ? (
+            <div style={{ padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+          ) : pendingBookings.length === 0 ? (
+            <div style={{ padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <CheckCircle size={28} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: 13 }} />
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>Нет заявок, ожидающих подтверждения</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {pendingBookings.map((b, idx) => {
+                const slot = b.schedule_slots
+                const dev = slot?.devices
+                const devColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#71717A') : '#71717A'
+                const isActing = actionId === b.id
+                return (
+                  <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 21px', borderBottom: idx < pendingBookings.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>
+                        {b.clients?.full_name ?? '—'}
+                      </div>
+                      {b.clients?.phone && (
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 3 }}>{b.clients.phone}</div>
+                      )}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {slot && (
+                          <span style={{ fontSize: 12, color: devColor }}>
+                            {dev ? `${DEVICE_TYPE_LABELS[dev.type]} #${dev.number}` : '—'} · {slot.date} · {ft(slot.time_start)}–{ft(slot.time_end)}
+                          </span>
+                        )}
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                          Заявка от {new Date(b.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <button
+                        onClick={() => void handleConfirm(b.id)}
+                        disabled={isActing}
+                        style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 13px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: isActing ? 'not-allowed' : 'pointer', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.35)', color: '#10b981', opacity: isActing ? 0.6 : 1 }}
+                      >
+                        <CheckCircle size={13} />Подтвердить
+                      </button>
+                      <button
+                        onClick={() => void handleReject(b.id)}
+                        disabled={isActing}
+                        style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 13px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: isActing ? 'not-allowed' : 'pointer', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', opacity: isActing ? 0.6 : 1 }}
+                      >
+                        <XCircle size={13} />Отклонить
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      ) : loading ? (
         <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
       ) : !error && devices.length === 0 ? (
         <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -1250,6 +1389,9 @@ export default function SchedulePage() {
                                 {slot.status === 'blocked'     && <span style={{ fontSize: 10, color: sc!.text }}>✕</span>}
                                 <span style={{ fontSize: 9, color: sc!.text, opacity: 0.8 }}>{ft(slot.time_start)}</span>
                               </div>
+                              {slot.status === 'booked' && pendingSlotIds.has(slot.id) && (
+                                <span style={{ position: 'absolute', top: 3, left: 3, fontSize: 10, lineHeight: 1, zIndex: 2 }} title="Ожидает подтверждения">⏳</span>
+                              )}
                               {isHov && canManageSlots && (
                                 <button
                                   onClick={e => { e.stopPropagation(); handleTrashClick(slot, device) }}

@@ -136,6 +136,15 @@ export interface Subscription {
   slot_2_duration_min: number | null
   slot_2_sessions_total: number | null
   slot_2_sessions_left: number | null
+  slot_3_type: DeviceType | null
+  slot_3_duration_min: number | null
+  slot_3_sessions_total: number | null
+  slot_3_sessions_left: number | null
+  slot_4_type: DeviceType | null
+  slot_4_duration_min: number | null
+  slot_4_sessions_total: number | null
+  slot_4_sessions_left: number | null
+  is_trial: boolean
   date_start: string
   date_end: string | null
   price: number | null
@@ -472,6 +481,13 @@ export interface SubscriptionTemplate {
   slot_2_type: DeviceType | null
   slot_2_duration_min: number | null
   slot_2_sessions_total: number | null
+  slot_3_type: DeviceType | null
+  slot_3_duration_min: number | null
+  slot_3_sessions_total: number | null
+  slot_4_type: DeviceType | null
+  slot_4_duration_min: number | null
+  slot_4_sessions_total: number | null
+  is_trial: boolean
   validity_days: number
   price: number | null
   is_active: boolean

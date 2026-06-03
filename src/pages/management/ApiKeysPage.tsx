@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Key, Plus, Trash2, Copy, CheckCircle2, ExternalLink, AlertCircle, X, Clock } from 'lucide-react'
+import { Key, Plus, Trash2, Copy, CheckCircle2, ExternalLink, AlertCircle, X, Clock, Eye, EyeOff } from 'lucide-react'
 import { apiKeysApi, type ApiKey, type ApiKeyCreated } from '../../api/apiKeys.api'
 import { usePermissions } from '../../hooks/usePermissions'
 
@@ -157,6 +157,31 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
 
 // ─── ApiKeysPage ──────────────────────────────────────────────────────────────
 
+function RawKeyInline({ raw }: { raw: string }) {
+  const [visible, setVisible] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(raw).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '8px 10px', background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 8 }}>
+      <code style={{ flex: 1, fontSize: 11, color: 'var(--text-primary)', wordBreak: 'break-all', fontFamily: 'monospace' }}>
+        {visible ? raw : raw.slice(0, 8) + '••••••••••••••••'}
+      </code>
+      <button onClick={() => setVisible(v => !v)} title={visible ? 'Скрыть' : 'Показать'} style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
+        {visible ? <EyeOff size={13} /> : <Eye size={13} />}
+      </button>
+      <button onClick={handleCopy} title="Скопировать" style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
+        {copied ? <CheckCircle2 size={13} /> : <Copy size={13} />}
+      </button>
+    </div>
+  )
+}
+
 export default function ApiKeysPage() {
   const perm = usePermissions()
   const [keys, setKeys] = useState<ApiKey[]>([])
@@ -289,7 +314,9 @@ export default function ApiKeysPage() {
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                {key.raw_key && <RawKeyInline raw={key.raw_key} />}
+
+                <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap', marginTop: 8 }}>
                   <span>Создан: {new Date(key.created_at).toLocaleDateString('ru-RU')}</span>
                   {key.last_used_at && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

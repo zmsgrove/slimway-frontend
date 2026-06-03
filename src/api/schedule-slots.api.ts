@@ -98,4 +98,26 @@ export const bookingsV2Api = {
     const { data } = await api.patch(`/bookings-v2/${id}`, { attended })
     return data
   },
+
+  getPending: async (): Promise<PendingBooking[]> => {
+    const { data } = await api.get('/bookings-v2/pending')
+    return data
+  },
+
+  confirm: async (id: string): Promise<BookingV2Result> => {
+    const { data } = await api.patch(`/bookings-v2/${id}/confirm`, {})
+    return data
+  },
+
+  reject: async (id: string): Promise<void> => {
+    await api.patch(`/bookings-v2/${id}/reject`, {})
+  },
+}
+
+export interface PendingBooking {
+  id: string
+  date: string
+  created_at: string
+  clients: { id: string; full_name: string; phone: string | null } | null
+  schedule_slots: { id: string; date: string; time_start: string; time_end: string; devices: { type: string; number: number } | null } | null
 }

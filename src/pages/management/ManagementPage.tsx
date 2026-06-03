@@ -385,12 +385,21 @@ function SubscriptionTemplatesSection() {
   const [validityDays, setValidityDays] = useState(30)
   const [price,        setPrice]        = useState('')
   const [hasSlot2,     setHasSlot2]     = useState(false)
+  const [hasSlot3,     setHasSlot3]     = useState(false)
+  const [hasSlot4,     setHasSlot4]     = useState(false)
+  const [isTrial,      setIsTrial]      = useState(false)
   const [slot1Type,    setSlot1Type]    = useState<DeviceType>('vacuactiv')
   const [slot1Dur,     setSlot1Dur]     = useState(30)
   const [slot1Ses,     setSlot1Ses]     = useState(8)
   const [slot2Type,    setSlot2Type]    = useState<DeviceType>('rollshape')
   const [slot2Dur,     setSlot2Dur]     = useState(20)
   const [slot2Ses,     setSlot2Ses]     = useState(8)
+  const [slot3Type,    setSlot3Type]    = useState<DeviceType>('vacuactiv')
+  const [slot3Dur,     setSlot3Dur]     = useState(30)
+  const [slot3Ses,     setSlot3Ses]     = useState(1)
+  const [slot4Type,    setSlot4Type]    = useState<DeviceType>('rollshape')
+  const [slot4Dur,     setSlot4Dur]     = useState(20)
+  const [slot4Ses,     setSlot4Ses]     = useState(1)
   const [saving,       setSaving]       = useState(false)
   const [formError,    setFormError]    = useState<string | null>(null)
 
@@ -425,11 +434,18 @@ function SubscriptionTemplatesSection() {
         slot_2_type:           hasSlot2 ? slot2Type : null,
         slot_2_duration_min:   hasSlot2 ? slot2Dur : null,
         slot_2_sessions_total: hasSlot2 ? slot2Ses : null,
+        slot_3_type:           hasSlot3 ? slot3Type : null,
+        slot_3_duration_min:   hasSlot3 ? slot3Dur : null,
+        slot_3_sessions_total: hasSlot3 ? slot3Ses : null,
+        slot_4_type:           hasSlot4 ? slot4Type : null,
+        slot_4_duration_min:   hasSlot4 ? slot4Dur : null,
+        slot_4_sessions_total: hasSlot4 ? slot4Ses : null,
+        is_trial:              isTrial,
         validity_days:         validityDays,
         price:                 price ? Number(price) : null,
       })
       setTemplates(prev => [tpl, ...prev])
-      setShowCreate(false); setName(''); setPrice(''); setHasSlot2(false)
+      setShowCreate(false); setName(''); setPrice(''); setHasSlot2(false); setHasSlot3(false); setHasSlot4(false); setIsTrial(false)
     } catch (e: unknown) {
       setFormError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
     } finally { setSaving(false) }
@@ -458,8 +474,11 @@ function SubscriptionTemplatesSection() {
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                   {DEVICE_TYPE_LABELS[tpl.slot_1_type]} · {tpl.slot_1_duration_min} мин · {tpl.slot_1_sessions_total} сеансов
                   {tpl.slot_2_type && ` + ${DEVICE_TYPE_LABELS[tpl.slot_2_type]}`}
+                  {tpl.slot_3_type && ` + ${DEVICE_TYPE_LABELS[tpl.slot_3_type]}`}
+                  {tpl.slot_4_type && ` + ${DEVICE_TYPE_LABELS[tpl.slot_4_type]}`}
                   {' · '}{tpl.validity_days} дней
                   {tpl.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸`}
+                  {tpl.is_trial && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontSize: 10, fontWeight: 600, border: '1px solid rgba(245,158,11,0.3)' }}>ТЕСТ</span>}
                 </div>
               </div>
               <button
@@ -522,6 +541,54 @@ function SubscriptionTemplatesSection() {
                     </div>
                   </div>
                 )}
+                <button onClick={() => setHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${hasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <ChevronDown size={13} style={{ transform: hasSlot3 ? 'rotate(180deg)' : 'none' }} />
+                  {hasSlot3 ? 'Убрать Слот 3' : '+ Слот 3'}
+                </button>
+                {hasSlot3 && (
+                  <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid rgba(139,92,246,0.2)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8b5cf6', marginBottom: 8 }}>Слот 3</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                      <div><label style={labelStyle}>Тип</label>
+                        <select style={selectStyle} value={slot3Type} onChange={e => setSlot3Type(e.target.value as DeviceType)}>
+                          {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
+                      </div>
+                      <div><label style={labelStyle}>Длит. (мин)</label>
+                        <select style={selectStyle} value={slot3Dur} onChange={e => setSlot3Dur(Number(e.target.value))}>
+                          {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={inputStyle} value={slot3Ses} onChange={e => setSlot3Ses(Math.max(1, Number(e.target.value)))} /></div>
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${hasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <ChevronDown size={13} style={{ transform: hasSlot4 ? 'rotate(180deg)' : 'none' }} />
+                  {hasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
+                </button>
+                {hasSlot4 && (
+                  <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', marginBottom: 8 }}>Слот 4</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                      <div><label style={labelStyle}>Тип</label>
+                        <select style={selectStyle} value={slot4Type} onChange={e => setSlot4Type(e.target.value as DeviceType)}>
+                          {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
+                      </div>
+                      <div><label style={labelStyle}>Длит. (мин)</label>
+                        <select style={selectStyle} value={slot4Dur} onChange={e => setSlot4Dur(Number(e.target.value))}>
+                          {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={inputStyle} value={slot4Ses} onChange={e => setSlot4Ses(Math.max(1, Number(e.target.value)))} /></div>
+                    </div>
+                  </div>
+                )}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: isTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${isTrial ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={isTrial} onChange={e => setIsTrial(e.target.checked)} style={{ accentColor: '#f59e0b', width: 14, height: 14 }} />
+                  <span style={{ fontSize: 12, color: isTrial ? '#f59e0b' : 'var(--text-secondary)', fontWeight: isTrial ? 600 : 400 }}>Тестовый абонемент (1 на клиента, без онлайн-записи)</span>
+                </label>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
                 <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Создание...' : 'Создать'}</button>
