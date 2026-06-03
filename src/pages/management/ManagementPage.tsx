@@ -374,6 +374,60 @@ function PositionsSection() {
 
 // ─── SubscriptionTemplatesSection ───────────────────────────────────────────
 
+function SlotForm({
+  slotNum, slotColor, slotBorder,
+  type, setType, dur, setDur, ses, setSes,
+  finishSlot, setFinishSlot,
+  isTrial,
+}: {
+  slotNum: number; slotColor: string; slotBorder: string
+  type: DeviceType; setType: (v: DeviceType) => void
+  dur: number; setDur: (v: number) => void
+  ses: number; setSes: (v: number) => void
+  finishSlot: number | null; setFinishSlot: (v: number | null) => void
+  isTrial: boolean
+}) {
+  const isFinish = finishSlot === slotNum
+  return (
+    <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: `1px solid ${slotBorder}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: slotColor }}>Слот {slotNum}</div>
+        {!isTrial && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={isFinish}
+              onChange={() => setFinishSlot(isFinish ? null : slotNum)}
+              style={{ accentColor: '#02BDB6', width: 12, height: 12 }}
+            />
+            <span style={{ fontSize: 11, color: isFinish ? '#02BDB6' : 'var(--text-muted)', fontWeight: isFinish ? 600 : 400 }}>Финишный</span>
+          </label>
+        )}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+        <div>
+          <label style={labelStyle}>Тип</label>
+          <select style={selectStyle} value={type} onChange={e => setType(e.target.value as DeviceType)}>
+            {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Длит. (мин)</label>
+          <select style={selectStyle} value={dur} onChange={e => setDur(Number(e.target.value))}>
+            {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Сеансов</label>
+          <input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }}
+            value={isTrial ? 1 : ses} disabled={isTrial}
+            onChange={e => setSes(Math.max(1, Number(e.target.value)))} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SubscriptionTemplatesSection() {
   const [templates,  setTemplates]  = useState<SubscriptionTemplate[]>([])
   const [connected,  setConnected]  = useState<BranchSubscriptionTemplate[]>([])
@@ -381,6 +435,7 @@ function SubscriptionTemplatesSection() {
   const [error,      setError]      = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
 
+  // Create form state
   const [name,         setName]         = useState('')
   const [validityDays, setValidityDays] = useState(30)
   const [price,        setPrice]        = useState('')
@@ -388,6 +443,7 @@ function SubscriptionTemplatesSection() {
   const [hasSlot3,     setHasSlot3]     = useState(false)
   const [hasSlot4,     setHasSlot4]     = useState(false)
   const [isTrial,      setIsTrial]      = useState(false)
+  const [finishSlot,   setFinishSlot]   = useState<number | null>(null)
   const [slot1Type,    setSlot1Type]    = useState<DeviceType>('vacuactiv')
   const [slot1Dur,     setSlot1Dur]     = useState(30)
   const [slot1Ses,     setSlot1Ses]     = useState(8)
@@ -403,12 +459,39 @@ function SubscriptionTemplatesSection() {
   const [saving,       setSaving]       = useState(false)
   const [formError,    setFormError]    = useState<string | null>(null)
 
-  useEffect(() => {
-    Promise.all([subscriptionTemplatesApi.getAll(), branchSubscriptionTemplatesApi.getAll()])
-      .then(([tpls, conn]) => { setTemplates(tpls); setConnected(conn) })
-      .catch(() => setError('Не удалось загрузить абонементы'))
-      .finally(() => setLoading(false))
+  // Edit modal state
+  const [editTpl,      setEditTpl]      = useState<SubscriptionTemplate | null>(null)
+  const [eName,        setEName]        = useState('')
+  const [eValidityDays,setEValidityDays]= useState(30)
+  const [ePrice,       setEPrice]       = useState('')
+  const [eIsTrial,     setEIsTrial]     = useState(false)
+  const [eFinishSlot,  setEFinishSlot]  = useState<number | null>(null)
+  const [eHasSlot2,    setEHasSlot2]    = useState(false)
+  const [eSlot1Type,   setESlot1Type]   = useState<DeviceType>('vacuactiv')
+  const [eSlot1Dur,    setESlot1Dur]    = useState(30)
+  const [eSlot1Ses,    setESlot1Ses]    = useState(8)
+  const [eSlot2Type,   setESlot2Type]   = useState<DeviceType>('rollshape')
+  const [eSlot2Dur,    setESlot2Dur]    = useState(20)
+  const [eSlot2Ses,    setESlot2Ses]    = useState(8)
+  const [eHasSlot3,    setEHasSlot3]    = useState(false)
+  const [eSlot3Type,   setESlot3Type]   = useState<DeviceType>('vacuactiv')
+  const [eSlot3Dur,    setESlot3Dur]    = useState(30)
+  const [eSlot3Ses,    setESlot3Ses]    = useState(1)
+  const [eHasSlot4,    setEHasSlot4]    = useState(false)
+  const [eSlot4Type,   setESlot4Type]   = useState<DeviceType>('rollshape')
+  const [eSlot4Dur,    setESlot4Dur]    = useState(20)
+  const [eSlot4Ses,    setESlot4Ses]    = useState(1)
+  const [eSaving,      setESaving]      = useState(false)
+  const [eFormError,   setEFormError]   = useState<string | null>(null)
+
+  const reload = useCallback(async () => {
+    const [tpls, conn] = await Promise.all([subscriptionTemplatesApi.getAll(), branchSubscriptionTemplatesApi.getAll()])
+    setTemplates(tpls); setConnected(conn)
   }, [])
+
+  useEffect(() => {
+    reload().catch(() => setError('Не удалось загрузить абонементы')).finally(() => setLoading(false))
+  }, [reload])
 
   const isConnected = (tplId: string) => connected.some(c => c.template_id === tplId)
   const connectedRecord = (tplId: string) => connected.find(c => c.template_id === tplId)
@@ -445,14 +528,68 @@ function SubscriptionTemplatesSection() {
         slot_4_duration_min:   show4 ? slot4Dur : null,
         slot_4_sessions_total: show4 ? ses(slot4Ses) : null,
         is_trial:              isTrial,
+        finish_slot:           isTrial ? null : finishSlot,
         validity_days:         validityDays,
         price:                 price ? Number(price) : null,
       })
       setTemplates(prev => [tpl, ...prev])
-      setShowCreate(false); setName(''); setPrice(''); setHasSlot2(false); setHasSlot3(false); setHasSlot4(false); setIsTrial(false)
+      setShowCreate(false)
+      setName(''); setPrice(''); setHasSlot2(false); setHasSlot3(false); setHasSlot4(false)
+      setIsTrial(false); setFinishSlot(null)
     } catch (e: unknown) {
       setFormError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
     } finally { setSaving(false) }
+  }
+
+  const openEdit = (tpl: SubscriptionTemplate) => {
+    setEditTpl(tpl)
+    setEName(tpl.name)
+    setEValidityDays(tpl.validity_days)
+    setEPrice(tpl.price != null ? String(tpl.price) : '')
+    setEIsTrial(tpl.is_trial)
+    setEFinishSlot(tpl.finish_slot ?? null)
+    setESlot1Type(tpl.slot_1_type); setESlot1Dur(tpl.slot_1_duration_min); setESlot1Ses(tpl.slot_1_sessions_total)
+    setEHasSlot2(!!tpl.slot_2_type)
+    setESlot2Type(tpl.slot_2_type ?? 'rollshape'); setESlot2Dur(tpl.slot_2_duration_min ?? 20); setESlot2Ses(tpl.slot_2_sessions_total ?? 8)
+    setEHasSlot3(!!tpl.slot_3_type)
+    setESlot3Type(tpl.slot_3_type ?? 'vacuactiv'); setESlot3Dur(tpl.slot_3_duration_min ?? 30); setESlot3Ses(tpl.slot_3_sessions_total ?? 1)
+    setEHasSlot4(!!tpl.slot_4_type)
+    setESlot4Type(tpl.slot_4_type ?? 'rollshape'); setESlot4Dur(tpl.slot_4_duration_min ?? 20); setESlot4Ses(tpl.slot_4_sessions_total ?? 1)
+    setEFormError(null)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!eName.trim()) { setEFormError('Введите название'); return }
+    setESaving(true); setEFormError(null)
+    try {
+      const eSes = (v: number) => eIsTrial ? 1 : v
+      const eShow2 = eHasSlot2 || eIsTrial
+      const eShow3 = eHasSlot3 || eIsTrial
+      const eShow4 = eHasSlot4 || eIsTrial
+      const updated = await subscriptionTemplatesApi.update(editTpl!.id, {
+        name:                  eName.trim(),
+        validity_days:         eValidityDays,
+        price:                 ePrice ? Number(ePrice) : null,
+        is_trial:              eIsTrial,
+        finish_slot:           eIsTrial ? null : eFinishSlot,
+        slot_1_type:           eSlot1Type,
+        slot_1_duration_min:   eSlot1Dur,
+        slot_1_sessions_total: eSes(eSlot1Ses),
+        slot_2_type:           eShow2 ? eSlot2Type : null,
+        slot_2_duration_min:   eShow2 ? eSlot2Dur : null,
+        slot_2_sessions_total: eShow2 ? eSes(eSlot2Ses) : null,
+        slot_3_type:           eShow3 ? eSlot3Type : null,
+        slot_3_duration_min:   eShow3 ? eSlot3Dur : null,
+        slot_3_sessions_total: eShow3 ? eSes(eSlot3Ses) : null,
+        slot_4_type:           eShow4 ? eSlot4Type : null,
+        slot_4_duration_min:   eShow4 ? eSlot4Dur : null,
+        slot_4_sessions_total: eShow4 ? eSes(eSlot4Ses) : null,
+      })
+      setTemplates(prev => prev.map(t => t.id === updated.id ? updated : t))
+      setEditTpl(null)
+    } catch (e: unknown) {
+      setEFormError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка')
+    } finally { setESaving(false) }
   }
 
   const handleDelete = async (id: string) => {
@@ -482,6 +619,7 @@ function SubscriptionTemplatesSection() {
                   {tpl.slot_4_type && ` + ${DEVICE_TYPE_LABELS[tpl.slot_4_type]}`}
                   {' · '}{tpl.validity_days} дней
                   {tpl.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸`}
+                  {tpl.finish_slot != null && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(2,189,182,0.10)', color: '#02BDB6', fontSize: 10, fontWeight: 600, border: '1px solid rgba(2,189,182,0.3)' }}>Финиш: С{tpl.finish_slot}</span>}
                   {tpl.is_trial && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontSize: 10, fontWeight: 600, border: '1px solid rgba(245,158,11,0.3)' }}>ТЕСТ</span>}
                 </div>
               </div>
@@ -489,6 +627,9 @@ function SubscriptionTemplatesSection() {
                 onClick={() => void handleToggleConnection(tpl)}
                 style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: isConnected(tpl.id) ? '1px solid rgba(2,189,182,0.4)' : '1px solid var(--glass-border)', background: isConnected(tpl.id) ? 'rgba(2,189,182,0.10)' : 'transparent', color: isConnected(tpl.id) ? '#02BDB6' : 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 {isConnected(tpl.id) ? '✓ Подключён' : 'Подключить'}
+              </button>
+              <button onClick={() => openEdit(tpl)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                <Edit2 size={12} strokeWidth={1.75} />
               </button>
               <button onClick={() => void handleDelete(tpl.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 <Trash2 size={12} strokeWidth={1.75} />
@@ -507,45 +648,19 @@ function SubscriptionTemplatesSection() {
                   <div><label style={labelStyle}>Срок (дней)</label><input type="number" min={1} style={inputStyle} value={validityDays} onChange={e => setValidityDays(Math.max(1, Number(e.target.value)))} /></div>
                   <div><label style={labelStyle}>Цена (₸)</label><input type="number" min={0} style={inputStyle} placeholder="0" value={price} onChange={e => setPrice(e.target.value)} /></div>
                 </div>
-                <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--glass-border)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>Слот 1</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                    <div><label style={labelStyle}>Тип</label>
-                      <select style={selectStyle} value={slot1Type} onChange={e => setSlot1Type(e.target.value as DeviceType)}>
-                        {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                      </select>
-                    </div>
-                    <div><label style={labelStyle}>Длит. (мин)</label>
-                      <select style={selectStyle} value={slot1Dur} onChange={e => setSlot1Dur(Number(e.target.value))}>
-                        {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </div>
-                    <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot1Ses} disabled={isTrial} onChange={e => setSlot1Ses(Math.max(1, Number(e.target.value)))} /></div>
-                  </div>
-                </div>
+                <SlotForm slotNum={1} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+                  type={slot1Type} setType={setSlot1Type} dur={slot1Dur} setDur={setSlot1Dur} ses={slot1Ses} setSes={setSlot1Ses}
+                  finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 {!isTrial && (
                   <button onClick={() => setHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot2 ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${hasSlot2 ? 'rgba(2,189,182,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot2 ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                     <ChevronDown size={13} style={{ transform: hasSlot2 ? 'rotate(180deg)' : 'none' }} />
-                    {hasSlot2 ? 'Убрать Слот 2' : '+ Слот 2 (финишный тренажёр)'}
+                    {hasSlot2 ? 'Убрать Слот 2' : '+ Слот 2'}
                   </button>
                 )}
                 {(hasSlot2 || isTrial) && (
-                  <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--glass-border)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>Слот 2</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                      <div><label style={labelStyle}>Тип</label>
-                        <select style={selectStyle} value={slot2Type} onChange={e => setSlot2Type(e.target.value as DeviceType)}>
-                          {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                        </select>
-                      </div>
-                      <div><label style={labelStyle}>Длит. (мин)</label>
-                        <select style={selectStyle} value={slot2Dur} onChange={e => setSlot2Dur(Number(e.target.value))}>
-                          {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                      </div>
-                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot2Ses} disabled={isTrial} onChange={e => setSlot2Ses(Math.max(1, Number(e.target.value)))} /></div>
-                    </div>
-                  </div>
+                  <SlotForm slotNum={2} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+                    type={slot2Type} setType={setSlot2Type} dur={slot2Dur} setDur={setSlot2Dur} ses={slot2Ses} setSes={setSlot2Ses}
+                    finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
                 {!isTrial && (
                   <button onClick={() => setHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${hasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
@@ -554,22 +669,9 @@ function SubscriptionTemplatesSection() {
                   </button>
                 )}
                 {(hasSlot3 || isTrial) && (
-                  <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid rgba(139,92,246,0.2)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8b5cf6', marginBottom: 8 }}>Слот 3</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                      <div><label style={labelStyle}>Тип</label>
-                        <select style={selectStyle} value={slot3Type} onChange={e => setSlot3Type(e.target.value as DeviceType)}>
-                          {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                        </select>
-                      </div>
-                      <div><label style={labelStyle}>Длит. (мин)</label>
-                        <select style={selectStyle} value={slot3Dur} onChange={e => setSlot3Dur(Number(e.target.value))}>
-                          {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                      </div>
-                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot3Ses} disabled={isTrial} onChange={e => setSlot3Ses(Math.max(1, Number(e.target.value)))} /></div>
-                    </div>
-                  </div>
+                  <SlotForm slotNum={3} slotColor="#8b5cf6" slotBorder="rgba(139,92,246,0.2)"
+                    type={slot3Type} setType={setSlot3Type} dur={slot3Dur} setDur={setSlot3Dur} ses={slot3Ses} setSes={setSlot3Ses}
+                    finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
                 {!isTrial && (
                   <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${hasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
@@ -578,28 +680,15 @@ function SubscriptionTemplatesSection() {
                   </button>
                 )}
                 {(hasSlot4 || isTrial) && (
-                  <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', marginBottom: 8 }}>Слот 4</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                      <div><label style={labelStyle}>Тип</label>
-                        <select style={selectStyle} value={slot4Type} onChange={e => setSlot4Type(e.target.value as DeviceType)}>
-                          {DEVICE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                        </select>
-                      </div>
-                      <div><label style={labelStyle}>Длит. (мин)</label>
-                        <select style={selectStyle} value={slot4Dur} onChange={e => setSlot4Dur(Number(e.target.value))}>
-                          {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                      </div>
-                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot4Ses} disabled={isTrial} onChange={e => setSlot4Ses(Math.max(1, Number(e.target.value)))} /></div>
-                    </div>
-                  </div>
+                  <SlotForm slotNum={4} slotColor="#f59e0b" slotBorder="rgba(245,158,11,0.2)"
+                    type={slot4Type} setType={setSlot4Type} dur={slot4Dur} setDur={setSlot4Dur} ses={slot4Ses} setSes={setSlot4Ses}
+                    finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: isTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${isTrial ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
                   <input type="checkbox" checked={isTrial} onChange={e => {
                     const checked = e.target.checked
                     setIsTrial(checked)
-                    if (checked) { setHasSlot2(true); setHasSlot3(true); setHasSlot4(true) }
+                    if (checked) { setHasSlot2(true); setHasSlot3(true); setHasSlot4(true); setFinishSlot(null) }
                   }} style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }} />
                   <div>
                     <span style={{ fontSize: 12, color: isTrial ? '#f59e0b' : 'var(--text-secondary)', fontWeight: isTrial ? 600 : 400 }}>Тестовый абонемент</span>
@@ -622,6 +711,85 @@ function SubscriptionTemplatesSection() {
             </div>
           )}
         </>
+      )}
+
+      {/* Edit modal */}
+      {editTpl && ReactDOM.createPortal(
+        <div onClick={() => setEditTpl(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Редактировать шаблон</div>
+              <button onClick={() => setEditTpl(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
+            </div>
+            {eFormError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{eFormError}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div><label style={labelStyle}>Название *</label><input style={inputStyle} value={eName} onChange={e => setEName(e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div><label style={labelStyle}>Срок (дней)</label><input type="number" min={1} style={inputStyle} value={eValidityDays} onChange={e => setEValidityDays(Math.max(1, Number(e.target.value)))} /></div>
+                <div><label style={labelStyle}>Цена (₸)</label><input type="number" min={0} style={inputStyle} placeholder="0" value={ePrice} onChange={e => setEPrice(e.target.value)} /></div>
+              </div>
+              <SlotForm slotNum={1} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+                type={eSlot1Type} setType={setESlot1Type} dur={eSlot1Dur} setDur={setESlot1Dur} ses={eSlot1Ses} setSes={setESlot1Ses}
+                finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
+              {!eIsTrial && (
+                <button onClick={() => setEHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot2 ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${eHasSlot2 ? 'rgba(2,189,182,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: eHasSlot2 ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <ChevronDown size={13} style={{ transform: eHasSlot2 ? 'rotate(180deg)' : 'none' }} />
+                  {eHasSlot2 ? 'Убрать Слот 2' : '+ Слот 2'}
+                </button>
+              )}
+              {(eHasSlot2 || eIsTrial) && (
+                <SlotForm slotNum={2} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+                  type={eSlot2Type} setType={setESlot2Type} dur={eSlot2Dur} setDur={setESlot2Dur} ses={eSlot2Ses} setSes={setESlot2Ses}
+                  finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
+              )}
+              {!eIsTrial && (
+                <button onClick={() => setEHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${eHasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: eHasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <ChevronDown size={13} style={{ transform: eHasSlot3 ? 'rotate(180deg)' : 'none' }} />
+                  {eHasSlot3 ? 'Убрать Слот 3' : '+ Слот 3'}
+                </button>
+              )}
+              {(eHasSlot3 || eIsTrial) && (
+                <SlotForm slotNum={3} slotColor="#8b5cf6" slotBorder="rgba(139,92,246,0.2)"
+                  type={eSlot3Type} setType={setESlot3Type} dur={eSlot3Dur} setDur={setESlot3Dur} ses={eSlot3Ses} setSes={setESlot3Ses}
+                  finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
+              )}
+              {!eIsTrial && (
+                <button onClick={() => setEHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${eHasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: eHasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <ChevronDown size={13} style={{ transform: eHasSlot4 ? 'rotate(180deg)' : 'none' }} />
+                  {eHasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
+                </button>
+              )}
+              {(eHasSlot4 || eIsTrial) && (
+                <SlotForm slotNum={4} slotColor="#f59e0b" slotBorder="rgba(245,158,11,0.2)"
+                  type={eSlot4Type} setType={setESlot4Type} dur={eSlot4Dur} setDur={setESlot4Dur} ses={eSlot4Ses} setSes={setESlot4Ses}
+                  finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
+              )}
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: eIsTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${eIsTrial ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={eIsTrial} onChange={e => {
+                  const checked = e.target.checked
+                  setEIsTrial(checked)
+                  if (checked) { setEHasSlot2(true); setEHasSlot3(true); setEHasSlot4(true); setEFinishSlot(null) }
+                }} style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }} />
+                <div>
+                  <span style={{ fontSize: 12, color: eIsTrial ? '#f59e0b' : 'var(--text-secondary)', fontWeight: eIsTrial ? 600 : 400 }}>Тестовый абонемент</span>
+                </div>
+              </label>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <button onClick={() => void handleSaveEdit()} disabled={eSaving}
+                style={{ flex: 1, height: 36, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: eSaving ? 'not-allowed' : 'pointer', opacity: eSaving ? 0.6 : 1 }}>
+                {eSaving ? 'Сохранение...' : 'Сохранить'}
+              </button>
+              <button onClick={() => setEditTpl(null)}
+                style={{ height: 36, padding: '0 16px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </Section>
   )

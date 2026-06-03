@@ -145,6 +145,7 @@ export interface Subscription {
   slot_4_sessions_total: number | null
   slot_4_sessions_left: number | null
   is_trial: boolean
+  finish_slot: number | null
   date_start: string
   date_end: string | null
   price: number | null
@@ -488,6 +489,7 @@ export interface SubscriptionTemplate {
   slot_4_duration_min: number | null
   slot_4_sessions_total: number | null
   is_trial: boolean
+  finish_slot: number | null
   validity_days: number
   price: number | null
   is_active: boolean
