@@ -102,6 +102,8 @@ function AddFromCatalogModal({ allTemplates, connected, onConnect, onClose }: Ad
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     {typeLabel(tpl.slot_1_type)} · {tpl.slot_1_duration_min} мин · {tpl.slot_1_sessions_total} сеансов
                     {tpl.slot_2_type && ` + ${typeLabel(tpl.slot_2_type)}`}
+                    {tpl.slot_3_type && ` + ${typeLabel(tpl.slot_3_type)}`}
+                    {tpl.slot_4_type && ` + ${typeLabel(tpl.slot_4_type)}`}
                     {' · '}{tpl.validity_days} дней
                     {tpl.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸`}
                   </div>
@@ -310,6 +312,24 @@ export default function SubscriptionsPage() {
                         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_2_sessions_total} сеансов</div>
                       </div>
                     )}
+                    {tpl.slot_3_type && tpl.slot_3_sessions_total && (
+                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_3_type!)}33` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_3_type!) }}>{typeLabel(tpl.slot_3_type!)}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_3_duration_min} мин</span>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_3_sessions_total} сеансов</div>
+                      </div>
+                    )}
+                    {tpl.slot_4_type && tpl.slot_4_sessions_total && (
+                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_4_type!)}33` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_4_type!) }}>{typeLabel(tpl.slot_4_type!)}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_4_duration_min} мин</span>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_4_sessions_total} сеансов</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -359,6 +379,8 @@ export default function SubscriptionsPage() {
                     <div style={{ display: 'flex', gap: 13, fontSize: 12, color: 'var(--text-muted)', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span>{typeLabel(sub.slot_1_type)} · {sub.slot_1_sessions_left}/{sub.slot_1_sessions_total}</span>
                       {sub.slot_2_type && <span>{typeLabel(sub.slot_2_type!)} · {sub.slot_2_sessions_left}/{sub.slot_2_sessions_total}</span>}
+                      {sub.slot_3_type && <span>{typeLabel(sub.slot_3_type!)} · {sub.slot_3_sessions_left}/{sub.slot_3_sessions_total}</span>}
+                      {sub.slot_4_type && <span>{typeLabel(sub.slot_4_type!)} · {sub.slot_4_sessions_left}/{sub.slot_4_sessions_total}</span>}
                       <span>С {new Date(sub.date_start).toLocaleDateString('ru-RU')}</span>
                       {sub.date_end && (
                         <>
@@ -416,6 +438,20 @@ export default function SubscriptionsPage() {
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Слот 2</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: typeColor(viewTpl.slot_2_type!) }}>{typeLabel(viewTpl.slot_2_type!)}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{viewTpl.slot_2_duration_min} мин · {viewTpl.slot_2_sessions_total} сеансов</div>
+                </div>
+              )}
+              {viewTpl.slot_3_type && (
+                <div style={{ flex: '1 1 160px', padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${typeColor(viewTpl.slot_3_type!)}33` }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Слот 3</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: typeColor(viewTpl.slot_3_type!) }}>{typeLabel(viewTpl.slot_3_type!)}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{viewTpl.slot_3_duration_min} мин · {viewTpl.slot_3_sessions_total} сеансов</div>
+                </div>
+              )}
+              {viewTpl.slot_4_type && (
+                <div style={{ flex: '1 1 160px', padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${typeColor(viewTpl.slot_4_type!)}33` }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Слот 4</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: typeColor(viewTpl.slot_4_type!) }}>{typeLabel(viewTpl.slot_4_type!)}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{viewTpl.slot_4_duration_min} мин · {viewTpl.slot_4_sessions_total} сеансов</div>
                 </div>
               )}
             </div>

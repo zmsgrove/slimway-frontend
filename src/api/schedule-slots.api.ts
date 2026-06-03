@@ -19,6 +19,7 @@ export interface BookingV2Error {
   code: string
   next_available?: { date: string; time_start: string } | null
   slot_2_type?: string
+  slot_type?: string
   required_time?: string
 }
 
@@ -111,6 +112,11 @@ export const bookingsV2Api = {
 
   reject: async (id: string): Promise<void> => {
     await api.patch(`/bookings-v2/${id}/reject`, {})
+  },
+
+  trialBook: async (payload: { subscription_id: string; date: string; time_start: string }): Promise<BookingV2Result> => {
+    const { data } = await api.post('/bookings-v2/trial', payload)
+    return data
   },
 }
 

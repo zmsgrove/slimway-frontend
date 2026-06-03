@@ -21,7 +21,7 @@ const SLOT_WIDTH   = 64   // px per time column
 const DEVICE_WIDTH = 160  // px for device name column
 const CELL_HEIGHT  = 60   // px
 
-const DURATIONS = [5, 15, 20, 25, 30, 45, 60]
+const DURATIONS = [5, 10, 15, 20, 25, 30, 45, 60]
 
 const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
@@ -323,12 +323,16 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
 interface BookingModalProps { slot: ScheduleSlot; device: Device; onClose: () => void; onBooked: () => void }
 
 function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
-  const [client,  setClient]  = useState<Client | null>(null)
-  const [subs,    setSubs]    = useState<Subscription[]>([])
-  const [selSub,  setSelSub]  = useState<Subscription | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
+  const [client,      setClient]      = useState<Client | null>(null)
+  const [subs,        setSubs]        = useState<Subscription[]>([])
+  const [selSub,      setSelSub]      = useState<Subscription | null>(null)
+  const [loading,     setLoading]     = useState(false)
+  const [saving,      setSaving]      = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+  const [trialDate,   setTrialDate]   = useState(slot.date)
+  const [trialTime,   setTrialTime]   = useState(slot.time_start)
+  const [trialAvail,  setTrialAvail]  = useState<Record<string, boolean> | null>(null)
+  const [checkingAvail, setCheckingAvail] = useState(false)
   const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#02BDB6'
 
   useEffect(() => {
@@ -340,11 +344,40 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
       .finally(() => setLoading(false))
   }, [client])
 
+  useEffect(() => { setTrialAvail(null) }, [trialDate, trialTime, selSub])
+
+  const checkTrialAvail = async () => {
+    if (!selSub) return
+    setCheckingAvail(true); setError(null)
+    try {
+      const slots = await scheduleSlotsApi.getByDate(trialDate)
+      const atTime = slots.filter(s => s.time_start === trialTime && s.status === 'free')
+      const slotTypes = [
+        selSub.slot_1_type,
+        selSub.slot_2_type,
+        selSub.slot_3_type,
+        selSub.slot_4_type,
+      ].filter(Boolean) as string[]
+      const avail: Record<string, boolean> = {}
+      for (const t of slotTypes) {
+        avail[t] = atTime.some(s => (s.devices as { type: string } | null)?.type === t)
+      }
+      setTrialAvail(avail)
+    } catch { setError('Не удалось проверить доступность') }
+    finally { setCheckingAvail(false) }
+  }
+
+  const allTrialFree = trialAvail !== null && Object.values(trialAvail).every(Boolean)
+
   const handleBook = async () => {
     if (!client || !selSub) { setError('Выберите клиента и абонемент'); return }
     setSaving(true); setError(null)
     try {
-      await bookingsV2Api.create({ client_id: client.id, subscription_id: selSub.id, slot_1_schedule_slot_id: slot.id, date: slot.date })
+      if (selSub.is_trial) {
+        await bookingsV2Api.trialBook({ subscription_id: selSub.id, date: trialDate, time_start: trialTime })
+      } else {
+        await bookingsV2Api.create({ client_id: client.id, subscription_id: selSub.id, slot_1_schedule_slot_id: slot.id, date: slot.date })
+      }
       onBooked()
     } catch (e: unknown) {
       const resp = (e as { response?: { data?: BookingV2Error } })?.response?.data
@@ -352,6 +385,8 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
         const nxt = resp.next_available
         const hint = nxt ? ` Ближайшее доступное: ${nxt.date} в ${ft(nxt.time_start)}` : ''
         setError(`Нет свободного слота 2 (${resp.slot_2_type}) сразу после.${hint}`)
+      } else if (resp?.code === 'SLOT_BUSY') {
+        setError(`Слот занят: ${resp.slot_type ? DEVICE_TYPE_LABELS[resp.slot_type] ?? resp.slot_type : 'неизвестный тренажёр'}`)
       } else {
         setError(resp?.error ?? 'Ошибка бронирования')
       }
@@ -359,6 +394,8 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
       setSaving(false)
     }
   }
+
+  const isTrial = selSub?.is_trial ?? false
 
   return (
     <ModalWrap onClose={onClose}>
@@ -369,7 +406,7 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
         <div>
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Забронировать</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
-            {DEVICE_TYPE_LABELS[device.type]} #{device.number} · {ft(slot.time_start)} — {ft(slot.time_end)}
+            {isTrial ? 'Тестовое занятие — все 4 тренажёра' : `${DEVICE_TYPE_LABELS[device.type]} #${device.number} · ${ft(slot.time_start)} — ${ft(slot.time_end)}`}
           </div>
         </div>
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -393,11 +430,20 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {subs.map(s => (
                   <button key={s.id} onClick={() => setSelSub(s)} style={{ padding: '10px 13px', background: selSub?.id === s.id ? 'rgba(2,189,182,0.10)' : 'var(--bg-surface)', border: `1px solid ${selSub?.id === s.id ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>{s.name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
+                      {s.name}
+                      {s.is_trial && <span style={{ marginLeft: 6, fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontWeight: 600 }}>ТЕСТ</span>}
+                    </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[s.slot_1_type] }}>{DEVICE_TYPE_LABELS[s.slot_1_type]}: {s.slot_1_sessions_left}/{s.slot_1_sessions_total}</span>
                       {s.slot_2_type && s.slot_2_sessions_left !== null && (
                         <span style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[s.slot_2_type] }}>+ {DEVICE_TYPE_LABELS[s.slot_2_type]}: {s.slot_2_sessions_left}/{s.slot_2_sessions_total}</span>
+                      )}
+                      {s.slot_3_type && s.slot_3_sessions_left !== null && (
+                        <span style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[s.slot_3_type] }}>+ {DEVICE_TYPE_LABELS[s.slot_3_type]}: {s.slot_3_sessions_left}/{s.slot_3_sessions_total}</span>
+                      )}
+                      {s.slot_4_type && s.slot_4_sessions_left !== null && (
+                        <span style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[s.slot_4_type] }}>+ {DEVICE_TYPE_LABELS[s.slot_4_type]}: {s.slot_4_sessions_left}/{s.slot_4_sessions_total}</span>
                       )}
                     </div>
                   </button>
@@ -406,14 +452,50 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
             )}
           </div>
         )}
-        {selSub?.slot_2_type && (
+
+        {selSub && !isTrial && selSub.slot_2_type && (
           <div style={{ padding: '10px 13px', background: 'rgba(2,189,182,0.06)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
             Слот 2 ({DEVICE_TYPE_LABELS[selSub.slot_2_type]}) подберётся автоматически.
           </div>
         )}
+
+        {selSub && isTrial && (
+          <div style={{ padding: 13, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 13 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', marginBottom: 13 }}>Тестовое занятие — выберите дату и время</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 13 }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Дата</div>
+                <input type="date" style={{ width: '100%', height: 36, padding: '0 10px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} value={trialDate} onChange={e => setTrialDate(e.target.value)} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Время начала</div>
+                <input type="time" step="1800" style={{ width: '100%', height: 36, padding: '0 10px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} value={trialTime} onChange={e => setTrialTime(e.target.value)} />
+              </div>
+            </div>
+            <button onClick={() => void checkTrialAvail()} disabled={checkingAvail} style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 8, color: '#f59e0b', fontSize: 12, cursor: checkingAvail ? 'not-allowed' : 'pointer', opacity: checkingAvail ? 0.5 : 1, marginBottom: trialAvail !== null ? 13 : 0 }}>
+              {checkingAvail ? 'Проверка...' : 'Проверить доступность'}
+            </button>
+            {trialAvail !== null && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                {Object.entries(trialAvail).map(([type, free]) => (
+                  <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: free ? '#10b981' : '#ef4444', flexShrink: 0 }} />
+                    <span style={{ color: DEVICE_TYPE_COLORS[type] ?? 'var(--text-primary)', fontWeight: 500 }}>{DEVICE_TYPE_LABELS[type] ?? type}</span>
+                    <span style={{ color: free ? '#10b981' : '#ef4444' }}>{free ? 'Свободен' : 'Занят'}</span>
+                  </div>
+                ))}
+                {!allTrialFree && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>Не все тренажёры свободны в это время</div>}
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 13, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
-          <button onClick={() => void handleBook()} disabled={saving || !client || !selSub} style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || !client || !selSub) ? 'not-allowed' : 'pointer', opacity: (saving || !client || !selSub) ? 0.5 : 1 }}>
-            {saving ? 'Бронирование...' : 'Подтвердить бронь'}
+          <button
+            onClick={() => void handleBook()}
+            disabled={saving || !client || !selSub || (isTrial && !allTrialFree)}
+            style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || !client || !selSub || (isTrial && !allTrialFree)) ? 'not-allowed' : 'pointer', opacity: (saving || !client || !selSub || (isTrial && !allTrialFree)) ? 0.5 : 1 }}>
+            {saving ? 'Бронирование...' : isTrial ? 'Забронировать тестовое занятие' : 'Подтвердить бронь'}
           </button>
           <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
         </div>
@@ -592,7 +674,7 @@ function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: Delet
 
 type RepeatMode = 'every_day' | 'weekdays' | 'every_n'
 
-const STEP_OPTIONS = [5, 15, 20, 30, 45, 60]
+const STEP_OPTIONS = [5, 10, 15, 20, 30, 45, 60, 90]
 
 interface QuickCreateModalProps {
   devices: Device[]

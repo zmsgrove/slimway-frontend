@@ -78,7 +78,7 @@ const STATUS_LABELS: Record<DeviceStatus, string> = {
   active: 'Активен', maintenance: 'Обслуживание', disabled: 'Отключён',
 }
 
-const DURATIONS = [15, 20, 25, 30, 45, 60]
+const DURATIONS = [5, 10, 15, 20, 25, 30, 45, 60]
 
 const CATALOG_CATEGORIES = [
   { value: 'merch', label: 'Мерч' },
@@ -426,20 +426,24 @@ function SubscriptionTemplatesSection() {
     if (!name.trim()) { setFormError('Введите название'); return }
     setSaving(true); setFormError(null)
     try {
+      const ses = (v: number) => isTrial ? 1 : v
+      const show2 = hasSlot2 || isTrial
+      const show3 = hasSlot3 || isTrial
+      const show4 = hasSlot4 || isTrial
       const tpl = await subscriptionTemplatesApi.create({
         name:                  name.trim(),
         slot_1_type:           slot1Type,
         slot_1_duration_min:   slot1Dur,
-        slot_1_sessions_total: slot1Ses,
-        slot_2_type:           hasSlot2 ? slot2Type : null,
-        slot_2_duration_min:   hasSlot2 ? slot2Dur : null,
-        slot_2_sessions_total: hasSlot2 ? slot2Ses : null,
-        slot_3_type:           hasSlot3 ? slot3Type : null,
-        slot_3_duration_min:   hasSlot3 ? slot3Dur : null,
-        slot_3_sessions_total: hasSlot3 ? slot3Ses : null,
-        slot_4_type:           hasSlot4 ? slot4Type : null,
-        slot_4_duration_min:   hasSlot4 ? slot4Dur : null,
-        slot_4_sessions_total: hasSlot4 ? slot4Ses : null,
+        slot_1_sessions_total: ses(slot1Ses),
+        slot_2_type:           show2 ? slot2Type : null,
+        slot_2_duration_min:   show2 ? slot2Dur : null,
+        slot_2_sessions_total: show2 ? ses(slot2Ses) : null,
+        slot_3_type:           show3 ? slot3Type : null,
+        slot_3_duration_min:   show3 ? slot3Dur : null,
+        slot_3_sessions_total: show3 ? ses(slot3Ses) : null,
+        slot_4_type:           show4 ? slot4Type : null,
+        slot_4_duration_min:   show4 ? slot4Dur : null,
+        slot_4_sessions_total: show4 ? ses(slot4Ses) : null,
         is_trial:              isTrial,
         validity_days:         validityDays,
         price:                 price ? Number(price) : null,
@@ -516,14 +520,16 @@ function SubscriptionTemplatesSection() {
                         {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
-                    <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={inputStyle} value={slot1Ses} onChange={e => setSlot1Ses(Math.max(1, Number(e.target.value)))} /></div>
+                    <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot1Ses} disabled={isTrial} onChange={e => setSlot1Ses(Math.max(1, Number(e.target.value)))} /></div>
                   </div>
                 </div>
-                <button onClick={() => setHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot2 ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${hasSlot2 ? 'rgba(2,189,182,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot2 ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
-                  <ChevronDown size={13} style={{ transform: hasSlot2 ? 'rotate(180deg)' : 'none' }} />
-                  {hasSlot2 ? 'Убрать Слот 2' : '+ Слот 2 (финишный тренажёр)'}
-                </button>
-                {hasSlot2 && (
+                {!isTrial && (
+                  <button onClick={() => setHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot2 ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${hasSlot2 ? 'rgba(2,189,182,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot2 ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                    <ChevronDown size={13} style={{ transform: hasSlot2 ? 'rotate(180deg)' : 'none' }} />
+                    {hasSlot2 ? 'Убрать Слот 2' : '+ Слот 2 (финишный тренажёр)'}
+                  </button>
+                )}
+                {(hasSlot2 || isTrial) && (
                   <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--glass-border)' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>Слот 2</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -537,15 +543,17 @@ function SubscriptionTemplatesSection() {
                           {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
                       </div>
-                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={inputStyle} value={slot2Ses} onChange={e => setSlot2Ses(Math.max(1, Number(e.target.value)))} /></div>
+                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot2Ses} disabled={isTrial} onChange={e => setSlot2Ses(Math.max(1, Number(e.target.value)))} /></div>
                     </div>
                   </div>
                 )}
-                <button onClick={() => setHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${hasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
-                  <ChevronDown size={13} style={{ transform: hasSlot3 ? 'rotate(180deg)' : 'none' }} />
-                  {hasSlot3 ? 'Убрать Слот 3' : '+ Слот 3'}
-                </button>
-                {hasSlot3 && (
+                {!isTrial && (
+                  <button onClick={() => setHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${hasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                    <ChevronDown size={13} style={{ transform: hasSlot3 ? 'rotate(180deg)' : 'none' }} />
+                    {hasSlot3 ? 'Убрать Слот 3' : '+ Слот 3'}
+                  </button>
+                )}
+                {(hasSlot3 || isTrial) && (
                   <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid rgba(139,92,246,0.2)' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: '#8b5cf6', marginBottom: 8 }}>Слот 3</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -559,15 +567,17 @@ function SubscriptionTemplatesSection() {
                           {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
                       </div>
-                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={inputStyle} value={slot3Ses} onChange={e => setSlot3Ses(Math.max(1, Number(e.target.value)))} /></div>
+                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot3Ses} disabled={isTrial} onChange={e => setSlot3Ses(Math.max(1, Number(e.target.value)))} /></div>
                     </div>
                   </div>
                 )}
-                <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${hasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
-                  <ChevronDown size={13} style={{ transform: hasSlot4 ? 'rotate(180deg)' : 'none' }} />
-                  {hasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
-                </button>
-                {hasSlot4 && (
+                {!isTrial && (
+                  <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${hasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                    <ChevronDown size={13} style={{ transform: hasSlot4 ? 'rotate(180deg)' : 'none' }} />
+                    {hasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
+                  </button>
+                )}
+                {(hasSlot4 || isTrial) && (
                   <div style={{ padding: 10, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', marginBottom: 8 }}>Слот 4</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -581,13 +591,20 @@ function SubscriptionTemplatesSection() {
                           {DURATIONS.map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
                       </div>
-                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={inputStyle} value={slot4Ses} onChange={e => setSlot4Ses(Math.max(1, Number(e.target.value)))} /></div>
+                      <div><label style={labelStyle}>Сеансов</label><input type="number" min={1} style={{ ...inputStyle, opacity: isTrial ? 0.5 : 1 }} value={isTrial ? 1 : slot4Ses} disabled={isTrial} onChange={e => setSlot4Ses(Math.max(1, Number(e.target.value)))} /></div>
                     </div>
                   </div>
                 )}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: isTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${isTrial ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={isTrial} onChange={e => setIsTrial(e.target.checked)} style={{ accentColor: '#f59e0b', width: 14, height: 14 }} />
-                  <span style={{ fontSize: 12, color: isTrial ? '#f59e0b' : 'var(--text-secondary)', fontWeight: isTrial ? 600 : 400 }}>Тестовый абонемент (1 на клиента, без онлайн-записи)</span>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: isTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${isTrial ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={isTrial} onChange={e => {
+                    const checked = e.target.checked
+                    setIsTrial(checked)
+                    if (checked) { setHasSlot2(true); setHasSlot3(true); setHasSlot4(true) }
+                  }} style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }} />
+                  <div>
+                    <span style={{ fontSize: 12, color: isTrial ? '#f59e0b' : 'var(--text-secondary)', fontWeight: isTrial ? 600 : 400 }}>Тестовый абонемент</span>
+                    {isTrial && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>Каждый клиент может приобрести только один раз. Все 4 слота бронируются одновременно, по 1 сеансу.</div>}
+                  </div>
                 </label>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>

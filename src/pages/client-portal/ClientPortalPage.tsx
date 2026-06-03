@@ -391,6 +391,9 @@ function SubsTab({ subs }: { subs: Record<string, unknown>[] }) {
           <div style={{ height: '100%', width: `${pct}%`, background: isActive ? '#02BDB6' : '#555', borderRadius: 3, transition: 'width 0.4s' }} />
         </div>
         <div style={{ ...s.muted }}>{used} из {total} сессий использовано</div>
+        {!!sub.slot_2_type && <div style={{ ...s.muted, marginTop: 2, fontSize: 11 }}>Слот 2: {sub.slot_2_sessions_left as number}/{sub.slot_2_sessions_total as number}</div>}
+        {!!sub.slot_3_type && <div style={{ ...s.muted, marginTop: 2, fontSize: 11 }}>Слот 3: {sub.slot_3_sessions_left as number}/{sub.slot_3_sessions_total as number}</div>}
+        {!!sub.slot_4_type && <div style={{ ...s.muted, marginTop: 2, fontSize: 11 }}>Слот 4: {sub.slot_4_sessions_left as number}/{sub.slot_4_sessions_total as number}</div>}
         {!!sub.date_end && (
           <div style={{ ...s.muted, marginTop: 4 }}>До {fmtDate(sub.date_end as string)}</div>
         )}
