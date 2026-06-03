@@ -1271,6 +1271,7 @@ interface BranchSettings {
   address: string | null
   booking_interval_min: number | null
   max_bookings_per_day: number | null
+  allow_cancel_within_24h: boolean
 }
 
 const SETTINGS_DEFAULTS: BranchSettings = {
@@ -1278,6 +1279,7 @@ const SETTINGS_DEFAULTS: BranchSettings = {
   timezone: 'UTC+5', currency: 'KZT',
   contact_phone: '', contact_email: '', website: '', address: '',
   booking_interval_min: 60, max_bookings_per_day: null,
+  allow_cancel_within_24h: false,
 }
 
 const TIMEZONES_LIST = [
@@ -1328,8 +1330,9 @@ function BranchSettingsSection() {
           contact_email:        d.contact_email        ?? '',
           website:              d.website              ?? '',
           address:              d.address              ?? '',
-          booking_interval_min: d.booking_interval_min ?? 60,
-          max_bookings_per_day: d.max_bookings_per_day ?? null,
+          booking_interval_min:    d.booking_interval_min    ?? 60,
+          max_bookings_per_day:    d.max_bookings_per_day    ?? null,
+          allow_cancel_within_24h: d.allow_cancel_within_24h ?? false,
         })
       })
       .catch(() => {})
@@ -1436,6 +1439,20 @@ function BranchSettingsSection() {
         <div style={{ gridColumn: 'span 2' }}>
           <label style={labelStyle}>Адрес</label>
           <input type="text" style={inputStyle} {...field('address')} placeholder="г. Алматы, ул. Примерная, 1" />
+        </div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 13px', background: settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={settings.allow_cancel_within_24h}
+              onChange={e => setSettings(s => ({ ...s, allow_cancel_within_24h: e.target.checked }))}
+              style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }}
+            />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: settings.allow_cancel_within_24h ? 600 : 400, color: settings.allow_cancel_within_24h ? '#f59e0b' : 'var(--text-primary)' }}>Разрешить отмену брони менее чем за 24 часа</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>Если включено — все роли смогут отменять записи менее чем за 24 часа до сеанса</div>
+            </div>
+          </label>
         </div>
       </div>
 
