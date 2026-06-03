@@ -37,6 +37,8 @@ export interface BookingInfo {
   subscription: { id: string; name: string }
   slot_1: BookingSlotDetail
   slot_2: BookingSlotDetail | null
+  slot_3: BookingSlotDetail | null
+  slot_4: BookingSlotDetail | null
 }
 
 export const scheduleSlotsApi = {

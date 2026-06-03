@@ -553,23 +553,23 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
     const slotStart = new Date(`${info.slot_1.date}T${info.slot_1.time_start}`)
     const hoursLeft = (slotStart.getTime() - Date.now()) / (1000 * 60 * 60)
     if (hoursLeft < 24) {
-      canCancel = ['owner', 'franchisee'].includes(userRole)
+      canCancel = ['developer', 'owner', 'franchisee'].includes(userRole)
       if (!canCancel) cancelHint = 'До сеанса менее 24 ч — снять бронь может только управляющий'
     } else {
-      canCancel = ['owner', 'franchisee', 'admin'].includes(userRole)
+      canCancel = ['developer', 'owner', 'franchisee', 'admin', 'staff'].includes(userRole)
     }
   }
 
   return (
     <ModalWrap onClose={onClose}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-        <div style={{ width: 44, height: 44, borderRadius: 13, background: devColor + '18', border: `1px solid ${devColor}33`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Calendar size={20} color={devColor} />
+        <div style={{ width: 44, height: 44, borderRadius: 13, background: '#02BDB618', border: '1px solid #02BDB633', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Calendar size={20} color="#02BDB6" />
         </div>
         <div>
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Информация о брони</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
-            {DEVICE_TYPE_LABELS[device.type]} #{device.number} · {ft(slot.time_start)} — {ft(slot.time_end)}
+            {info ? `${info.client.full_name} · ${new Date(info.slot_1.date).toLocaleDateString('ru-RU')}` : `${DEVICE_TYPE_LABELS[device.type]} #${device.number} · ${ft(slot.time_start)}`}
           </div>
         </div>
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -589,11 +589,11 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{info.client.full_name}</div>
               {info.client.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>{info.client.phone}</div>}
             </div>
-            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
+            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, gridColumn: '1 / -1' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Абонемент</div>
               <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>{info.subscription.name}</div>
             </div>
-            {([info.slot_1, info.slot_2] as Array<typeof info.slot_1 | null>).map((s, i) => {
+            {([info.slot_1, info.slot_2, info.slot_3, info.slot_4] as Array<typeof info.slot_1 | null>).map((s, i) => {
               if (!s) return null
               const dev = s.devices
               const dColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#71717A') : '#71717A'
