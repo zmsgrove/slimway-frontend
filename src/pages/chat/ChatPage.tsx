@@ -11,7 +11,7 @@ export default function ChatPage() {
   return (
     <div>
       <div style={{ marginBottom: 21 }}>
-        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>
+        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>
           Чат
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
@@ -22,12 +22,12 @@ export default function ChatPage() {
       <div
         style={{
           maxWidth: 520,
-          background: 'var(--glass-bg)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: 21,
-          padding: 34,
+          background: 'var(--bg-card)',
+         
+         
+          border: '1px solid var(--border)',
+          borderRadius: 16,
+          padding: 28,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -39,25 +39,25 @@ export default function ChatPage() {
           style={{
             width: 64,
             height: 64,
-            borderRadius: 21,
-            background: 'rgba(2,189,182,0.12)',
-            border: '1px solid rgba(2,189,182,0.25)',
+            borderRadius: 16,
+            background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <MessageSquare size={28} strokeWidth={1.5} color="#02BDB6" />
+          <MessageSquare size={28} strokeWidth={1.5} color="var(--accent)" />
         </div>
 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
-            <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Чат</span>
+            <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)' }}>Чат</span>
             <span
               style={{
-                background: 'rgba(2,189,182,0.12)',
-                color: '#02BDB6',
-                border: '1px solid rgba(2,189,182,0.25)',
+                background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                color: 'var(--accent)',
+                border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
                 fontSize: 10,
                 fontWeight: 700,
                 padding: '2px 8px',
@@ -76,7 +76,7 @@ export default function ChatPage() {
           style={{
             width: '100%',
             background: 'var(--bg-surface)',
-            border: '1px solid var(--glass-border)',
+            border: '1px solid var(--border)',
             borderRadius: 13,
             padding: '21px',
             textAlign: 'left',
@@ -97,7 +97,7 @@ export default function ChatPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
             {features.map(({ icon: Icon, text }, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Icon size={14} strokeWidth={1.75} color="#02BDB6" style={{ flexShrink: 0, marginTop: 1 }} />
+                <Icon size={14} strokeWidth={1.75} color="var(--accent)" style={{ flexShrink: 0, marginTop: 1 }} />
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{text}</span>
               </div>
             ))}
@@ -106,7 +106,7 @@ export default function ChatPage() {
 
         <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
           Выйдет в{' '}
-          <span style={{ color: '#02BDB6', fontWeight: 600 }}>v1.6.0</span>
+          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>v1.6.0</span>
         </div>
       </div>
     </div>

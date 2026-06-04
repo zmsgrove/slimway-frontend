@@ -14,14 +14,14 @@ import type { Employee, Shift } from '../../types'
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const POSITIONS = [
-  { value: 'manager',   label: 'Управляющий', role: 'franchisee', color: '#02BDB6' },
+  { value: 'manager',   label: 'Управляющий', role: 'franchisee', color: 'var(--accent)' },
   { value: 'staff',     label: 'Менеджер',    role: 'admin',       color: '#263CD9' },
   { value: 'technical', label: 'Тех.персонал', role: 'technical',  color: '#f59e0b' },
 ]
 const DEPARTMENTS = ['Управление', 'Менеджмент', 'Технический отдел', 'IT']
 
 const STATUS_COLOR: Record<string, string> = {
-  scheduled: '#71717A', active: '#10b981', completed: '#02BDB6',
+  scheduled: '#71717A', active: '#10b981', completed: 'var(--accent)',
 }
 const STATUS_LABEL: Record<string, string> = {
   scheduled: 'По графику', active: 'На смене', completed: 'Завершена',
@@ -30,8 +30,15 @@ const STATUS_LABEL: Record<string, string> = {
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function avatarColor(name: string): string {
-  const colors = ['#02BDB6', '#263CD9', '#8b5cf6', '#f59e0b', '#10b981', '#f97316', '#ec4899']
+  const colors = ['var(--accent)', '#263CD9', '#8b5cf6', '#f59e0b', '#10b981', '#f97316', '#ec4899']
   return colors[name.charCodeAt(0) % colors.length]
+}
+
+function colorBg(c: string, opacity = 12): string {
+  return `color-mix(in srgb, ${c} ${opacity}%, transparent)`
+}
+function colorBorder(c: string, opacity = 25): string {
+  return `color-mix(in srgb, ${c} ${opacity}%, transparent)`
 }
 
 function formatDate(d: string | null): string {
@@ -57,16 +64,17 @@ function genPassword(): string {
 
 const inputStyle: React.CSSProperties = {
   width: '100%', height: 36, padding: '0 13px',
-  background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
-  borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  background: 'var(--bg-card)', border: '1px solid var(--border)',
+  borderRadius: 8, color: 'var(--text)', fontSize: 13,
   outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+  transition: 'border-color 150ms ease-out, box-shadow 150ms ease-out',
 }
 const labelStyle: React.CSSProperties = { fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }
 
 function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, paddingBottom: 8, borderBottom: '1px solid var(--glass-border)' }}>
-      <div style={{ color: '#02BDB6' }}>{icon}</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
+      <div style={{ color: 'var(--accent)' }}>{icon}</div>
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8 }}>{title}</div>
     </div>
   )
@@ -90,33 +98,33 @@ function SuccessModal({ email, password, name, onClose }: SuccessModalProps) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 400, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 400, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', textAlign: 'center' }}>
         <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', border: '2px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 13px' }}>
           <CheckCircle size={24} color="#10b981" />
         </div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 5 }}>Сотрудник создан!</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 5 }}>Сотрудник создан!</div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 21 }}>{name}</div>
 
-        <div style={{ background: 'var(--bg-surface)', borderRadius: 13, padding: 13, marginBottom: 21, textAlign: 'left' }}>
+        <div style={{ background: 'var(--bg-surface)', borderRadius: 12, padding: 13, marginBottom: 21, textAlign: 'left' }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>Данные для входа</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Логин</span>
-              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{email}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', fontFamily: 'monospace' }}>{email}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Пароль</span>
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#02BDB6', fontFamily: 'monospace' }}>{password}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)', fontFamily: 'monospace' }}>{password}</span>
             </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 13 }}>
-          <button onClick={handleCopy} style={{ flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copied ? 'rgba(16,185,129,0.12)' : 'rgba(2,189,182,0.12)', border: `1px solid ${copied ? 'rgba(16,185,129,0.3)' : 'rgba(2,189,182,0.3)'}`, borderRadius: 8, color: copied ? '#10b981' : '#02BDB6', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={handleCopy} style={{ flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copied ? 'rgba(16,185,129,0.12)' : 'color-mix(in srgb, var(--accent) 12%, transparent)', border: `1px solid ${copied ? 'rgba(16,185,129,0.3)' : 'color-mix(in srgb, var(--accent) 30%, transparent)'}`, borderRadius: 8, color: copied ? '#10b981' : 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? 'Скопировано' : 'Скопировать'}
           </button>
-          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
+          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
         </div>
       </div>
     </div>
@@ -171,19 +179,19 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 540, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 540, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
         {/* Modal header */}
-        <div style={{ padding: '34px 34px 21px', borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, background: 'var(--bg-elevated)', zIndex: 5 }}>
+        <div style={{ padding: '28px 28px 21px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 5 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Добавить сотрудника</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Добавить сотрудника</div>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>Создаётся аккаунт и профиль в системе</div>
             </div>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
           </div>
         </div>
 
-        <div style={{ padding: '21px 34px 34px', display: 'flex', flexDirection: 'column', gap: 21 }}>
+        <div style={{ padding: '21px 28px 28px', display: 'flex', flexDirection: 'column', gap: 21 }}>
           {error && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
               <AlertCircle size={13} />{error}
@@ -234,7 +242,7 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   {POSITIONS.map(p => (
                     <button key={p.value} onClick={() => set('position', p.value)}
-                      style={{ flex: 1, height: 38, background: form.position === p.value ? p.color + '15' : 'transparent', border: `1px solid ${form.position === p.value ? p.color : 'var(--glass-border)'}`, borderRadius: 8, color: form.position === p.value ? p.color : 'var(--text-muted)', fontSize: 12, fontWeight: form.position === p.value ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
+                      style={{ flex: 1, height: 38, background: form.position === p.value ? colorBg(p.color, 15) : 'transparent', border: `1px solid ${form.position === p.value ? p.color : 'var(--border)'}`, borderRadius: 8, color: form.position === p.value ? p.color : 'var(--text-muted)', fontSize: 12, fontWeight: form.position === p.value ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                       {p.label}
                     </button>
                   ))}
@@ -245,7 +253,7 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
                   {DEPARTMENTS.map(d => (
                     <button key={d} onClick={() => set('department', form.department === d ? '' : d)}
-                      style={{ background: form.department === d ? 'rgba(38,60,217,0.12)' : 'transparent', border: `1px solid ${form.department === d ? '#263CD9' : 'var(--glass-border)'}`, borderRadius: 20, color: form.department === d ? '#263CD9' : 'var(--text-muted)', fontSize: 11, padding: '3px 10px', cursor: 'pointer' }}>
+                      style={{ background: form.department === d ? 'rgba(38,60,217,0.12)' : 'transparent', border: `1px solid ${form.department === d ? '#263CD9' : 'var(--border)'}`, borderRadius: 20, color: form.department === d ? '#263CD9' : 'var(--text-muted)', fontSize: 11, padding: '3px 10px', cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                       {d}
                     </button>
                   ))}
@@ -279,7 +287,7 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
                     </button>
                   </div>
                   <button onClick={() => set('password', genPassword())} title="Сгенерировать пароль"
-                    style={{ width: 36, height: 36, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    style={{ width: 36, height: 36, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <RefreshCw size={14} />
                   </button>
                 </div>
@@ -288,12 +296,12 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
           </div>
 
           {/* Buttons */}
-          <div style={{ display: 'flex', gap: 13, paddingTop: 8, borderTop: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', gap: 13, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
             <button onClick={() => void handleSave()} disabled={saving}
-              style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+              style={{ flex: 1, height: 40, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Создание...' : 'Создать сотрудника'}
             </button>
-            <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+            <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
           </div>
         </div>
       </div>
@@ -325,16 +333,16 @@ function ShiftHistoryTab({ empId }: { empId: string }) {
         const sc      = STATUS_COLOR[shift.status]
         const isDone  = shift.status === 'completed'
         return (
-          <div key={shift.id} style={{ padding: '8px 10px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${sc}22` }}>
+          <div key={shift.id} style={{ padding: '8px 10px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${colorBorder(sc, 13)}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{formatShiftDate(shift.date)}</div>
-              <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>{STATUS_LABEL[shift.status]}</span>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{formatShiftDate(shift.date)}</div>
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 20, background: colorBg(sc, 10), color: sc, border: `1px solid ${colorBorder(sc, 20)}` }}>{STATUS_LABEL[shift.status]}</span>
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Clock size={10} />
               {shift.time_start.slice(0, 5)} — {shift.time_end.slice(0, 5)}
               {isDone && checkin && (
-                <span style={{ marginLeft: 6, color: '#02BDB6' }}>
+                <span style={{ marginLeft: 6, color: 'var(--accent)' }}>
                   <CheckCircle size={10} style={{ verticalAlign: 'middle' }} /> {fmtTime(checkin.checkin_at)} → {fmtTime(checkin.checkout_at)}
                 </span>
               )}
@@ -414,28 +422,28 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
   }
 
   const tabBtn = (t: 'profile' | 'shifts', label: string) => (
-    <button onClick={() => setTab(t)} style={{ flex: 1, height: 28, background: tab === t ? 'var(--bg-elevated)' : 'transparent', border: 'none', borderRadius: 6, color: tab === t ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: 11, fontWeight: tab === t ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
+    <button onClick={() => setTab(t)} style={{ flex: 1, height: 28, background: tab === t ? 'var(--bg-card)' : 'transparent', border: 'none', borderRadius: 6, color: tab === t ? 'var(--text)' : 'var(--text-muted)', fontSize: 11, fontWeight: tab === t ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, color 150ms ease-out' }}>
       {label}
     </button>
   )
 
   return (
-    <div onContextMenu={onContextMenu} style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+    <div onContextMenu={onContextMenu} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '16px 16px 12px', display: 'flex', gap: 12, alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', cursor: 'default' }}>
+      <div style={{ padding: '16px 16px 12px', display: 'flex', gap: 12, alignItems: 'flex-start', borderBottom: '1px solid var(--border)', cursor: 'default' }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: color + '20', border: `2px solid ${color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: colorBg(color, 12), border: `2px solid ${colorBorder(color, 27)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color }}>
             {initials}
           </div>
           {isOnDuty && (
-            <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-elevated)' }} />
+            <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emp.full_name}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emp.full_name}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
             {posInfo && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: posInfo.color + '18', color: posInfo.color, border: `1px solid ${posInfo.color}33` }}>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: colorBg(posInfo.color, 10), color: posInfo.color, border: `1px solid ${colorBorder(posInfo.color, 20)}` }}>
                 {posInfo.label}
               </span>
             )}
@@ -454,7 +462,7 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
         {canEdit && (
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             <button onClick={() => { setEditing(e => !e); setTab('profile'); setError(null) }}
-              style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 7, color: 'var(--text-muted)', cursor: 'pointer' }}>
+              style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text-muted)', cursor: 'pointer' }}>
               <Pencil size={11} />
             </button>
             <button onClick={() => void handleDelete()} disabled={deleting}
@@ -466,7 +474,7 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
       </div>
 
       {/* Tabs */}
-      <div style={{ padding: '6px 12px', display: 'flex', gap: 4, background: 'var(--bg-surface)', borderBottom: '1px solid var(--glass-border)' }}>
+      <div style={{ padding: '6px 12px', display: 'flex', gap: 4, background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
         {tabBtn('profile', 'Профиль')}
         {tabBtn('shifts', 'Смены')}
       </div>
@@ -510,8 +518,8 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
           <input style={{ ...inputStyle, height: 30, fontSize: 12 }} placeholder="Должность" value={form.position} onChange={e => setF('position', e.target.value)} />
           <input style={{ ...inputStyle, height: 30, fontSize: 12 }} placeholder="Отдел" value={form.department} onChange={e => setF('department', e.target.value)} />
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => { setEditing(false); setError(null) }} style={{ flex: 1, height: 30, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>Отмена</button>
-            <button onClick={() => void handleSave()} disabled={saving} style={{ flex: 2, height: 30, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            <button onClick={() => { setEditing(false); setError(null) }} style={{ flex: 1, height: 30, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>Отмена</button>
+            <button onClick={() => void handleSave()} disabled={saving} style={{ flex: 2, height: 30, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Сохранение...' : 'Сохранить'}
             </button>
           </div>
@@ -596,9 +604,9 @@ export default function EmployeesPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Сотрудники</h1>
+            <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Сотрудники</h1>
             {!loading && (
-              <span style={{ background: 'rgba(2,189,182,0.12)', color: '#02BDB6', border: '1px solid rgba(2,189,182,0.25)', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
+              <span style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
                 {employees.length}
               </span>
             )}
@@ -609,7 +617,7 @@ export default function EmployeesPage() {
         </div>
         {canCreateEmployee('staff') && (
           <button onClick={() => setShowAdd(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
             <Plus size={15} />Добавить сотрудника
           </button>
         )}
@@ -622,9 +630,9 @@ export default function EmployeesPage() {
       )}
 
       {loading ? (
-        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
       ) : employees.length === 0 ? (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 13, textAlign: 'center' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 13, textAlign: 'center' }}>
           <Briefcase size={28} strokeWidth={1.5} color="var(--text-muted)" />
           <div>
             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>Сотрудников нет</div>

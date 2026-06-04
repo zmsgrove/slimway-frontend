@@ -35,7 +35,7 @@ function getCountdownColor(dateEnd: string): string {
 // ─── constants ─────────────────────────────────────────────────────────────
 
 const DEVICE_TYPES: { value: DeviceType; label: string; color: string }[] = [
-  { value: 'vacuactiv',  label: 'VacuActiv',  color: '#02BDB6' },
+  { value: 'vacuactiv',  label: 'VacuActiv',  color: 'var(--accent)' },
   { value: 'rollshape',  label: 'RollShape',  color: '#263CD9' },
   { value: 'infrastep',  label: 'InfraStep',  color: '#8b5cf6' },
   { value: 'infrashape', label: 'InfraShape', color: '#f59e0b' },
@@ -49,9 +49,9 @@ function getServerError(e: unknown): string | null {
 }
 
 const inputStyle: React.CSSProperties = {
-  height: 36, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  height: 36, padding: '0 13px', background: 'var(--bg-card)',
+  border: '1px solid var(--border)', borderRadius: 8,
+  color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
 }
 
 // ─── AddFromCatalogModal ──────────────────────────────────────────────────────
@@ -80,15 +80,15 @@ function AddFromCatalogModal({ allTemplates, connected, onConnect, onClose }: Ad
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 520, maxHeight: '80vh', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '21px 21px 13px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Добавить из каталога</div>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 520, maxHeight: '80vh', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '21px 21px 13px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Добавить из каталога</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={18} /></button>
         </div>
-        <div style={{ padding: '13px 21px', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 13px', background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 8 }}>
+        <div style={{ padding: '13px 21px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 13px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8 }}>
             <Search size={14} color="var(--text-muted)" />
-            <input style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} placeholder="Поиск..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, outline: 'none' }} placeholder="Поиск..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 21, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -96,9 +96,9 @@ function AddFromCatalogModal({ allTemplates, connected, onConnect, onClose }: Ad
           {filtered.map(tpl => {
             const conn = isConnected(tpl.id)
             return (
-              <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: conn ? 'rgba(2,189,182,0.06)' : 'var(--bg-surface)', border: `1px solid ${conn ? 'rgba(2,189,182,0.25)' : 'var(--glass-border)'}`, borderRadius: 13 }}>
+              <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: conn ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--bg-surface)', border: `1px solid ${conn ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border)'}`, borderRadius: 13 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>{tpl.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{tpl.name}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     {typeLabel(tpl.slot_1_type)} · {tpl.slot_1_duration_min} мин · {tpl.slot_1_sessions_total} сеансов
                     {tpl.slot_2_type && ` + ${typeLabel(tpl.slot_2_type)}`}
@@ -109,10 +109,10 @@ function AddFromCatalogModal({ allTemplates, connected, onConnect, onClose }: Ad
                   </div>
                 </div>
                 {conn ? (
-                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'rgba(2,189,182,0.12)', color: '#02BDB6', border: '1px solid rgba(2,189,182,0.3)' }}>✓ Подключён</span>
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' }}>✓ Подключён</span>
                 ) : (
                   <button onClick={() => void handleConnect(tpl)} disabled={loading === tpl.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: loading === tpl.id ? 'wait' : 'pointer', opacity: loading === tpl.id ? 0.6 : 1 }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: loading === tpl.id ? 'wait' : 'pointer', opacity: loading === tpl.id ? 0.6 : 1 }}>
                     <Link size={12} />{loading === tpl.id ? '...' : 'Добавить'}
                   </button>
                 )}
@@ -222,24 +222,24 @@ export default function SubscriptionsPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
         <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Абонементы</h1>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Абонементы</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
             {connected.length} подключено к филиалу · {allTemplates.length} в каталоге
           </p>
         </div>
         {tab === 'branch' && (
           <button onClick={() => setShowCatalog(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
             <Plus size={15} strokeWidth={2} />Добавить из каталога
           </button>
         )}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 21, borderBottom: '1px solid var(--border)' }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ padding: '10px 21px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, color: tab === t.id ? '#02BDB6' : 'var(--text-secondary)', borderBottom: `2px solid ${tab === t.id ? '#02BDB6' : 'transparent'}`, transition: 'all 0.15s', marginBottom: -1 }}>
+            style={{ padding: '10px 21px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, color: tab === t.id ? 'var(--accent)' : 'var(--text-secondary)', borderBottom: `2px solid ${tab === t.id ? 'var(--accent)' : 'transparent'}`, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out', marginBottom: -1 }}>
             {t.label}
           </button>
         ))}
@@ -254,15 +254,15 @@ export default function SubscriptionsPage() {
             </div>
           )}
           {loadingBranch ? (
-            <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center' }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center' }}>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
             </div>
           ) : connectedTemplates.length === 0 ? (
-            <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              <div style={{ width: 56, height: 56, borderRadius: 21, background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
-                <CreditCard size={24} strokeWidth={1.5} color="#02BDB6" />
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
+                <CreditCard size={24} strokeWidth={1.5} color="var(--accent)" />
               </div>
-              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>Абонементов нет</div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', marginBottom: 8 }}>Абонементов нет</div>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 300, lineHeight: 1.6 }}>
                 Нажмите «Добавить из каталога» чтобы подключить шаблоны к этому филиалу
               </div>
@@ -274,12 +274,12 @@ export default function SubscriptionsPage() {
                   key={tpl.id}
                   onClick={() => setViewTpl(tpl)}
                   onContextMenu={e => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, tpl }) }}
-                  style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 21, cursor: 'pointer', opacity: tpl.is_active ? 1 : 0.55 }}
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 21, cursor: 'pointer', opacity: tpl.is_active ? 1 : 0.55 }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 13 }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.name}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{tpl.name}</div>
                         {!tpl.is_active && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(113,113,122,0.15)', color: 'var(--text-muted)', border: '1px solid rgba(113,113,122,0.25)' }}>Неактивен</span>}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Срок: {tpl.validity_days} дней</div>
@@ -296,38 +296,38 @@ export default function SubscriptionsPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_1_type)}33` }}>
+                    <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_1_type)}33` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                         <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_1_type) }}>{typeLabel(tpl.slot_1_type)}</span>
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_1_duration_min} мин</span>
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_1_sessions_total} сеансов</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_1_sessions_total} сеансов</div>
                     </div>
                     {tpl.slot_2_type && tpl.slot_2_sessions_total && (
-                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_2_type!)}33` }}>
+                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_2_type!)}33` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                           <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_2_type!) }}>{typeLabel(tpl.slot_2_type!)}</span>
                           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_2_duration_min} мин</span>
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_2_sessions_total} сеансов</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_2_sessions_total} сеансов</div>
                       </div>
                     )}
                     {tpl.slot_3_type && tpl.slot_3_sessions_total && (
-                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_3_type!)}33` }}>
+                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_3_type!)}33` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                           <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_3_type!) }}>{typeLabel(tpl.slot_3_type!)}</span>
                           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_3_duration_min} мин</span>
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_3_sessions_total} сеансов</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_3_sessions_total} сеансов</div>
                       </div>
                     )}
                     {tpl.slot_4_type && tpl.slot_4_sessions_total && (
-                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-elevated)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_4_type!)}33` }}>
+                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_4_type!)}33` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                           <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_4_type!) }}>{typeLabel(tpl.slot_4_type!)}</span>
                           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_4_duration_min} мин</span>
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{tpl.slot_4_sessions_total} сеансов</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_4_sessions_total} сеансов</div>
                       </div>
                     )}
                   </div>
@@ -341,9 +341,9 @@ export default function SubscriptionsPage() {
       {/* Sold subscriptions tab */}
       {tab === 'sold' && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8, marginBottom: 13 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 13 }}>
             <Search size={15} color="var(--text-muted)" />
-            <input style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} placeholder="Поиск по клиенту или названию..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, outline: 'none' }} placeholder="Поиск по клиенту или названию..." value={search} onChange={e => setSearch(e.target.value)} />
             {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={13} /></button>}
           </div>
           {soldError && (
@@ -354,7 +354,7 @@ export default function SubscriptionsPage() {
           {loadingSold ? (
             <div style={{ padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
           ) : filteredSold.length === 0 ? (
-            <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center' }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center' }}>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{search ? 'Ничего не найдено' : 'Проданных абонементов нет'}</div>
             </div>
           ) : (
@@ -363,10 +363,10 @@ export default function SubscriptionsPage() {
                 const statusColors: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A', cancelled: '#ef4444' }
                 const statusLabels: Record<string, string> = { active: 'Активен', frozen: 'Заморожен', expired: 'Истёк', cancelled: 'Отменён' }
                 return (
-                  <div key={sub.id} style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 21 }}>
+                  <div key={sub.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 21 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{sub.name}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>{sub.name}</div>
                         {sub.clients?.full_name && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{sub.clients.full_name}{sub.clients.phone && ` · ${sub.clients.phone}`}</div>}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -414,13 +414,13 @@ export default function SubscriptionsPage() {
       {viewTpl && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
           <div onClick={() => setViewTpl(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-          <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 460, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CreditCard size={20} color="#02BDB6" />
+          <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 460, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 13, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCard size={20} color="var(--accent)" />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{viewTpl.name}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{viewTpl.name}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                   {viewTpl.validity_days} дней{viewTpl.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(viewTpl.price)} ₸`}
                 </div>

@@ -28,7 +28,7 @@ const s = {
   card: { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 16 },
   btn: (active?: boolean): React.CSSProperties => ({
     height: 44, padding: '0 16px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-    background: active ? '#02BDB6' : 'rgba(255,255,255,0.08)', border: active ? 'none' : '1px solid rgba(255,255,255,0.12)',
+    background: active ? 'var(--accent)' : 'rgba(255,255,255,0.08)', border: active ? 'none' : '1px solid rgba(255,255,255,0.12)',
     color: active ? '#fff' : '#ccc',
   }),
   input: { height: 44, padding: '0 14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#f0f0f0', fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' as const, fontFamily: 'inherit' },
@@ -61,7 +61,7 @@ function LoginScreen({ portalToken, onLogin }: { portalToken: string; onLogin: (
     <div style={{ ...s.wrap, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(2,189,182,0.15)', border: '2px solid rgba(2,189,182,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28 }}>
+          <div style={{ width: 64, height: 64, borderRadius: 20, background: 'color-mix(in srgb, var(--accent) 15%, transparent)', border: '2px solid color-mix(in srgb, var(--accent) 40%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28 }}>
             💎
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>Slimway</h1>
@@ -99,8 +99,8 @@ function TabBar({ tab, onChange, unread }: { tab: Tab; onChange: (t: Tab) => voi
       {TABS.map(t => (
         <button key={t.id} onClick={() => onChange(t.id)}
           style={{ flex: 1, height: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}>
-          <span style={{ color: tab === t.id ? '#02BDB6' : '#555' }}>{t.icon}</span>
-          <span style={{ fontSize: 10, color: tab === t.id ? '#02BDB6' : '#555' }}>{t.label}</span>
+          <span style={{ color: tab === t.id ? 'var(--accent)' : '#555' }}>{t.icon}</span>
+          <span style={{ fontSize: 10, color: tab === t.id ? 'var(--accent)' : '#555' }}>{t.label}</span>
           {t.id === 'chat' && unread > 0 && (
             <span style={{ position: 'absolute', top: 8, right: '50%', marginRight: -18, width: 16, height: 16, background: '#ef4444', borderRadius: '50%', fontSize: 10, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {unread > 9 ? '9+' : unread}
@@ -132,12 +132,12 @@ function HomeTab({ me, subs, bookings }: { me: Record<string, unknown>; subs: Re
       </div>
 
       {activeSub ? (
-        <div style={{ ...s.card, background: 'linear-gradient(135deg, rgba(2,189,182,0.15), rgba(2,189,182,0.05))', borderColor: 'rgba(2,189,182,0.3)' }}>
-          <div style={{ fontSize: 11, color: '#02BDB6', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Активный абонемент</div>
+        <div style={{ ...s.card, background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 15%, transparent), color-mix(in srgb, var(--accent) 5%, transparent))', borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)' }}>
+          <div style={{ fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Активный абонемент</div>
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{activeSub.name as string}</div>
           <div style={{ display: 'flex', gap: 16 }}>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#02BDB6' }}>{activeSub.slot_1_sessions_left as number}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{activeSub.slot_1_sessions_left as number}</div>
               <div style={{ ...s.muted }}>сессий осталось</div>
             </div>
             {!!activeSub.date_end && (
@@ -331,7 +331,7 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
       {future.length === 0 && !showNew && (
         <div style={{ ...s.card, textAlign: 'center', padding: 32, color: '#888' }}>
           Предстоящих записей нет
-          {activeSub && <div style={{ marginTop: 8, fontSize: 13, color: '#02BDB6', cursor: 'pointer' }} onClick={() => setShowNew(true)}>Записаться →</div>}
+          {activeSub && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--accent)', cursor: 'pointer' }} onClick={() => setShowNew(true)}>Записаться →</div>}
         </div>
       )}
 
@@ -388,7 +388,7 @@ function SubsTab({ subs }: { subs: Record<string, unknown>[] }) {
           </span>
         </div>
         <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, marginBottom: 6 }}>
-          <div style={{ height: '100%', width: `${pct}%`, background: isActive ? '#02BDB6' : '#555', borderRadius: 3, transition: 'width 0.4s' }} />
+          <div style={{ height: '100%', width: `${pct}%`, background: isActive ? 'var(--accent)' : '#555', borderRadius: 3, transition: 'width 0.4s' }} />
         </div>
         <div style={{ ...s.muted }}>{used} из {total} сессий использовано</div>
         {!!sub.slot_2_type && <div style={{ ...s.muted, marginTop: 2, fontSize: 11 }}>Слот 2: {sub.slot_2_sessions_left as number}/{sub.slot_2_sessions_total as number}</div>}
@@ -431,7 +431,7 @@ function ActivityTab({ activity }: { activity: Record<string, unknown>[] }) {
         const isBooking = item.type === 'booking'
         const icon = isBooking
           ? (item.attended ? <CheckCircle size={18} color="#10b981" /> : <Clock size={18} color="#f59e0b" />)
-          : <ShoppingBag size={18} color="#02BDB6" />
+          : <ShoppingBag size={18} color="var(--accent)" />
 
         return (
           <div key={item.id as string} style={{ ...s.card, display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -509,7 +509,7 @@ function ChatTab({ token, onUnreadChange }: { token: string; onUnreadChange: (n:
           <div key={m.id} style={{ display: 'flex', justifyContent: m.sender === 'client' ? 'flex-end' : 'flex-start' }}>
             <div style={{
               maxWidth: '75%', padding: '10px 14px', borderRadius: m.sender === 'client' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-              background: m.sender === 'client' ? '#02BDB6' : 'rgba(255,255,255,0.1)',
+              background: m.sender === 'client' ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
               color: m.sender === 'client' ? '#fff' : '#f0f0f0', fontSize: 14, lineHeight: 1.4,
             }}>
               {m.sender === 'manager' && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Менеджер</div>}
@@ -531,7 +531,7 @@ function ChatTab({ token, onUnreadChange }: { token: string; onUnreadChange: (n:
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSend() } }}
         />
         <button onClick={() => void handleSend()} disabled={!text.trim() || sending}
-          style={{ width: 44, height: 44, background: text.trim() ? '#02BDB6' : 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 12, cursor: text.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ width: 44, height: 44, background: text.trim() ? 'var(--accent)' : 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 12, cursor: text.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Send size={18} color={text.trim() ? '#fff' : '#555'} />
         </button>
       </div>
@@ -596,7 +596,7 @@ export default function ClientPortalPage() {
   if (loading) {
     return (
       <div style={{ ...s.wrap, alignItems: 'center', justifyContent: 'center' }}>
-        <Loader size={32} color="#02BDB6" />
+        <Loader size={32} color="var(--accent)" />
       </div>
     )
   }

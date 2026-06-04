@@ -50,11 +50,11 @@ export function HotkeyHelp() {
         style={{
           position: 'fixed', bottom: 21, right: 21, zIndex: 9000,
           width: 32, height: 32, borderRadius: '50%',
-          background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid var(--glass-border)',
+          background: 'var(--bg-card)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid var(--border)',
           color: 'var(--text-muted)', fontSize: 13, fontWeight: 700,
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.15s',
+          transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out',
         }}
       >
         ?
@@ -70,11 +70,11 @@ export function HotkeyHelp() {
       />
       <div style={{
         position: 'fixed', bottom: 21, right: 21, zIndex: 9002,
-        background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 16, padding: 21, minWidth: 260,
         boxShadow: '0 16px 48px rgba(0,0,0,0.4)',
       }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>
           Горячие клавиши
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -85,7 +85,7 @@ export function HotkeyHelp() {
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 minWidth: 24, height: 22, padding: '0 6px',
                 background: 'var(--bg-surface)', border: '1px solid var(--border)',
-                borderRadius: 5, fontSize: 11, fontWeight: 600, color: 'var(--text-primary)',
+                borderRadius: 5, fontSize: 11, fontWeight: 600, color: 'var(--text)',
                 fontFamily: 'monospace', flexShrink: 0,
               }}>{key}</kbd>
             </div>

@@ -27,11 +27,11 @@ const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
 }
 const DEVICE_TYPE_COLORS: Record<string, string> = {
-  vacuactiv: '#02BDB6', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
+  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
 }
 const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   free:              { bg: 'rgba(16,185,129,0.15)',  border: 'rgba(16,185,129,0.4)',  text: '#10b981' },
-  booked:            { bg: 'rgba(2,189,182,0.18)',   border: 'rgba(2,189,182,0.45)',  text: '#02BDB6' },
+  booked:            { bg: 'color-mix(in srgb, var(--accent) 18%, transparent)', border: 'color-mix(in srgb, var(--accent) 45%, transparent)', text: 'var(--accent)' },
   booked_attended:   { bg: 'rgba(16,185,129,0.18)',  border: 'rgba(16,185,129,0.5)',  text: '#10b981' },
   booked_missed:     { bg: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.4)',   text: '#ef4444' },
   blocked:           { bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)',  text: '#f59e0b' },
@@ -86,9 +86,10 @@ function currentTimeLeft(): number | null {
 }
 
 const inputStyle: React.CSSProperties = {
-  height: 36, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  height: 36, padding: '0 13px', background: 'var(--bg-card)',
+  border: '1px solid var(--border)', borderRadius: 8,
+  color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  transition: 'border-color 150ms ease-out, box-shadow 150ms ease-out',
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' }
 
@@ -100,7 +101,7 @@ function ModalWrap({ onClose, children, maxWidth = 460 }: { onClose: () => void;
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
       <div
         className="modal-animate"
-        style={{ position: 'relative', width: '100%', maxWidth, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+        style={{ position: 'relative', width: '100%', maxWidth, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
       >
         {children}
       </div>
@@ -110,9 +111,9 @@ function ModalWrap({ onClose, children, maxWidth = 460 }: { onClose: () => void;
 
 function ModalHeader({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
       <div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{title}</div>
         {subtitle && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>{subtitle}</div>}
       </div>
       <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}><X size={18} /></button>
@@ -146,8 +147,8 @@ function ClientSearch({ value, onChange }: ClientSearchProps) {
 
   if (value) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 36, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid #02BDB6', borderRadius: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{value.full_name}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 36, padding: '0 13px', background: 'var(--bg-card)', border: '1px solid var(--accent)', borderRadius: 8 }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{value.full_name}</span>
         <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }}><X size={13} /></button>
       </div>
     )
@@ -158,9 +159,9 @@ function ClientSearch({ value, onChange }: ClientSearchProps) {
       <Search size={13} color="var(--text-muted)" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
       <input style={{ ...inputStyle, paddingLeft: 30 }} placeholder="Поиск клиента..." value={q} onChange={e => search(e.target.value)} onFocus={() => q && setOpen(true)} />
       {open && res.length > 0 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden', marginTop: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginTop: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
           {res.map(c => (
-            <button key={c.id} onClick={() => { onChange(c); setQ(''); setOpen(false) }} style={{ display: 'block', width: '100%', padding: '8px 13px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: 13 }}>
+            <button key={c.id} onClick={() => { onChange(c); setQ(''); setOpen(false) }} style={{ display: 'block', width: '100%', padding: '8px 13px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid var(--border)', color: 'var(--text)', fontSize: 13 }}>
               {c.full_name}{c.phone && <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 8 }}>{c.phone}</span>}
             </button>
           ))}
@@ -180,7 +181,7 @@ function CreateSlotModal({ target, onClose, onCreate }: CreateSlotModalProps) {
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const timeEnd = addMinutes(target.timeStart, duration)
-  const devColor = DEVICE_TYPE_COLORS[target.device.type] ?? '#02BDB6'
+  const devColor = DEVICE_TYPE_COLORS[target.device.type] ?? 'var(--accent)'
 
   const handleCreate = async () => {
     setSaving(true); setError(null)
@@ -198,7 +199,7 @@ function CreateSlotModal({ target, onClose, onCreate }: CreateSlotModalProps) {
   return (
     <ModalWrap onClose={onClose} maxWidth={400}>
       <ModalHeader title="Создать ячейку" onClose={onClose} />
-      <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 21, border: `1px solid ${devColor}33` }}>
+      <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 12, marginBottom: 21, border: `1px solid color-mix(in srgb, ${devColor} 20%, transparent)` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: devColor }}>{DEVICE_TYPE_LABELS[target.device.type]} #{target.device.number}</div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
           {new Date(target.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} · {target.timeStart}
@@ -212,10 +213,11 @@ function CreateSlotModal({ target, onClose, onCreate }: CreateSlotModalProps) {
         </select>
       </div>
       <div style={{ display: 'flex', gap: 13 }}>
-        <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+        <button onClick={() => void handleCreate()} disabled={saving}
+          style={{ flex: 1, height: 40, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Создание...' : 'Создать'}
         </button>
-        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
       </div>
     </ModalWrap>
   )
@@ -270,12 +272,12 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
 
   return (
     <ModalWrap onClose={onClose} maxWidth={440}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-        <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(38,60,217,0.12)', border: '1px solid rgba(38,60,217,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(38,60,217,0.12)', border: '1px solid rgba(38,60,217,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Layers size={20} color="#263CD9" />
         </div>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Создать {selection.size} ячеек</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Создать {selection.size} ячеек</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>Массовое создание расписания</div>
         </div>
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -287,7 +289,7 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
           const devColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#71717A') : '#71717A'
           const sorted = [...times].sort()
           return (
-            <div key={deviceId} style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 8, border: `1px solid ${devColor}22` }}>
+            <div key={deviceId} style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 8, border: `1px solid color-mix(in srgb, ${devColor} 13%, transparent)` }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: devColor }}>
                 {dev ? `${DEVICE_TYPE_LABELS[dev.type]} #${dev.number}` : deviceId}
               </div>
@@ -299,7 +301,7 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
         })}
       </div>
 
-      <div style={{ marginBottom: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
+      <div style={{ marginBottom: 21, paddingTop: 21, borderTop: '1px solid var(--border)' }}>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Длительность каждой ячейки</div>
         <select style={selectStyle} value={duration} onChange={e => setDuration(Number(e.target.value))}>
           {DURATIONS.map(d => <option key={d} value={d}>{d} мин</option>)}
@@ -309,10 +311,11 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
       {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
 
       <div style={{ display: 'flex', gap: 13 }}>
-        <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 40, background: '#263CD9', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+        <button onClick={() => void handleCreate()} disabled={saving}
+          style={{ flex: 1, height: 40, background: '#263CD9', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Создание...' : `Создать ${selection.size} ячеек`}
         </button>
-        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
       </div>
     </ModalWrap>
   )
@@ -333,7 +336,7 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
   const [trialTime,   setTrialTime]   = useState(slot.time_start)
   const [trialAvail,  setTrialAvail]  = useState<Record<string, boolean> | null>(null)
   const [checkingAvail, setCheckingAvail] = useState(false)
-  const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#02BDB6'
+  const devColor = DEVICE_TYPE_COLORS[device.type] ?? 'var(--accent)'
 
   useEffect(() => {
     if (!client) { setSubs([]); setSelSub(null); return }
@@ -399,12 +402,12 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
 
   return (
     <ModalWrap onClose={onClose}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-        <div style={{ width: 44, height: 44, borderRadius: 13, background: devColor + '18', border: `1px solid ${devColor}33`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: `color-mix(in srgb, ${devColor} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${devColor} 20%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Calendar size={20} color={devColor} />
         </div>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Забронировать</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Забронировать</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
             {isTrial ? 'Тестовое занятие — все 4 тренажёра' : `${DEVICE_TYPE_LABELS[device.type]} #${device.number} · ${ft(slot.time_start)} — ${ft(slot.time_end)}`}
           </div>
@@ -429,8 +432,8 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {subs.map(s => (
-                  <button key={s.id} onClick={() => setSelSub(s)} style={{ padding: '10px 13px', background: selSub?.id === s.id ? 'rgba(2,189,182,0.10)' : 'var(--bg-surface)', border: `1px solid ${selSub?.id === s.id ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
+                  <button key={s.id} onClick={() => setSelSub(s)} style={{ padding: '10px 13px', background: selSub?.id === s.id ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--bg-surface)', border: `1px solid ${selSub?.id === s.id ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'background 150ms ease-out, border-color 150ms ease-out' }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>
                       {s.name}
                       {s.is_trial && <span style={{ marginLeft: 6, fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontWeight: 600 }}>ТЕСТ</span>}
                     </div>
@@ -454,22 +457,22 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
         )}
 
         {selSub && !isTrial && selSub.slot_2_type && (
-          <div style={{ padding: '10px 13px', background: 'rgba(2,189,182,0.06)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div style={{ padding: '10px 13px', background: 'color-mix(in srgb, var(--accent) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
             Слот 2 ({DEVICE_TYPE_LABELS[selSub.slot_2_type]}) подберётся автоматически.
           </div>
         )}
 
         {selSub && isTrial && (
-          <div style={{ padding: 13, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 13 }}>
+          <div style={{ padding: 13, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', marginBottom: 13 }}>Тестовое занятие — выберите дату и время</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 13 }}>
               <div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Дата</div>
-                <input type="date" style={{ width: '100%', height: 36, padding: '0 10px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} value={trialDate} onChange={e => setTrialDate(e.target.value)} />
+                <input type="date" style={inputStyle} value={trialDate} onChange={e => setTrialDate(e.target.value)} />
               </div>
               <div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Время начала</div>
-                <input type="time" step="1800" style={{ width: '100%', height: 36, padding: '0 10px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} value={trialTime} onChange={e => setTrialTime(e.target.value)} />
+                <input type="time" step="1800" style={inputStyle} value={trialTime} onChange={e => setTrialTime(e.target.value)} />
               </div>
             </div>
             <button onClick={() => void checkTrialAvail()} disabled={checkingAvail} style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 8, color: '#f59e0b', fontSize: 12, cursor: checkingAvail ? 'not-allowed' : 'pointer', opacity: checkingAvail ? 0.5 : 1, marginBottom: trialAvail !== null ? 13 : 0 }}>
@@ -480,7 +483,7 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
                 {Object.entries(trialAvail).map(([type, free]) => (
                   <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: free ? '#10b981' : '#ef4444', flexShrink: 0 }} />
-                    <span style={{ color: DEVICE_TYPE_COLORS[type] ?? 'var(--text-primary)', fontWeight: 500 }}>{DEVICE_TYPE_LABELS[type] ?? type}</span>
+                    <span style={{ color: DEVICE_TYPE_COLORS[type] ?? 'var(--text)', fontWeight: 500 }}>{DEVICE_TYPE_LABELS[type] ?? type}</span>
                     <span style={{ color: free ? '#10b981' : '#ef4444' }}>{free ? 'Свободен' : 'Занят'}</span>
                   </div>
                 ))}
@@ -490,14 +493,14 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 13, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
+        <div style={{ display: 'flex', gap: 13, paddingTop: 21, borderTop: '1px solid var(--border)' }}>
           <button
             onClick={() => void handleBook()}
             disabled={saving || !client || !selSub || (isTrial && !allTrialFree)}
-            style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || !client || !selSub || (isTrial && !allTrialFree)) ? 'not-allowed' : 'pointer', opacity: (saving || !client || !selSub || (isTrial && !allTrialFree)) ? 0.5 : 1 }}>
+            style={{ flex: 1, height: 40, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || !client || !selSub || (isTrial && !allTrialFree)) ? 'not-allowed' : 'pointer', opacity: (saving || !client || !selSub || (isTrial && !allTrialFree)) ? 0.5 : 1 }}>
             {saving ? 'Бронирование...' : isTrial ? 'Забронировать тестовое занятие' : 'Подтвердить бронь'}
           </button>
-          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
         </div>
       </div>
     </ModalWrap>
@@ -515,7 +518,7 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
   const [marking,    setMarking]    = useState(false)
   const [attended,   setAttended]   = useState<boolean | null>(null)
   const [error,      setError]      = useState<string | null>(null)
-  const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#02BDB6'
+  const devColor = DEVICE_TYPE_COLORS[device.type] ?? 'var(--accent)'
 
   useEffect(() => {
     if (!slot.booking_id) { setLoading(false); return }
@@ -562,12 +565,12 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
 
   return (
     <ModalWrap onClose={onClose}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-        <div style={{ width: 44, height: 44, borderRadius: 13, background: '#02BDB618', border: '1px solid #02BDB633', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Calendar size={20} color="#02BDB6" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Calendar size={20} color="var(--accent)" />
         </div>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Информация о брони</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Информация о брони</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
             {info ? `${info.client.full_name} · ${new Date(info.slot_1.date).toLocaleDateString('ru-RU')}` : `${DEVICE_TYPE_LABELS[device.type]} #${device.number} · ${ft(slot.time_start)}`}
           </div>
@@ -584,21 +587,21 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
       ) : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 21 }}>
-            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, gridColumn: '1 / -1' }}>
+            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 12, gridColumn: '1 / -1' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Клиент</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{info.client.full_name}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{info.client.full_name}</div>
               {info.client.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>{info.client.phone}</div>}
             </div>
-            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, gridColumn: '1 / -1' }}>
+            <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 12, gridColumn: '1 / -1' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Абонемент</div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>{info.subscription.name}</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)' }}>{info.subscription.name}</div>
             </div>
             {([info.slot_1, info.slot_2, info.slot_3, info.slot_4] as Array<typeof info.slot_1 | null>).map((s, i) => {
               if (!s) return null
               const dev = s.devices
               const dColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#71717A') : '#71717A'
               return (
-                <div key={i} style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${dColor}22` }}>
+                <div key={i} style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 12, border: `1px solid color-mix(in srgb, ${dColor} 13%, transparent)` }}>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Слот {i + 1}</div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: dColor }}>{dev ? `${DEVICE_TYPE_LABELS[dev.type]} #${dev.number}` : '—'}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{ft(s.time_start)} — {ft(s.time_end)}</div>
@@ -608,19 +611,19 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
           </div>
 
           {/* Attendance */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
             <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>Посещение:</span>
             <button onClick={() => void handleMarkAttended(true)} disabled={marking}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === true ? 'rgba(16,185,129,0.15)' : 'transparent', border: `1px solid ${attended === true ? '#10b981' : 'var(--glass-border)'}`, color: attended === true ? '#10b981' : 'var(--text-muted)' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === true ? 'rgba(16,185,129,0.15)' : 'transparent', border: `1px solid ${attended === true ? '#10b981' : 'var(--border)'}`, color: attended === true ? '#10b981' : 'var(--text-muted)' }}>
               ✓ Был
             </button>
             <button onClick={() => void handleMarkAttended(false)} disabled={marking}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === false ? 'rgba(239,68,68,0.12)' : 'transparent', border: `1px solid ${attended === false ? '#ef4444' : 'var(--glass-border)'}`, color: attended === false ? '#ef4444' : 'var(--text-muted)' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === false ? 'rgba(239,68,68,0.12)' : 'transparent', border: `1px solid ${attended === false ? '#ef4444' : 'var(--border)'}`, color: attended === false ? '#ef4444' : 'var(--text-muted)' }}>
               ✗ Не был
             </button>
             {attended !== null && (
               <button onClick={() => void handleMarkAttended(null)} disabled={marking}
-                style={{ height: 30, padding: '0 8px', borderRadius: 6, fontSize: 11, cursor: 'pointer', background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                style={{ height: 30, padding: '0 8px', borderRadius: 6, fontSize: 11, cursor: 'pointer', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                 Сброс
               </button>
             )}
@@ -629,17 +632,17 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
           {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
           {cancelHint && <div style={{ padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>{cancelHint}</div>}
 
-          <div style={{ display: 'flex', gap: 8, paddingTop: 21, borderTop: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, paddingTop: 21, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
             {onReschedule && info && (
               <button onClick={() => { onReschedule(info); onClose() }}
                 style={{ flex: 1, minWidth: 120, height: 40, background: 'rgba(38,60,217,0.10)', border: '1px solid rgba(38,60,217,0.3)', borderRadius: 8, color: '#263CD9', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 <RefreshCw size={13} />Перенести
               </button>
             )}
-            <button onClick={() => void handleCancel()} disabled={!canCancel || cancelling} style={{ flex: 1, minWidth: 120, height: 40, background: canCancel ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface)', border: `1px solid ${canCancel ? 'rgba(239,68,68,0.35)' : 'var(--glass-border)'}`, borderRadius: 8, color: canCancel ? '#ef4444' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canCancel || cancelling) ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.6 : 1 }}>
+            <button onClick={() => void handleCancel()} disabled={!canCancel || cancelling} style={{ flex: 1, minWidth: 120, height: 40, background: canCancel ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface)', border: `1px solid ${canCancel ? 'rgba(239,68,68,0.35)' : 'var(--border)'}`, borderRadius: 8, color: canCancel ? '#ef4444' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canCancel || cancelling) ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.6 : 1 }}>
               {cancelling ? 'Снятие...' : 'Снять бронь'}
             </button>
-            <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
+            <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
           </div>
         </>
       )}
@@ -652,11 +655,11 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
 interface DeleteConfirmModalProps { slot: ScheduleSlot; device: Device; loading: boolean; onClose: () => void; onConfirm: () => void }
 
 function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: DeleteConfirmModalProps) {
-  const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#02BDB6'
+  const devColor = DEVICE_TYPE_COLORS[device.type] ?? 'var(--accent)'
   return (
     <ModalWrap onClose={onClose} maxWidth={380}>
       <ModalHeader title="Удалить ячейку?" onClose={onClose} />
-      <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, marginBottom: 21, border: `1px solid ${devColor}33` }}>
+      <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 12, marginBottom: 21, border: `1px solid color-mix(in srgb, ${devColor} 20%, transparent)` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: devColor }}>{DEVICE_TYPE_LABELS[device.type]} #{device.number}</div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{ft(slot.time_start)} — {ft(slot.time_end)}</div>
       </div>
@@ -664,7 +667,7 @@ function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: Delet
         <button onClick={onConfirm} disabled={loading} style={{ flex: 1, height: 40, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
           {loading ? 'Удаление...' : 'Удалить'}
         </button>
-        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
       </div>
     </ModalWrap>
   )
@@ -766,12 +769,12 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
 
   return (
     <ModalWrap onClose={onClose} maxWidth={520}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-        <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Zap size={20} color="#02BDB6" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Zap size={20} color="var(--accent)" />
         </div>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Быстрое создание</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Быстрое создание</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>Массовое расписание по диапазону дат</div>
         </div>
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -787,22 +790,22 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8 }}>Тренажёры</div>
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={() => setSelectedIds(new Set(devices.map(d => d.id)))}
-                style={{ fontSize: 11, height: 24, padding: '0 8px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
+                style={{ fontSize: 11, height: 24, padding: '0 8px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
               <button onClick={() => setSelectedIds(new Set())}
-                style={{ fontSize: 11, height: 24, padding: '0 8px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer' }}>Снять</button>
+                style={{ fontSize: 11, height: 24, padding: '0 8px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer' }}>Снять</button>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 180, overflowY: 'auto' }}>
             {devices.map(d => {
               const checked = selectedIds.has(d.id)
-              const color = DEVICE_TYPE_COLORS[d.type] ?? '#02BDB6'
+              const color = DEVICE_TYPE_COLORS[d.type] ?? 'var(--accent)'
               return (
-                <label key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', background: checked ? `${color}0d` : 'var(--bg-elevated)', border: `1px solid ${checked ? color + '44' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+                <label key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', background: checked ? `color-mix(in srgb, ${color} 5%, transparent)` : 'var(--bg-card)', border: `1px solid ${checked ? `color-mix(in srgb, ${color} 27%, transparent)` : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
                   <input type="checkbox" checked={checked} onChange={() => toggleDevice(d.id)} style={{ accentColor: color, width: 14, height: 14 }} />
-                  <span style={{ fontSize: 13, color: 'var(--text-primary)', flex: 1 }}>
+                  <span style={{ fontSize: 13, color: 'var(--text)', flex: 1 }}>
                     {DEVICE_TYPE_LABELS[d.type]} #{d.number}
                   </span>
-                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: `${color}18`, color, border: `1px solid ${color}33` }}>
+                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: `color-mix(in srgb, ${color} 10%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 20%, transparent)` }}>
                     Гр. {d.device_group}
                   </span>
                 </label>
@@ -841,7 +844,7 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
           <div style={{ display: 'flex', gap: 6 }}>
             {STEP_OPTIONS.map(s => (
               <button key={s} onClick={() => setStep(s)}
-                style={{ flex: 1, height: 32, background: step === s ? 'rgba(2,189,182,0.12)' : 'transparent', border: `1px solid ${step === s ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: step === s ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, fontWeight: step === s ? 600 : 400, cursor: 'pointer' }}>
+                style={{ flex: 1, height: 32, background: step === s ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent', border: `1px solid ${step === s ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 8, color: step === s ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 12, fontWeight: step === s ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                 {s}
               </button>
             ))}
@@ -858,7 +861,7 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
               { value: 'every_n',   label: 'Каждые N' },
             ] as { value: RepeatMode; label: string }[]).map(opt => (
               <button key={opt.value} onClick={() => setRepeat(opt.value)}
-                style={{ flex: 1, height: 32, background: repeat === opt.value ? 'rgba(2,189,182,0.12)' : 'transparent', border: `1px solid ${repeat === opt.value ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: repeat === opt.value ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, fontWeight: repeat === opt.value ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
+                style={{ flex: 1, height: 32, background: repeat === opt.value ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent', border: `1px solid ${repeat === opt.value ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 8, color: repeat === opt.value ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 12, fontWeight: repeat === opt.value ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                 {opt.label}
               </button>
             ))}
@@ -877,31 +880,31 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Тип ячеек</div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setSlotStatus('free')}
-              style={{ flex: 1, height: 32, background: slotStatus === 'free' ? 'rgba(16,185,129,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'free' ? '#10b981' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'free' ? '#10b981' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'free' ? 600 : 400, cursor: 'pointer' }}>
+              style={{ flex: 1, height: 32, background: slotStatus === 'free' ? 'rgba(16,185,129,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'free' ? '#10b981' : 'var(--border)'}`, borderRadius: 8, color: slotStatus === 'free' ? '#10b981' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'free' ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
               Свободные
             </button>
             <button onClick={() => setSlotStatus('blocked')}
-              style={{ flex: 1, height: 32, background: slotStatus === 'blocked' ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'blocked' ? '#f59e0b' : 'var(--glass-border)'}`, borderRadius: 8, color: slotStatus === 'blocked' ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'blocked' ? 600 : 400, cursor: 'pointer' }}>
+              style={{ flex: 1, height: 32, background: slotStatus === 'blocked' ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'blocked' ? '#f59e0b' : 'var(--border)'}`, borderRadius: 8, color: slotStatus === 'blocked' ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'blocked' ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
               Заблокированные
             </button>
           </div>
         </div>
 
         {/* Превью */}
-        <div style={{ padding: '10px 13px', background: 'rgba(2,189,182,0.06)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-          Будет создано <strong style={{ color: '#02BDB6' }}>{totalCells}</strong> ячеек
-          {' '}для <strong style={{ color: '#02BDB6' }}>{selectedIds.size}</strong> тренажёров
+        <div style={{ padding: '10px 13px', background: 'color-mix(in srgb, var(--accent) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+          Будет создано <strong style={{ color: 'var(--accent)' }}>{totalCells}</strong> ячеек
+          {' '}для <strong style={{ color: 'var(--accent)' }}>{selectedIds.size}</strong> тренажёров
           {timeSlots.length > 0 && ` · ${timeSlots.length} слотов/день`}
           {dates.length > 0 && ` · ${dates.length} дней`}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
+      <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--border)' }}>
         <button onClick={() => void handleCreate()} disabled={saving || totalCells === 0 || selectedIds.size === 0}
-          style={{ flex: 1, height: 40, background: slotStatus === 'blocked' ? '#f59e0b' : '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || totalCells === 0) ? 'not-allowed' : 'pointer', opacity: (saving || totalCells === 0) ? 0.5 : 1 }}>
+          style={{ flex: 1, height: 40, background: slotStatus === 'blocked' ? '#f59e0b' : 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || totalCells === 0) ? 'not-allowed' : 'pointer', opacity: (saving || totalCells === 0) ? 0.5 : 1 }}>
           {saving ? 'Создание...' : `Создать ${totalCells} ячеек`}
         </button>
-        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
       </div>
     </ModalWrap>
   )
@@ -963,12 +966,12 @@ function RescheduleModal({ bookingInfo, userRole, onClose, onRescheduled }: Resc
 
   return (
     <ModalWrap onClose={onClose} maxWidth={460}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-        <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(38,60,217,0.12)', border: '1px solid rgba(38,60,217,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(38,60,217,0.12)', border: '1px solid rgba(38,60,217,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <RefreshCw size={20} color="#263CD9" />
         </div>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Перенести бронь</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Перенести бронь</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{bookingInfo.client.full_name}</div>
         </div>
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -999,12 +1002,12 @@ function RescheduleModal({ bookingInfo, userRole, onClose, onRescheduled }: Resc
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
             {freeSlots.map(s => {
               const dev = s.devices
-              const dColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#02BDB6') : '#02BDB6'
+              const dColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? 'var(--accent)') : 'var(--accent)'
               return (
                 <button key={s.id} onClick={() => setSelectedId(s.id)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: selectedId === s.id ? `${dColor}12` : 'var(--bg-surface)', border: `1px solid ${selectedId === s.id ? dColor : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left' }}>
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: selectedId === s.id ? `color-mix(in srgb, ${dColor} 12%, transparent)` : 'var(--bg-surface)', border: `1px solid ${selectedId === s.id ? dColor : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out', textAlign: 'left' }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: selectedId === s.id ? dColor : 'var(--text-primary)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: selectedId === s.id ? dColor : 'var(--text)' }}>
                       {ft(s.time_start)} — {ft(s.time_end)}
                     </div>
                     {dev && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{DEVICE_TYPE_LABELS[dev.type]} #{dev.number}</div>}
@@ -1017,14 +1020,14 @@ function RescheduleModal({ bookingInfo, userRole, onClose, onRescheduled }: Resc
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
+      <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--border)' }}>
         <button
           onClick={() => void handleReschedule()}
           disabled={!canReschedule || !selectedId || saving}
-          style={{ flex: 1, height: 40, background: canReschedule && selectedId ? '#263CD9' : 'var(--bg-surface)', border: `1px solid ${canReschedule && selectedId ? '#263CD9' : 'var(--glass-border)'}`, borderRadius: 8, color: canReschedule && selectedId ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canReschedule || !selectedId || saving) ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+          style={{ flex: 1, height: 40, background: canReschedule && selectedId ? '#263CD9' : 'var(--bg-surface)', border: `1px solid ${canReschedule && selectedId ? '#263CD9' : 'var(--border)'}`, borderRadius: 8, color: canReschedule && selectedId ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canReschedule || !selectedId || saving) ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Перенос...' : 'Перенести'}
         </button>
-        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
       </div>
     </ModalWrap>
   )
@@ -1244,28 +1247,28 @@ export default function SchedulePage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
         <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Расписание</h1>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Расписание</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, textTransform: 'capitalize' }}>{dateLabel}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {canManageSlots && (
             <button
               onClick={() => setShowQuickCreate(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.3)', borderRadius: 8, color: '#02BDB6', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', borderRadius: 8, color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out' }}
             >
               <Zap size={14} strokeWidth={2} />Быстрое создание
             </button>
           )}
           <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            style={{ height: 36, padding: '0 13px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer', outline: 'none' }} />
+            style={{ height: 36, padding: '0 13px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, cursor: 'pointer', outline: 'none' }} />
         </div>
       </div>
 
       {/* Date navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: '8px 13px', backdropFilter: 'blur(12px)' }}>
-        <button onClick={prevDay} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><ChevronLeft size={14} /></button>
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textTransform: 'capitalize' }}>{formatDate(new Date(date))}</span>
-        <button onClick={nextDay} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><ChevronRight size={14} /></button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 13px' }}>
+        <button onClick={prevDay} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><ChevronLeft size={14} /></button>
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 500, color: 'var(--text)', textTransform: 'capitalize' }}>{formatDate(new Date(date))}</span>
+        <button onClick={nextDay} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><ChevronRight size={14} /></button>
       </div>
 
       {/* Tabs */}
@@ -1273,13 +1276,13 @@ export default function SchedulePage() {
         <div style={{ display: 'flex', gap: 6, marginBottom: 13 }}>
           <button
             onClick={() => setActiveTab('schedule')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'schedule' ? '#02BDB6' : 'var(--glass-border)'}`, background: activeTab === 'schedule' ? 'rgba(2,189,182,0.12)' : 'transparent', color: activeTab === 'schedule' ? '#02BDB6' : 'var(--text-secondary)', transition: 'all 0.15s' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'schedule' ? 'var(--accent)' : 'var(--border)'}`, background: activeTab === 'schedule' ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent', color: activeTab === 'schedule' ? 'var(--accent)' : 'var(--text-secondary)', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}
           >
             <CalendarDays size={14} />Расписание
           </button>
           <button
             onClick={() => { setActiveTab('pending'); void loadPending() }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'pending' ? '#f59e0b' : 'var(--glass-border)'}`, background: activeTab === 'pending' ? 'rgba(245,158,11,0.12)' : 'transparent', color: activeTab === 'pending' ? '#f59e0b' : 'var(--text-secondary)', transition: 'all 0.15s' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'pending' ? '#f59e0b' : 'var(--border)'}`, background: activeTab === 'pending' ? 'rgba(245,158,11,0.12)' : 'transparent', color: activeTab === 'pending' ? '#f59e0b' : 'var(--text-secondary)', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}
           >
             <Clock size={14} />Ожидают подтверждения
             {pendingBookings.length > 0 && (
@@ -1322,7 +1325,7 @@ export default function SchedulePage() {
       )}
 
       {activeTab === 'pending' ? (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
           {pendingLoading ? (
             <div style={{ padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
           ) : pendingBookings.length === 0 ? (
@@ -1338,9 +1341,9 @@ export default function SchedulePage() {
                 const devColor = dev ? (DEVICE_TYPE_COLORS[dev.type] ?? '#71717A') : '#71717A'
                 const isActing = actionId === b.id
                 return (
-                  <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 21px', borderBottom: idx < pendingBookings.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
+                  <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 21px', borderBottom: idx < pendingBookings.length - 1 ? '1px solid var(--border)' : 'none' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>
                         {b.clients?.full_name ?? '—'}
                       </div>
                       {b.clients?.phone && (
@@ -1380,32 +1383,32 @@ export default function SchedulePage() {
           )}
         </div>
       ) : loading ? (
-        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
       ) : !error && devices.length === 0 ? (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <Calendar size={28} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: 13 }} />
           <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>Нет активных тренажёров</div>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>Добавьте оборудование в Настройках</div>
         </div>
       ) : !error ? (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', userSelect: 'none' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', userSelect: 'none' }}>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: gridMinWidth, position: 'relative' }}>
 
               {/* Current time line */}
               {isToday && timeLeft !== null && (
-                <div style={{ position: 'absolute', top: 0, bottom: 0, left: timeLeft, width: 2, background: '#02BDB6', zIndex: 10, pointerEvents: 'none', opacity: 0.8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#02BDB6', position: 'absolute', top: 8, left: -3 }} />
+                <div style={{ position: 'absolute', top: 0, bottom: 0, left: timeLeft, width: 2, background: 'var(--accent)', zIndex: 10, pointerEvents: 'none', opacity: 0.8 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', position: 'absolute', top: 8, left: -3 }} />
                 </div>
               )}
 
               {/* Header row */}
-              <div style={{ display: 'grid', gridTemplateColumns: `${DEVICE_WIDTH}px repeat(${TIME_SLOTS.length}, ${SLOT_WIDTH}px)`, borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, background: 'var(--bg-surface)', zIndex: 5 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `${DEVICE_WIDTH}px repeat(${TIME_SLOTS.length}, ${SLOT_WIDTH}px)`, borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-surface)', zIndex: 5 }}>
                 <div style={{ padding: '10px 13px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Тренажёр</div>
                 {TIME_SLOTS.map((t, idx) => {
                   const isHour = t.endsWith(':00')
                   return (
-                    <div key={t} style={{ padding: '10px 0', textAlign: 'center', fontSize: 10, fontWeight: isHour ? 700 : 400, color: isHour ? 'var(--text-secondary)' : 'var(--text-muted)', borderLeft: '1px solid var(--glass-border)', opacity: idx === 0 ? 1 : 1 }}>
+                    <div key={t} style={{ padding: '10px 0', textAlign: 'center', fontSize: 10, fontWeight: isHour ? 700 : 400, color: isHour ? 'var(--text-secondary)' : 'var(--text-muted)', borderLeft: '1px solid var(--border)', opacity: idx === 0 ? 1 : 1 }}>
                       {isHour ? t : <span style={{ opacity: 0.5 }}>{t}</span>}
                     </div>
                   )
@@ -1416,8 +1419,8 @@ export default function SchedulePage() {
               {devices.map(device => {
                 const devColor = DEVICE_TYPE_COLORS[device.type] ?? '#71717A'
                 return (
-                  <div key={device.id} style={{ display: 'grid', gridTemplateColumns: `${DEVICE_WIDTH}px repeat(${TIME_SLOTS.length}, ${SLOT_WIDTH}px)`, borderBottom: '1px solid var(--glass-border)' }}>
-                    <div style={{ padding: '10px 13px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--glass-border)', background: 'var(--bg-surface)' }}>
+                  <div key={device.id} style={{ display: 'grid', gridTemplateColumns: `${DEVICE_WIDTH}px repeat(${TIME_SLOTS.length}, ${SLOT_WIDTH}px)`, borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ padding: '10px 13px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: devColor }}>{DEVICE_TYPE_LABELS[device.type]}</div>
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>#{device.number} · Гр. {device.device_group}</div>
                     </div>
@@ -1452,12 +1455,12 @@ export default function SchedulePage() {
                             : canManageSlots ? `Создать ячейку ${time}` : time}
                           style={{
                             height: CELL_HEIGHT,
-                            borderLeft: '1px solid var(--glass-border)',
+                            borderLeft: '1px solid var(--border)',
                             cursor: slot ? (['free', 'booked'].includes(slot.status) ? 'pointer' : 'default') : canManageSlots ? 'crosshair' : 'default',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            transition: 'background 0.12s',
+                            transition: 'background 120ms ease-out',
                             background: sc ? sc.bg : 'transparent',
                             position: 'relative',
                           }}
@@ -1484,7 +1487,7 @@ export default function SchedulePage() {
                               )}
                             </>
                           ) : (
-                            <div style={{ width: 40, height: 32, borderRadius: 8, border: '1px dashed rgba(255,255,255,0.08)', opacity: 0.5, transition: 'opacity 0.12s' }} />
+                            <div style={{ width: 40, height: 32, borderRadius: 8, border: '1px dashed rgba(255,255,255,0.08)', opacity: 0.5, transition: 'opacity 120ms ease-out' }} />
                           )}
                         </div>
                       )

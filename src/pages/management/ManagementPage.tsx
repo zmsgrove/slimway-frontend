@@ -34,8 +34,8 @@ import { catalogApi } from '../../api/catalog.api'
 interface SectionProps { title: string; icon: React.ReactNode; children: React.ReactNode }
 function Section({ title, icon, children }: SectionProps) {
   return (
-    <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', marginBottom: 13 }}>
-      <div style={{ padding: '13px 21px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', marginBottom: 13 }}>
+      <div style={{ padding: '13px 21px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
         {icon}{title}
       </div>
       <div style={{ padding: 21 }}>{children}</div>
@@ -44,19 +44,19 @@ function Section({ title, icon, children }: SectionProps) {
 }
 
 const inputStyle: React.CSSProperties = {
-  height: 36, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%',
+  height: 36, padding: '0 13px', background: 'var(--bg-card)',
+  border: '1px solid var(--border)', borderRadius: 8,
+  color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%',
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' }
 const labelStyle: React.CSSProperties  = { fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }
 const thStyle: React.CSSProperties = {
-  padding: '10px 13px', borderBottom: '1px solid var(--glass-border)',
+  padding: '10px 13px', borderBottom: '1px solid var(--border)',
   fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
   textTransform: 'uppercase', letterSpacing: 0.5,
-  background: 'var(--bg-elevated)', whiteSpace: 'nowrap',
+  background: 'var(--bg-card)', whiteSpace: 'nowrap',
 }
-const tdStyle: React.CSSProperties = { padding: '6px 13px', fontSize: 13, color: 'var(--text-primary)' }
+const tdStyle: React.CSSProperties = { padding: '6px 13px', fontSize: 13, color: 'var(--text)' }
 
 // ─── constants ─────────────────────────────────────────────────────────────────
 
@@ -68,11 +68,11 @@ const DEVICE_TYPES: { value: DeviceType; label: string }[] = [
 ]
 
 const DEVICE_TYPE_COLORS: Record<DeviceType, string> = {
-  vacuactiv: '#02BDB6', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
+  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
 }
 
 const STATUS_COLORS: Record<DeviceStatus, string> = {
-  active: '#02BDB6', maintenance: '#f59e0b', disabled: '#71717A',
+  active: 'var(--accent)', maintenance: '#f59e0b', disabled: '#71717A',
 }
 const STATUS_LABELS: Record<DeviceStatus, string> = {
   active: 'Активен', maintenance: 'Обслуживание', disabled: 'Отключён',
@@ -130,7 +130,7 @@ function DevicesSection() {
   const grouped = { A: devices.filter(d => d.device_group === 'A'), B: devices.filter(d => d.device_group === 'B') }
 
   return (
-    <Section title="Оборудование" icon={<Cpu size={15} strokeWidth={1.75} color="#02BDB6" />}>
+    <Section title="Оборудование" icon={<Cpu size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
           <AlertCircle size={13} />{error}
@@ -145,16 +145,16 @@ function DevicesSection() {
               <div key={grp} style={{ marginBottom: 13 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Группа {grp}</div>
                 {grouped[grp].map(d => (
-                  <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
+                  <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: DEVICE_TYPE_COLORS[d.type], flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{DEVICE_TYPES.find(t => t.value === d.type)?.label ?? d.type}</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{DEVICE_TYPES.find(t => t.value === d.type)?.label ?? d.type}</span>
                       <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>#{d.number}</span>
                     </div>
                     <button onClick={() => void handleStatusCycle(d)} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, border: `1px solid ${STATUS_COLORS[d.status]}33`, background: `${STATUS_COLORS[d.status]}12`, color: STATUS_COLORS[d.status], cursor: 'pointer' }}>
                       {STATUS_LABELS[d.status]}
                     </button>
-                    <button onClick={() => void handleDelete(d.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                    <button onClick={() => void handleDelete(d.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
                       <Trash2 size={13} strokeWidth={1.75} />
                     </button>
                   </div>
@@ -187,11 +187,11 @@ function DevicesSection() {
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {showForm ? (
               <>
-                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Сохранение...' : 'Добавить'}</button>
-                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Сохранение...' : 'Добавить'}</button>
+                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
               </>
             ) : (
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                 <Plus size={14} strokeWidth={2} />Добавить тренажёр
               </button>
             )}
@@ -227,14 +227,14 @@ function BranchesSection() {
   }
 
   return (
-    <Section title="Филиалы" icon={<Building2 size={15} strokeWidth={1.75} color="#02BDB6" />}>
+    <Section title="Филиалы" icon={<Building2 size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Загрузка...</div> : (
         <>
           {branches.map(b => (
-            <div key={b.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+            <div key={b.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{b.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{b.name}</div>
                 {b.city && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{b.city}</div>}
               </div>
               {b.is_franchise && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'rgba(38,60,217,0.10)', color: '#263CD9', border: '1px solid rgba(38,60,217,0.25)', fontWeight: 600 }}>Франшиза</span>}
@@ -251,11 +251,11 @@ function BranchesSection() {
           <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
             {showForm ? (
               <>
-                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Сохранение...' : 'Добавить'}</button>
-                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Сохранение...' : 'Добавить'}</button>
+                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
               </>
             ) : (
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}><Plus size={14} strokeWidth={2} />Добавить филиал</button>
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}><Plus size={14} strokeWidth={2} />Добавить филиал</button>
             )}
           </div>
         </>
@@ -290,14 +290,14 @@ function DepartmentsSection() {
   }
 
   return (
-    <Section title="Отделы" icon={<Briefcase size={15} strokeWidth={1.75} color="#02BDB6" />}>
+    <Section title="Отделы" icon={<Briefcase size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {items.map(dep => (
-            <div key={dep.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
-              <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{dep.name}</span>
-              <button onClick={() => void handleDelete(dep.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Trash2 size={12} strokeWidth={1.75} /></button>
+            <div key={dep.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--text)' }}>{dep.name}</span>
+              <button onClick={() => void handleDelete(dep.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Trash2 size={12} strokeWidth={1.75} /></button>
             </div>
           ))}
           {items.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Отделов нет</div>}
@@ -305,11 +305,11 @@ function DepartmentsSection() {
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {showForm ? (
               <>
-                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? '...' : 'Добавить'}</button>
-                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? '...' : 'Добавить'}</button>
+                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
               </>
             ) : (
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}><Plus size={14} strokeWidth={2} />Добавить отдел</button>
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}><Plus size={14} strokeWidth={2} />Добавить отдел</button>
             )}
           </div>
         </>
@@ -344,14 +344,14 @@ function PositionsSection() {
   }
 
   return (
-    <Section title="Должности" icon={<LayoutGrid size={15} strokeWidth={1.75} color="#02BDB6" />}>
+    <Section title="Должности" icon={<LayoutGrid size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {items.map(pos => (
-            <div key={pos.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
-              <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{pos.name}</span>
-              <button onClick={() => void handleDelete(pos.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Trash2 size={12} strokeWidth={1.75} /></button>
+            <div key={pos.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 13, color: 'var(--text)' }}>{pos.name}</span>
+              <button onClick={() => void handleDelete(pos.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Trash2 size={12} strokeWidth={1.75} /></button>
             </div>
           ))}
           {items.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Должностей нет</div>}
@@ -359,11 +359,11 @@ function PositionsSection() {
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {showForm ? (
               <>
-                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? '...' : 'Добавить'}</button>
-                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+                <button onClick={() => void handleAdd()} disabled={saving} style={{ flex: 1, height: 34, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? '...' : 'Добавить'}</button>
+                <button onClick={() => { setShowForm(false); setError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
               </>
             ) : (
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}><Plus size={14} strokeWidth={2} />Добавить должность</button>
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}><Plus size={14} strokeWidth={2} />Добавить должность</button>
             )}
           </div>
         </>
@@ -398,9 +398,9 @@ function SlotForm({
               type="checkbox"
               checked={isFinish}
               onChange={() => setFinishSlot(isFinish ? null : slotNum)}
-              style={{ accentColor: '#02BDB6', width: 12, height: 12 }}
+              style={{ accentColor: 'var(--accent)', width: 12, height: 12 }}
             />
-            <span style={{ fontSize: 11, color: isFinish ? '#02BDB6' : 'var(--text-muted)', fontWeight: isFinish ? 600 : 400 }}>Финишный</span>
+            <span style={{ fontSize: 11, color: isFinish ? 'var(--accent)' : 'var(--text-muted)', fontWeight: isFinish ? 600 : 400 }}>Финишный</span>
           </label>
         )}
       </div>
@@ -604,14 +604,14 @@ function SubscriptionTemplatesSection() {
   const DEVICE_TYPE_LABELS: Record<DeviceType, string> = { vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape' }
 
   return (
-    <Section title="Абонементы" icon={<CreditCard size={15} strokeWidth={1.75} color="#02BDB6" />}>
+    <Section title="Абонементы" icon={<CreditCard size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {templates.map(tpl => (
-            <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+            <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>{tpl.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{tpl.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                   {DEVICE_TYPE_LABELS[tpl.slot_1_type]} · {tpl.slot_1_duration_min} мин · {tpl.slot_1_sessions_total} сеансов
                   {tpl.slot_2_type && ` + ${DEVICE_TYPE_LABELS[tpl.slot_2_type]}`}
@@ -619,19 +619,19 @@ function SubscriptionTemplatesSection() {
                   {tpl.slot_4_type && ` + ${DEVICE_TYPE_LABELS[tpl.slot_4_type]}`}
                   {' · '}{tpl.validity_days} дней
                   {tpl.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸`}
-                  {tpl.finish_slot != null && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(2,189,182,0.10)', color: '#02BDB6', fontSize: 10, fontWeight: 600, border: '1px solid rgba(2,189,182,0.3)' }}>Финиш: С{tpl.finish_slot}</span>}
+                  {tpl.finish_slot != null && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', color: 'var(--accent)', fontSize: 10, fontWeight: 600, border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' }}>Финиш: С{tpl.finish_slot}</span>}
                   {tpl.is_trial && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontSize: 10, fontWeight: 600, border: '1px solid rgba(245,158,11,0.3)' }}>ТЕСТ</span>}
                 </div>
               </div>
               <button
                 onClick={() => void handleToggleConnection(tpl)}
-                style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: isConnected(tpl.id) ? '1px solid rgba(2,189,182,0.4)' : '1px solid var(--glass-border)', background: isConnected(tpl.id) ? 'rgba(2,189,182,0.10)' : 'transparent', color: isConnected(tpl.id) ? '#02BDB6' : 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: isConnected(tpl.id) ? '1px solid color-mix(in srgb, var(--accent) 40%, transparent)' : '1px solid var(--border)', background: isConnected(tpl.id) ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent', color: isConnected(tpl.id) ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 {isConnected(tpl.id) ? '✓ Подключён' : 'Подключить'}
               </button>
-              <button onClick={() => openEdit(tpl)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+              <button onClick={() => openEdit(tpl)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 <Edit2 size={12} strokeWidth={1.75} />
               </button>
-              <button onClick={() => void handleDelete(tpl.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+              <button onClick={() => void handleDelete(tpl.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 <Trash2 size={12} strokeWidth={1.75} />
               </button>
             </div>
@@ -639,8 +639,8 @@ function SubscriptionTemplatesSection() {
           {templates.length === 0 && !showCreate && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Шаблонов нет</div>}
 
           {showCreate && (
-            <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-elevated)', borderRadius: 13, border: '1px solid var(--glass-border)' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Новый шаблон</div>
+            <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-card)', borderRadius: 13, border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Новый шаблон</div>
               {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{formError}</div>}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div><label style={labelStyle}>Название *</label><input style={inputStyle} placeholder="Базовый 8 сеансов" value={name} onChange={e => setName(e.target.value)} /></div>
@@ -648,22 +648,22 @@ function SubscriptionTemplatesSection() {
                   <div><label style={labelStyle}>Срок (дней)</label><input type="number" min={1} style={inputStyle} value={validityDays} onChange={e => setValidityDays(Math.max(1, Number(e.target.value)))} /></div>
                   <div><label style={labelStyle}>Цена (₸)</label><input type="number" min={0} style={inputStyle} placeholder="0" value={price} onChange={e => setPrice(e.target.value)} /></div>
                 </div>
-                <SlotForm slotNum={1} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+                <SlotForm slotNum={1} slotColor="var(--text)" slotBorder="var(--border)"
                   type={slot1Type} setType={setSlot1Type} dur={slot1Dur} setDur={setSlot1Dur} ses={slot1Ses} setSes={setSlot1Ses}
                   finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 {!isTrial && (
-                  <button onClick={() => setHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot2 ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${hasSlot2 ? 'rgba(2,189,182,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot2 ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <button onClick={() => setHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot2 ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'transparent', border: `1px solid ${hasSlot2 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)'}`, borderRadius: 8, color: hasSlot2 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                     <ChevronDown size={13} style={{ transform: hasSlot2 ? 'rotate(180deg)' : 'none' }} />
                     {hasSlot2 ? 'Убрать Слот 2' : '+ Слот 2'}
                   </button>
                 )}
                 {(hasSlot2 || isTrial) && (
-                  <SlotForm slotNum={2} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+                  <SlotForm slotNum={2} slotColor="var(--text)" slotBorder="var(--border)"
                     type={slot2Type} setType={setSlot2Type} dur={slot2Dur} setDur={setSlot2Dur} ses={slot2Ses} setSes={setSlot2Ses}
                     finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
                 {!isTrial && (
-                  <button onClick={() => setHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${hasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <button onClick={() => setHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${hasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--border)'}`, borderRadius: 8, color: hasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                     <ChevronDown size={13} style={{ transform: hasSlot3 ? 'rotate(180deg)' : 'none' }} />
                     {hasSlot3 ? 'Убрать Слот 3' : '+ Слот 3'}
                   </button>
@@ -674,7 +674,7 @@ function SubscriptionTemplatesSection() {
                     finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
                 {!isTrial && (
-                  <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${hasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: hasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${hasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, color: hasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                     <ChevronDown size={13} style={{ transform: hasSlot4 ? 'rotate(180deg)' : 'none' }} />
                     {hasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
                   </button>
@@ -684,7 +684,7 @@ function SubscriptionTemplatesSection() {
                     type={slot4Type} setType={setSlot4Type} dur={slot4Dur} setDur={setSlot4Dur} ses={slot4Ses} setSes={setSlot4Ses}
                     finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: isTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${isTrial ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: isTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${isTrial ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
                   <input type="checkbox" checked={isTrial} onChange={e => {
                     const checked = e.target.checked
                     setIsTrial(checked)
@@ -697,15 +697,15 @@ function SubscriptionTemplatesSection() {
                 </label>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
-                <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Создание...' : 'Создать'}</button>
-                <button onClick={() => { setShowCreate(false); setFormError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+                <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 34, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Создание...' : 'Создать'}</button>
+                <button onClick={() => { setShowCreate(false); setFormError(null) }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
               </div>
             </div>
           )}
 
           {!showCreate && (
             <div style={{ marginTop: 8 }}>
-              <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                 <Plus size={14} strokeWidth={2} />Новый шаблон
               </button>
             </div>
@@ -720,7 +720,7 @@ function SubscriptionTemplatesSection() {
           <div onClick={e => e.stopPropagation()}
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Редактировать шаблон</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Редактировать шаблон</div>
               <button onClick={() => setEditTpl(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
             </div>
             {eFormError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{eFormError}</div>}
@@ -730,22 +730,22 @@ function SubscriptionTemplatesSection() {
                 <div><label style={labelStyle}>Срок (дней)</label><input type="number" min={1} style={inputStyle} value={eValidityDays} onChange={e => setEValidityDays(Math.max(1, Number(e.target.value)))} /></div>
                 <div><label style={labelStyle}>Цена (₸)</label><input type="number" min={0} style={inputStyle} placeholder="0" value={ePrice} onChange={e => setEPrice(e.target.value)} /></div>
               </div>
-              <SlotForm slotNum={1} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+              <SlotForm slotNum={1} slotColor="var(--text)" slotBorder="var(--border)"
                 type={eSlot1Type} setType={setESlot1Type} dur={eSlot1Dur} setDur={setESlot1Dur} ses={eSlot1Ses} setSes={setESlot1Ses}
                 finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
               {!eIsTrial && (
-                <button onClick={() => setEHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot2 ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${eHasSlot2 ? 'rgba(2,189,182,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: eHasSlot2 ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                <button onClick={() => setEHasSlot2(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot2 ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'transparent', border: `1px solid ${eHasSlot2 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)'}`, borderRadius: 8, color: eHasSlot2 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                   <ChevronDown size={13} style={{ transform: eHasSlot2 ? 'rotate(180deg)' : 'none' }} />
                   {eHasSlot2 ? 'Убрать Слот 2' : '+ Слот 2'}
                 </button>
               )}
               {(eHasSlot2 || eIsTrial) && (
-                <SlotForm slotNum={2} slotColor="var(--text-primary)" slotBorder="var(--glass-border)"
+                <SlotForm slotNum={2} slotColor="var(--text)" slotBorder="var(--border)"
                   type={eSlot2Type} setType={setESlot2Type} dur={eSlot2Dur} setDur={setESlot2Dur} ses={eSlot2Ses} setSes={setESlot2Ses}
                   finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
               )}
               {!eIsTrial && (
-                <button onClick={() => setEHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${eHasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: eHasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                <button onClick={() => setEHasSlot3(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot3 ? 'rgba(139,92,246,0.08)' : 'transparent', border: `1px solid ${eHasSlot3 ? 'rgba(139,92,246,0.3)' : 'var(--border)'}`, borderRadius: 8, color: eHasSlot3 ? '#8b5cf6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                   <ChevronDown size={13} style={{ transform: eHasSlot3 ? 'rotate(180deg)' : 'none' }} />
                   {eHasSlot3 ? 'Убрать Слот 3' : '+ Слот 3'}
                 </button>
@@ -756,7 +756,7 @@ function SubscriptionTemplatesSection() {
                   finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
               )}
               {!eIsTrial && (
-                <button onClick={() => setEHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${eHasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, color: eHasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                <button onClick={() => setEHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${eHasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, color: eHasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                   <ChevronDown size={13} style={{ transform: eHasSlot4 ? 'rotate(180deg)' : 'none' }} />
                   {eHasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
                 </button>
@@ -766,7 +766,7 @@ function SubscriptionTemplatesSection() {
                   type={eSlot4Type} setType={setESlot4Type} dur={eSlot4Dur} setDur={setESlot4Dur} ses={eSlot4Ses} setSes={setESlot4Ses}
                   finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
               )}
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: eIsTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${eIsTrial ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: eIsTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${eIsTrial ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
                 <input type="checkbox" checked={eIsTrial} onChange={e => {
                   const checked = e.target.checked
                   setEIsTrial(checked)
@@ -779,11 +779,11 @@ function SubscriptionTemplatesSection() {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button onClick={() => void handleSaveEdit()} disabled={eSaving}
-                style={{ flex: 1, height: 36, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: eSaving ? 'not-allowed' : 'pointer', opacity: eSaving ? 0.6 : 1 }}>
+                style={{ flex: 1, height: 36, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: eSaving ? 'not-allowed' : 'pointer', opacity: eSaving ? 0.6 : 1 }}>
                 {eSaving ? 'Сохранение...' : 'Сохранить'}
               </button>
               <button onClick={() => setEditTpl(null)}
-                style={{ height: 36, padding: '0 16px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                style={{ height: 36, padding: '0 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                 Отмена
               </button>
             </div>
@@ -850,31 +850,31 @@ function CatalogSection() {
   const CATEGORY_COLORS: Record<string, string> = { merch: '#8b5cf6', nutrition: '#10b981', equipment: '#3b82f6', other: '#71717A' }
 
   return (
-    <Section title="Каталог товаров" icon={<Package size={15} strokeWidth={1.75} color="#02BDB6" />}>
+    <Section title="Каталог товаров" icon={<Package size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {items.map(item => (
-            <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+            <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[item.category] ?? '#71717A', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{item.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                   {item.sku && `SKU: ${item.sku} · `}{item.unit && `${item.unit} · `}
                   {CATALOG_CATEGORIES.find(c => c.value === item.category)?.label}
                   {item.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(item.price)} ₸`}
                 </div>
               </div>
-              <button onClick={() => startEdit(item)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Edit2 size={12} strokeWidth={1.75} /></button>
-              <button onClick={() => void handleDelete(item.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Trash2 size={12} strokeWidth={1.75} /></button>
+              <button onClick={() => startEdit(item)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Edit2 size={12} strokeWidth={1.75} /></button>
+              <button onClick={() => void handleDelete(item.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}><Trash2 size={12} strokeWidth={1.75} /></button>
             </div>
           ))}
           {items.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Каталог пуст</div>}
 
           {showForm && (
-            <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-elevated)', borderRadius: 13, border: '1px solid var(--glass-border)' }}>
+            <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-card)', borderRadius: 13, border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{editItem ? 'Редактировать позицию' : 'Новая позиция'}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{editItem ? 'Редактировать позицию' : 'Новая позиция'}</div>
                 <button onClick={() => { setShowForm(false); setEditItem(null); resetForm() }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={14} /></button>
               </div>
               {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{formError}</div>}
@@ -895,15 +895,15 @@ function CatalogSection() {
                 <div><label style={labelStyle}>Описание</label><input style={inputStyle} placeholder="Краткое описание" value={desc} onChange={e => setDesc(e.target.value)} /></div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
-                <button onClick={() => void handleSave()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Сохранение...' : editItem ? 'Сохранить' : 'Добавить'}</button>
-                <button onClick={() => { setShowForm(false); setEditItem(null); resetForm() }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+                <button onClick={() => void handleSave()} disabled={saving} style={{ flex: 1, height: 34, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Сохранение...' : editItem ? 'Сохранить' : 'Добавить'}</button>
+                <button onClick={() => { setShowForm(false); setEditItem(null); resetForm() }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
               </div>
             </div>
           )}
 
           {!showForm && (
             <div style={{ marginTop: 8 }}>
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                 <Plus size={14} strokeWidth={2} />Добавить позицию
               </button>
             </div>
@@ -994,16 +994,16 @@ function PromoCodesSection() {
   }
 
   return (
-    <Section title="Промокоды" icon={<Tag size={15} strokeWidth={1.75} color="#02BDB6" />}>
+    <Section title="Промокоды" icon={<Tag size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {codes.map(promo => (
-            <div key={promo.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+            <div key={promo.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'monospace', letterSpacing: 1 }}>{promo.code}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: promo.discount_type === 'percent' ? 'rgba(139,92,246,0.10)' : 'rgba(2,189,182,0.10)', color: promo.discount_type === 'percent' ? '#8b5cf6' : '#02BDB6', border: `1px solid ${promo.discount_type === 'percent' ? 'rgba(139,92,246,0.25)' : 'rgba(2,189,182,0.25)'}` }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', fontFamily: 'monospace', letterSpacing: 1 }}>{promo.code}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: promo.discount_type === 'percent' ? 'rgba(139,92,246,0.10)' : 'color-mix(in srgb, var(--accent) 10%, transparent)', color: promo.discount_type === 'percent' ? '#8b5cf6' : 'var(--accent)', border: `1px solid ${promo.discount_type === 'percent' ? 'rgba(139,92,246,0.25)' : 'color-mix(in srgb, var(--accent) 25%, transparent)'}` }}>
                     -{promo.discount_value}{promo.discount_type === 'percent' ? '%' : ' ₸'}
                   </span>
                   {!promo.is_active && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, background: 'rgba(113,113,122,0.10)', color: '#71717A', border: '1px solid rgba(113,113,122,0.2)' }}>Неактивен</span>}
@@ -1013,10 +1013,10 @@ function PromoCodesSection() {
                   {promo.expires_at && <span>До {new Date(promo.expires_at + 'T00:00:00').toLocaleDateString('ru-RU')}</span>}
                 </div>
               </div>
-              <button onClick={() => void handleToggle(promo)} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: promo.is_active ? '1px solid rgba(2,189,182,0.3)' : '1px solid var(--glass-border)', background: promo.is_active ? 'rgba(2,189,182,0.08)' : 'transparent', color: promo.is_active ? '#02BDB6' : 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+              <button onClick={() => void handleToggle(promo)} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: promo.is_active ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid var(--border)', background: promo.is_active ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'transparent', color: promo.is_active ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 {promo.is_active ? 'Активен' : 'Включить'}
               </button>
-              <button onClick={() => void handleDelete(promo.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+              <button onClick={() => void handleDelete(promo.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 <Trash2 size={12} strokeWidth={1.75} />
               </button>
             </div>
@@ -1024,9 +1024,9 @@ function PromoCodesSection() {
           {codes.length === 0 && !showForm && <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Промокодов нет</div>}
 
           {showForm && (
-            <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-elevated)', borderRadius: 13, border: '1px solid var(--glass-border)' }}>
+            <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-card)', borderRadius: 13, border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Новый промокод</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>Новый промокод</div>
                 <button onClick={() => { setShowForm(false); resetForm() }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={14} /></button>
               </div>
               {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{formError}</div>}
@@ -1047,14 +1047,14 @@ function PromoCodesSection() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
-                <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 34, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Создание...' : 'Создать'}</button>
-                <button onClick={() => { setShowForm(false); resetForm() }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+                <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 1, height: 34, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Создание...' : 'Создать'}</button>
+                <button onClick={() => { setShowForm(false); resetForm() }} style={{ height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
               </div>
             </div>
           )}
           {!showForm && (
             <div style={{ marginTop: 8 }}>
-              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                 <Plus size={14} strokeWidth={2} />Добавить промокод
               </button>
             </div>
@@ -1220,16 +1220,16 @@ function PermissionsTab() {
               Object.keys(actions).map((action, actionIdx) => {
                 const actionCount = Object.keys(actions).length
                 return (
-                  <tr key={`${resource}:${action}`} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                  <tr key={`${resource}:${action}`} style={{ borderBottom: '1px solid var(--border)' }}>
                     {actionIdx === 0 && (
                       <td
                         rowSpan={actionCount}
-                        style={{ ...tdStyle, fontWeight: 600, fontSize: 12, verticalAlign: 'middle', borderRight: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', whiteSpace: 'nowrap' }}
+                        style={{ ...tdStyle, fontWeight: 600, fontSize: 12, verticalAlign: 'middle', borderRight: '1px solid var(--border)', background: 'var(--bg-card)', whiteSpace: 'nowrap' }}
                       >
                         {RESOURCE_LABELS[resource] ?? resource}
                       </td>
                     )}
-                    <td style={{ ...tdStyle, fontSize: 12, color: 'var(--text-secondary)', borderRight: '1px solid var(--glass-border)' }}>
+                    <td style={{ ...tdStyle, fontSize: 12, color: 'var(--text-secondary)', borderRight: '1px solid var(--border)' }}>
                       {ACTION_LABELS[action] ?? action}
                     </td>
                     {PERM_ROLES.map(targetRole => {
@@ -1257,9 +1257,9 @@ function PermissionsTab() {
                               width: 30, height: 30, borderRadius: 7, border: 'none',
                               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                               cursor: clickable && !isSaving ? 'pointer' : 'not-allowed',
-                              background: state === 'allow'  ? 'rgba(2,189,182,0.12)' :
+                              background: state === 'allow'  ? 'color-mix(in srgb, var(--accent) 12%, transparent)' :
                                           state === 'locked' ? 'rgba(239,68,68,0.10)' : 'transparent',
-                              color:      state === 'allow'  ? '#02BDB6' :
+                              color:      state === 'allow'  ? 'var(--accent)' :
                                           state === 'locked' ? '#ef4444' : 'var(--text-muted)',
                               opacity: isSaving ? 0.4 : (!clickable ? 0.5 : 1),
                               outline: isOpen ? '2px solid var(--accent)' : 'none',
@@ -1356,7 +1356,7 @@ function UsersTab() {
   return (
     <div>
       {toast && (
-        <div style={{ marginBottom: 10, padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: toast.ok ? '#02BDB618' : '#ef444418', color: toast.ok ? '#02BDB6' : '#ef4444', border: `1px solid ${toast.ok ? '#02BDB640' : '#ef444440'}` }}>
+        <div style={{ marginBottom: 10, padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: toast.ok ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : '#ef444418', color: toast.ok ? 'var(--accent)' : '#ef4444', border: `1px solid ${toast.ok ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : '#ef444440'}` }}>
           {toast.msg}
         </div>
       )}
@@ -1376,9 +1376,9 @@ function UsersTab() {
               const isSavingBranch = saving === `branch:${emp.id}`
 
               return (
-                <tr key={emp.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td style={tdStyle}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{emp.full_name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{emp.full_name}</div>
                     {emp.phone && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.phone}</div>}
                   </td>
                   <td style={{ ...tdStyle, padding: '6px 8px' }}>
@@ -1609,7 +1609,7 @@ function BranchSettingsSection() {
           <input type="text" style={inputStyle} {...field('address')} placeholder="г. Алматы, ул. Примерная, 1" />
         </div>
         <div style={{ gridColumn: 'span 2' }}>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 13px', background: settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 13px', background: settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={settings.allow_cancel_within_24h}
@@ -1617,7 +1617,7 @@ function BranchSettingsSection() {
               style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }}
             />
             <div>
-              <div style={{ fontSize: 13, fontWeight: settings.allow_cancel_within_24h ? 600 : 400, color: settings.allow_cancel_within_24h ? '#f59e0b' : 'var(--text-primary)' }}>Разрешить отмену брони менее чем за 24 часа</div>
+              <div style={{ fontSize: 13, fontWeight: settings.allow_cancel_within_24h ? 600 : 400, color: settings.allow_cancel_within_24h ? '#f59e0b' : 'var(--text)' }}>Разрешить отмену брони менее чем за 24 часа</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>Если включено — все роли смогут отменять записи менее чем за 24 часа до сеанса</div>
             </div>
           </label>
@@ -1625,7 +1625,7 @@ function BranchSettingsSection() {
       </div>
 
       <button onClick={save} disabled={saving}
-        style={{ height: 36, padding: '0 21px', background: saved ? '#02BDB6' : 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>
+        style={{ height: 36, padding: '0 21px', background: saved ? 'var(--accent)' : 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>
         {saving ? 'Сохранение...' : saved ? 'Сохранено!' : 'Сохранить'}
       </button>
     </div>
@@ -1645,7 +1645,7 @@ interface AuditEntry {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  create: '#02BDB6', update: '#8b5cf6', delete: '#ef4444',
+  create: 'var(--accent)', update: '#8b5cf6', delete: '#ef4444',
   status_change: '#f59e0b', follow_up_reminder: '#3b82f6', deadline_reminder: '#f97316',
 }
 
@@ -1667,7 +1667,7 @@ function AuditLogSection() {
 
   useEffect(() => { load() }, [load])
 
-  const tdS: React.CSSProperties = { padding: '9px 12px', fontSize: 12, borderBottom: '1px solid var(--glass-border)', verticalAlign: 'middle' }
+  const tdS: React.CSSProperties = { padding: '9px 12px', fontSize: 12, borderBottom: '1px solid var(--border)', verticalAlign: 'middle' }
 
   const ENTITY_TYPES = ['client', 'lead', 'task', 'subscription', 'employee', 'shift', 'booking', 'warehouse_item', 'supplier_order']
 
@@ -1675,11 +1675,11 @@ function AuditLogSection() {
     <div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 13, flexWrap: 'wrap', alignItems: 'center' }}>
         <select value={entityType} onChange={e => setEntityType(e.target.value)}
-          style={{ fontSize: 12, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer' }}>
+          style={{ fontSize: 12, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text)', cursor: 'pointer' }}>
           <option value="">Все типы</option>
           {ENTITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
-        <button onClick={load} style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer' }}>
+        <button onClick={load} style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text)', cursor: 'pointer' }}>
           Обновить
         </button>
         <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 'auto' }}>{entries.length} записей</span>
@@ -1706,13 +1706,13 @@ function AuditLogSection() {
                 const dateStr = dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })
                 const timeStr = dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
                 return (
-                  <tr key={e.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                  <tr key={e.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={tdS}>
-                      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{timeStr}</div>
+                      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text)' }}>{timeStr}</div>
                       <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{dateStr}</div>
                     </td>
                     <td style={tdS}>
-                      <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}>
+                      <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
                         {e.entity_type ?? '—'}
                       </span>
                     </td>
@@ -1807,15 +1807,15 @@ function OnlineBookingTab() {
 
   const slugInputRow = (onAction: () => void, btnLabel: string, btnDisabled: boolean) => (
     <div style={{ display: 'flex', gap: 8 }}>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
-        <span style={{ padding: '0 10px', fontSize: 12, color: 'var(--text-muted)', background: 'var(--bg-surface)', height: 36, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' as const, borderRight: '1px solid var(--glass-border)', flexShrink: 0 }}>/book/</span>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+        <span style={{ padding: '0 10px', fontSize: 12, color: 'var(--text-muted)', background: 'var(--bg-surface)', height: 36, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' as const, borderRight: '1px solid var(--border)', flexShrink: 0 }}>/book/</span>
         <input style={{ ...inputStyle, border: 'none', borderRadius: 0, flex: 1 }}
           placeholder="studio-almaty"
           value={slug}
           onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} />
       </div>
       <button onClick={onAction} disabled={saving || btnDisabled}
-        style={{ height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving || btnDisabled ? 'not-allowed' : 'pointer', opacity: saving || btnDisabled ? 0.55 : 1, flexShrink: 0 }}>
+        style={{ height: 36, padding: '0 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving || btnDisabled ? 'not-allowed' : 'pointer', opacity: saving || btnDisabled ? 0.55 : 1, flexShrink: 0 }}>
         {saving ? '...' : btnLabel}
       </button>
     </div>
@@ -1837,13 +1837,13 @@ function OnlineBookingTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {/* Toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg-elevated)', borderRadius: 12, border: '1px solid var(--glass-border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border)' }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>Принимать онлайн-записи</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>Принимать онлайн-записи</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{link.is_active ? 'Клиенты могут записываться' : 'Страница недоступна'}</div>
         </div>
         <button onClick={() => void handleToggleActive()}
-          style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: link.is_active ? '#02BDB6' : 'rgba(255,255,255,0.15)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+          style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: link.is_active ? 'var(--accent)' : 'rgba(255,255,255,0.15)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
           <span style={{ position: 'absolute', top: 2, left: link.is_active ? 22 : 2, width: 20, height: 20, borderRadius: 10, background: '#fff', transition: 'left 0.2s', display: 'block' }} />
         </button>
       </div>
@@ -1852,15 +1852,15 @@ function OnlineBookingTab() {
       <div>
         <label style={labelStyle}>Ссылка для клиентов</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ flex: 1, padding: '8px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+          <div style={{ flex: 1, padding: '8px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
             {bookingUrl}
           </div>
           <button onClick={handleCopy}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 12px', background: 'transparent', border: `1px solid ${copied ? 'rgba(2,189,182,0.4)' : 'var(--glass-border)'}`, borderRadius: 8, color: copied ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 12px', background: 'transparent', border: `1px solid ${copied ? 'color-mix(in srgb, var(--accent) 40%, transparent)' : 'var(--border)'}`, borderRadius: 8, color: copied ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', flexShrink: 0, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
             <Copy size={13} />{copied ? 'Скопировано' : 'Копировать'}
           </button>
           <button onClick={() => setShowQR(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 12px', background: showQR ? 'rgba(2,189,182,0.08)' : 'transparent', border: `1px solid ${showQR ? 'rgba(2,189,182,0.4)' : 'var(--glass-border)'}`, borderRadius: 8, color: showQR ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 12px', background: showQR ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'transparent', border: `1px solid ${showQR ? 'color-mix(in srgb, var(--accent) 40%, transparent)' : 'var(--border)'}`, borderRadius: 8, color: showQR ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>
             <QrCode size={13} />QR
           </button>
         </div>
@@ -1903,7 +1903,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   subscription_expiring: 'Абонемент истекает',
 }
 const TRIGGER_ICONS: Record<string, React.ReactNode> = {
-  lead_created:          <Zap size={15} color="#02BDB6" />,
+  lead_created:          <Zap size={15} color="var(--accent)" />,
   lead_no_activity:      <Clock size={15} color="#f59e0b" />,
   subscription_expiring: <AlertCircle size={15} color="#f97316" />,
 }
@@ -2000,10 +2000,10 @@ function AutomationTab() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 13 }}>
           {rules.map(rule => (
-            <div key={rule.id} style={{ padding: '12px 14px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div key={rule.id} style={{ padding: '12px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ flexShrink: 0 }}>{TRIGGER_ICONS[rule.trigger_type] ?? <Zap size={15} />}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 3 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 3 }}>
                   {TRIGGER_LABELS[rule.trigger_type] ?? rule.trigger_type}
                   {rule.trigger_value != null && (
                     <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}> · {rule.trigger_value} дн.</span>
@@ -2017,15 +2017,15 @@ function AutomationTab() {
                 </div>
               </div>
               <button onClick={() => void handleToggle(rule)}
-                style={{ width: 38, height: 22, borderRadius: 11, border: 'none', background: rule.is_active ? '#02BDB6' : 'rgba(255,255,255,0.15)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                style={{ width: 38, height: 22, borderRadius: 11, border: 'none', background: rule.is_active ? 'var(--accent)' : 'rgba(255,255,255,0.15)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                 <span style={{ position: 'absolute', top: 1, left: rule.is_active ? 17 : 1, width: 20, height: 20, borderRadius: 10, background: '#fff', transition: 'left 0.2s', display: 'block' }} />
               </button>
               <button onClick={() => openEdit(rule)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 <Edit2 size={12} strokeWidth={1.75} />
               </button>
               <button onClick={() => void handleDelete(rule.id)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 <Trash2 size={12} strokeWidth={1.75} />
               </button>
             </div>
@@ -2034,7 +2034,7 @@ function AutomationTab() {
       )}
 
       <button onClick={openCreate}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+        style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
         <Plus size={14} strokeWidth={2} />Добавить правило
       </button>
 
@@ -2044,7 +2044,7 @@ function AutomationTab() {
           <div onClick={e => e.stopPropagation()}
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 460, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{editRule ? 'Редактировать правило' : 'Новое правило'}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{editRule ? 'Редактировать правило' : 'Новое правило'}</div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
             </div>
             {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{formError}</div>}
@@ -2091,11 +2091,11 @@ function AutomationTab() {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
               <button onClick={() => void handleSave()} disabled={saving}
-                style={{ flex: 1, height: 38, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                style={{ flex: 1, height: 38, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
                 {saving ? 'Сохранение...' : editRule ? 'Сохранить' : 'Создать'}
               </button>
               <button onClick={() => setShowModal(false)}
-                style={{ height: 38, padding: '0 16px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                style={{ height: 38, padding: '0 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                 Отмена
               </button>
             </div>
@@ -2134,16 +2134,16 @@ export default function ManagementPage() {
   return (
     <div>
       <div style={{ marginBottom: 21, maxWidth: 700 }}>
-        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Управление</h1>
+        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Управление</h1>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Оборудование, структура, абонементы, каталог</p>
       </div>
 
       {/* Tabs */}
       <style>{'.mgmt-tabs::-webkit-scrollbar{display:none}'}</style>
-      <div className="mgmt-tabs" style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 4, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
+      <div className="mgmt-tabs" style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 4, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, height: 34, padding: '0 10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-elevated)' : 'transparent', color: tab === t.id ? 'var(--text-primary)' : 'var(--text-muted)', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, height: 34, padding: '0 10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-card)' : 'transparent', color: tab === t.id ? 'var(--text)' : 'var(--text-muted)', whiteSpace: 'nowrap', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
             {t.icon}{t.label}
           </button>
         ))}
@@ -2160,37 +2160,37 @@ export default function ManagementPage() {
       {tab === 'subscriptions' && <div style={{ maxWidth: 700 }}><SubscriptionTemplatesSection /><PromoCodesSection /></div>}
       {tab === 'catalog' && isDeveloperOrOwner && <div style={{ maxWidth: 700 }}><CatalogSection /></div>}
       {tab === 'permissions' && perm.can('permissions', 'view') && (
-        <Section title="Матрица прав доступа" icon={<Shield size={15} strokeWidth={1.75} color="#02BDB6" />}>
+        <Section title="Матрица прав доступа" icon={<Shield size={15} strokeWidth={1.75} color="var(--accent)" />}>
           <PermissionsTab />
         </Section>
       )}
       {tab === 'users' && user?.role === 'developer' && (
-        <Section title="Пользователи" icon={<Users size={15} strokeWidth={1.75} color="#02BDB6" />}>
+        <Section title="Пользователи" icon={<Users size={15} strokeWidth={1.75} color="var(--accent)" />}>
           <UsersTab />
         </Section>
       )}
       {tab === 'audit' && (isDeveloperOrOwner || user?.role === 'admin') && (
-        <Section title="Журнал аудита" icon={<ClipboardList size={15} strokeWidth={1.75} color="#02BDB6" />}>
+        <Section title="Журнал аудита" icon={<ClipboardList size={15} strokeWidth={1.75} color="var(--accent)" />}>
           <AuditLogSection />
         </Section>
       )}
       {tab === 'branch_settings' && (isDeveloperOrOwner || user?.role === 'admin') && (
         <div style={{ maxWidth: 700 }}>
-          <Section title="Настройки филиала" icon={<Cpu size={15} strokeWidth={1.75} color="#02BDB6" />}>
+          <Section title="Настройки филиала" icon={<Cpu size={15} strokeWidth={1.75} color="var(--accent)" />}>
             <BranchSettingsSection />
           </Section>
         </div>
       )}
       {tab === 'booking' && isFranchiseeOrAbove && (
         <div style={{ maxWidth: 700 }}>
-          <Section title="Онлайн-запись" icon={<Globe size={15} strokeWidth={1.75} color="#02BDB6" />}>
+          <Section title="Онлайн-запись" icon={<Globe size={15} strokeWidth={1.75} color="var(--accent)" />}>
             <OnlineBookingTab />
           </Section>
         </div>
       )}
       {tab === 'automation' && isFranchiseeOrAbove && (
         <div style={{ maxWidth: 700 }}>
-          <Section title="Автоворонка" icon={<Zap size={15} strokeWidth={1.75} color="#02BDB6" />}>
+          <Section title="Автоворонка" icon={<Zap size={15} strokeWidth={1.75} color="var(--accent)" />}>
             <AutomationTab />
           </Section>
         </div>

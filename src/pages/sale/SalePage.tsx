@@ -44,14 +44,14 @@ const fmt = (n: number) => new Intl.NumberFormat('ru-KZ').format(n)
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const inputSt: React.CSSProperties = {
-  height: 40, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  height: 40, padding: '0 13px', background: 'var(--bg-card)',
+  border: '1px solid var(--border)', borderRadius: 8,
+  color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
 }
 const labelSt: React.CSSProperties = { fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }
 const cardSt: React.CSSProperties = {
-  background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-  border: '1px solid var(--glass-border)', borderRadius: 21, padding: 21, marginBottom: 13,
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border)', borderRadius: 16, padding: 21, marginBottom: 13,
 }
 
 // ─── PromoModal ───────────────────────────────────────────────────────────────
@@ -93,12 +93,12 @@ function PromoModal({ onClose, onApply }: PromoModalProps) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Tag size={16} color="#02BDB6" />
-            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Промокод</span>
+            <Tag size={16} color="var(--accent)" />
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Промокод</span>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}><X size={16} /></button>
         </div>
@@ -116,7 +116,7 @@ function PromoModal({ onClose, onApply }: PromoModalProps) {
           <button
             onClick={() => void handleValidate()}
             disabled={validating || !input.trim()}
-            style={{ height: 40, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (validating || !input.trim()) ? 'not-allowed' : 'pointer', opacity: (validating || !input.trim()) ? 0.6 : 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
+            style={{ height: 40, padding: '0 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (validating || !input.trim()) ? 'not-allowed' : 'pointer', opacity: (validating || !input.trim()) ? 0.6 : 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
             {validating ? '...' : 'Применить'}
           </button>
         </div>
@@ -137,13 +137,13 @@ function PromoModal({ onClose, onApply }: PromoModalProps) {
         {/* Footer */}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button onClick={onClose}
-            style={{ height: 38, padding: '0 16px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            style={{ height: 38, padding: '0 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
             Закрыть
           </button>
           <button
             onClick={handleConfirm}
             disabled={!result}
-            style={{ height: 38, padding: '0 18px', background: result ? '#10b981' : 'var(--bg-elevated)', border: `1px solid ${result ? '#10b981' : 'var(--glass-border)'}`, borderRadius: 8, color: result ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: result ? 'pointer' : 'not-allowed', opacity: result ? 1 : 0.5 }}>
+            style={{ height: 38, padding: '0 18px', background: result ? '#10b981' : 'var(--bg-card)', border: `1px solid ${result ? '#10b981' : 'var(--border)'}`, borderRadius: 8, color: result ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: result ? 'pointer' : 'not-allowed', opacity: result ? 1 : 0.5 }}>
             Подтвердить
           </button>
         </div>
@@ -183,10 +183,10 @@ function ClientSearch({ value, onChange, onCreateNew }: ClientSearchProps) {
 
   if (value) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 40, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid #02BDB6', borderRadius: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 40, padding: '0 13px', background: 'var(--bg-card)', border: '1px solid var(--accent)', borderRadius: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <User size={14} strokeWidth={1.75} color="#02BDB6" />
-          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{value.full_name}</span>
+          <User size={14} strokeWidth={1.75} color="var(--accent)" />
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{value.full_name}</span>
           {value.phone && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{value.phone}</span>}
         </div>
         <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }}><X size={13} /></button>
@@ -205,16 +205,16 @@ function ClientSearch({ value, onChange, onCreateNew }: ClientSearchProps) {
         onFocus={() => q && setOpen(true)}
       />
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden', marginTop: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginTop: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
           {res.map(c => (
             <button key={c.id} onClick={() => { onChange(c); setQ(''); setOpen(false) }}
-              style={{ display: 'block', width: '100%', padding: '9px 13px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid var(--glass-border)', cursor: 'pointer', color: 'var(--text-primary)', fontSize: 13 }}>
+              style={{ display: 'block', width: '100%', padding: '9px 13px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text)', fontSize: 13 }}>
               {c.full_name}{c.phone && <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 8 }}>{c.phone}</span>}
             </button>
           ))}
           {q.trim() && (
             <button onClick={() => { onCreateNew(q.trim()); setOpen(false) }}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '9px 13px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#02BDB6', fontSize: 13 }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '9px 13px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--accent)', fontSize: 13 }}>
               <Plus size={13} />Создать клиента «{q.trim()}»
             </button>
           )}
@@ -251,8 +251,8 @@ function CreateClientInline({ defaultName, onCreated, onCancel }: CreateClientIn
   }
 
   return (
-    <div style={{ padding: 13, background: 'var(--bg-elevated)', border: '1px solid rgba(2,189,182,0.25)', borderRadius: 13, marginTop: 8 }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: '#02BDB6', marginBottom: 13 }}>Новый клиент</div>
+    <div style={{ padding: 13, background: 'var(--bg-card)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', borderRadius: 13, marginTop: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 13 }}>Новый клиент</div>
       {error && <div style={{ fontSize: 11, color: '#ef4444', marginBottom: 8 }}>{error}</div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
         <div>
@@ -266,11 +266,11 @@ function CreateClientInline({ defaultName, onCreated, onCancel }: CreateClientIn
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => void handleCreate()} disabled={saving}
-          style={{ flex: 1, height: 32, background: '#02BDB6', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+          style={{ flex: 1, height: 32, background: 'var(--accent)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Создание...' : 'Создать'}
         </button>
         <button onClick={onCancel}
-          style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+          style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
           Отмена
         </button>
       </div>
@@ -416,16 +416,16 @@ export default function SalePage() {
     const hasSubscription = receipt.items_created.some(i => i.type === 'subscription')
     return (
       <div style={{ maxWidth: 480 }}>
-        <div style={{ ...cardSt, textAlign: 'center', padding: 34 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 21px' }}>
-            <Check size={28} strokeWidth={2.5} color="#02BDB6" />
+        <div style={{ ...cardSt, textAlign: 'center', padding: 28 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 21px' }}>
+            <Check size={28} strokeWidth={2.5} color="var(--accent)" />
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Продажа оформлена!</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Продажа оформлена!</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
-            Клиент: <strong style={{ color: 'var(--text-primary)' }}>{receipt.client.full_name}</strong>
+            Клиент: <strong style={{ color: 'var(--text)' }}>{receipt.client.full_name}</strong>
           </div>
 
-          <div style={{ background: 'var(--bg-elevated)', borderRadius: 13, padding: '13px 18px', margin: '18px 0', textAlign: 'left' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 13, padding: '13px 18px', margin: '18px 0', textAlign: 'left' }}>
             {receipt.items_created.map((item, i) => (
               <div key={i} style={{ fontSize: 13, color: 'var(--text-secondary)', padding: '3px 0' }}>• {item.name}</div>
             ))}
@@ -434,7 +434,7 @@ export default function SalePage() {
                 Скидка: −{fmt(receipt.discount)} ₸
               </div>
             )}
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
               Итого: {fmt(receipt.total)} ₸ · {receipt.payment_method === 'cash' ? 'Наличные' : 'Карта'}
             </div>
           </div>
@@ -442,12 +442,12 @@ export default function SalePage() {
           <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
             {hasSubscription && (
               <button onClick={() => navigate('/schedule')}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 <Calendar size={16} strokeWidth={2} />Записать на тренировку
               </button>
             )}
             <button onClick={handleReset}
-              style={{ height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+              style={{ height: 40, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
               Новая продажа
             </button>
           </div>
@@ -465,7 +465,7 @@ export default function SalePage() {
           <button onClick={() => setStage('cart')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', padding: 0 }}>
             <ArrowLeft size={16} />Назад
           </button>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Способ оплаты</h1>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Способ оплаты</h1>
         </div>
 
         {payError && (
@@ -475,13 +475,13 @@ export default function SalePage() {
         )}
 
         <div style={cardSt}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Оплата</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Оплата</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {(['cash', 'card'] as PaymentMethod[]).map(m => (
               <button key={m} onClick={() => setPayMethod(m)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '21px 13px', background: payMethod === m ? 'rgba(2,189,182,0.08)' : 'var(--bg-elevated)', border: `1px solid ${payMethod === m ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
-                {m === 'cash' ? <Banknote size={24} color={payMethod === m ? '#02BDB6' : 'var(--text-muted)'} /> : <CreditCard size={24} color={payMethod === m ? '#02BDB6' : 'var(--text-muted)'} />}
-                <span style={{ fontSize: 13, fontWeight: 600, color: payMethod === m ? '#02BDB6' : 'var(--text-primary)' }}>{m === 'cash' ? 'Наличные' : 'Карта'}</span>
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '21px 13px', background: payMethod === m ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-card)', border: `1px solid ${payMethod === m ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 13, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+                {m === 'cash' ? <Banknote size={24} color={payMethod === m ? 'var(--accent)' : 'var(--text-muted)'} /> : <CreditCard size={24} color={payMethod === m ? 'var(--accent)' : 'var(--text-muted)'} />}
+                <span style={{ fontSize: 13, fontWeight: 600, color: payMethod === m ? 'var(--accent)' : 'var(--text)' }}>{m === 'cash' ? 'Наличные' : 'Карта'}</span>
               </button>
             ))}
           </div>
@@ -504,13 +504,13 @@ export default function SalePage() {
               </div>
             </>
           )}
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>
             Итого: {fmt(total)} ₸
           </div>
         </div>
 
         <button onClick={() => void handlePay()} disabled={paying}
-          style={{ width: '100%', height: 48, background: '#02BDB6', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: paying ? 'not-allowed' : 'pointer', opacity: paying ? 0.7 : 1 }}>
+          style={{ width: '100%', height: 48, background: 'var(--accent)', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: paying ? 'not-allowed' : 'pointer', opacity: paying ? 0.7 : 1 }}>
           {paying ? 'Оформление...' : `Подтвердить оплату · ${fmt(total)} ₸`}
         </button>
       </div>
@@ -534,7 +534,7 @@ export default function SalePage() {
           <button onClick={() => setStage('catalog')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', padding: 0 }}>
             <ArrowLeft size={16} />Каталог
           </button>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Корзина</h1>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Корзина</h1>
         </div>
 
         {cartError && (
@@ -545,13 +545,13 @@ export default function SalePage() {
 
         {/* Cart items */}
         <div style={cardSt}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Позиции</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Позиции</div>
           {cart.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Корзина пуста</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Название', 'Кол-во', 'Цена', 'Сумма', ''].map(h => (
                     <th key={h} style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', padding: '0 8px 8px', textAlign: h === 'Название' ? 'left' : 'center' }}>{h}</th>
                   ))}
@@ -559,19 +559,19 @@ export default function SalePage() {
               </thead>
               <tbody>
                 {cart.map(item => (
-                  <tr key={`${item.type}-${item.id}`} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                    <td style={{ padding: '10px 8px', fontSize: 13, color: 'var(--text-primary)' }}>{item.name}</td>
+                  <tr key={`${item.type}-${item.id}`} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '10px 8px', fontSize: 13, color: 'var(--text)' }}>{item.name}</td>
                     <td style={{ padding: '10px 8px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                        <button onClick={() => changeQty(item.id, item.type, -1)} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 4, cursor: 'pointer', color: 'var(--text-muted)' }}><Minus size={10} /></button>
-                        <span style={{ fontSize: 13, minWidth: 20, textAlign: 'center', color: 'var(--text-primary)' }}>{item.qty}</span>
-                        <button onClick={() => changeQty(item.id, item.type, +1)} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 4, cursor: 'pointer', color: 'var(--text-muted)' }}><Plus size={10} /></button>
+                        <button onClick={() => changeQty(item.id, item.type, -1)} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer', color: 'var(--text-muted)' }}><Minus size={10} /></button>
+                        <span style={{ fontSize: 13, minWidth: 20, textAlign: 'center', color: 'var(--text)' }}>{item.qty}</span>
+                        <button onClick={() => changeQty(item.id, item.type, +1)} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer', color: 'var(--text-muted)' }}><Plus size={10} /></button>
                       </div>
                     </td>
                     <td style={{ padding: '10px 8px', fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>
                       {item.price !== null ? `${fmt(item.price)} ₸` : '—'}
                     </td>
-                    <td style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center' }}>
+                    <td style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: 'var(--text)', textAlign: 'center' }}>
                       {item.price !== null ? `${fmt(item.price * item.qty)} ₸` : '—'}
                     </td>
                     <td style={{ padding: '10px 8px', textAlign: 'center' }}>
@@ -594,15 +594,15 @@ export default function SalePage() {
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={3} style={{ padding: '2px 8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>Итого:</td>
-                      <td style={{ padding: '2px 8px 10px', fontSize: 15, fontWeight: 700, color: '#02BDB6', textAlign: 'center' }}>{fmt(total)} ₸</td>
+                      <td colSpan={3} style={{ padding: '2px 8px 10px', fontSize: 13, fontWeight: 600, color: 'var(--text)', textAlign: 'right' }}>Итого:</td>
+                      <td style={{ padding: '2px 8px 10px', fontSize: 15, fontWeight: 700, color: 'var(--accent)', textAlign: 'center' }}>{fmt(total)} ₸</td>
                       <td />
                     </tr>
                   </>
                 ) : (
                   <tr>
-                    <td colSpan={3} style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>Итого:</td>
-                    <td style={{ padding: '10px 8px', fontSize: 15, fontWeight: 700, color: '#02BDB6', textAlign: 'center' }}>{fmt(subtotal)} ₸</td>
+                    <td colSpan={3} style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: 'var(--text)', textAlign: 'right' }}>Итого:</td>
+                    <td style={{ padding: '10px 8px', fontSize: 15, fontWeight: 700, color: 'var(--accent)', textAlign: 'center' }}>{fmt(subtotal)} ₸</td>
                     <td />
                   </tr>
                 )}
@@ -613,7 +613,7 @@ export default function SalePage() {
 
         {/* Client */}
         <div style={cardSt}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Клиент</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Клиент</div>
           <ClientSearch value={client} onChange={setClient} onCreateNew={name => setCreatingName(name)} />
           {creatingName !== null && (
             <CreateClientInline defaultName={creatingName} onCreated={c => { setClient(c); setCreatingName(null) }} onCancel={() => setCreatingName(null)} />
@@ -622,7 +622,7 @@ export default function SalePage() {
 
         {/* Promo code */}
         <div style={cardSt}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Промокод</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Промокод</div>
           {appliedPromo ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 40, padding: '0 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -635,7 +635,7 @@ export default function SalePage() {
           ) : (
             <button
               onClick={() => setPromoModalOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13, width: '100%' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13, width: '100%' }}>
               <Tag size={14} color="var(--text-muted)" />
               Ввести промокод
             </button>
@@ -645,7 +645,7 @@ export default function SalePage() {
         {/* Date start for subscriptions */}
         {cart.some(c => c.type === 'subscription') && (
           <div style={cardSt}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Дата начала абонемента</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Дата начала абонемента</div>
             <input type="date" style={inputSt} value={dateStart} onChange={e => setDateStart(e.target.value)} />
           </div>
         )}
@@ -653,7 +653,7 @@ export default function SalePage() {
         <button
           onClick={() => { if (!client) { setCartError('Выберите клиента'); return }; setCartError(null); setStage('payment') }}
           disabled={!canProceed}
-          style={{ width: '100%', height: 48, background: '#02BDB6', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: canProceed ? 'pointer' : 'not-allowed', opacity: canProceed ? 1 : 0.5 }}>
+          style={{ width: '100%', height: 48, background: 'var(--accent)', border: 'none', borderRadius: 13, color: '#fff', fontSize: 15, fontWeight: 700, cursor: canProceed ? 'pointer' : 'not-allowed', opacity: canProceed ? 1 : 0.5 }}>
           Перейти к оплате · {fmt(total)} ₸
         </button>
       </div>
@@ -669,12 +669,12 @@ export default function SalePage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
         <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Продажа</h1>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Продажа</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Добавьте товары в корзину</p>
         </div>
         <button
           onClick={() => { if (cart.length > 0) setStage('cart') }}
-          style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 18px', background: cartCount > 0 ? '#02BDB6' : 'var(--bg-elevated)', border: `1px solid ${cartCount > 0 ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 13, color: cartCount > 0 ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: cartCount > 0 ? 'pointer' : 'default', transition: 'all 0.15s' }}>
+          style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 18px', background: cartCount > 0 ? 'var(--accent)' : 'var(--bg-card)', border: `1px solid ${cartCount > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 13, color: cartCount > 0 ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: cartCount > 0 ? 'pointer' : 'default', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
           <ShoppingCart size={18} strokeWidth={2} />
           {cartCount > 0 ? `Корзина · ${cartCount}` : 'Корзина пуста'}
         </button>
@@ -687,16 +687,16 @@ export default function SalePage() {
           {/* Subscriptions */}
           {templates.length > 0 && (
             <div style={cardSt}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Абонементы</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Абонементы</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {templates.map(tpl => {
                   const qty = inCart(tpl.id, 'subscription')
                   return (
-                    <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'rgba(2,189,182,0.06)' : 'var(--bg-elevated)', border: `1px solid ${qty > 0 ? 'rgba(2,189,182,0.3)' : 'var(--glass-border)'}`, borderRadius: 10, gap: 10 }}>
+                    <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>{tpl.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>{tpl.name}</div>
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(2,189,182,0.10)', color: '#02BDB6', border: '1px solid rgba(2,189,182,0.2)' }}>
+                          <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}>
                             {DEVICE_LABELS[tpl.slot_1_type]} · {tpl.slot_1_sessions_total} сеансов
                           </span>
                           {tpl.slot_2_type && tpl.slot_2_sessions_total && (
@@ -720,10 +720,10 @@ export default function SalePage() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                        {tpl.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{fmt(tpl.price)} ₸</span>}
+                        {tpl.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{fmt(tpl.price)} ₸</span>}
                         <button
                           onClick={() => addToCart({ id: tpl.id, type: 'subscription', name: tpl.name, price: tpl.price, qty: 1 })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? '#02BDB6' : 'var(--bg-elevated)', border: `1px solid ${qty > 0 ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? 'var(--accent)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                           <Plus size={12} />{qty > 0 ? `В корзине (${qty})` : 'В корзину'}
                         </button>
                       </div>
@@ -737,21 +737,21 @@ export default function SalePage() {
           {/* Merch */}
           {merch.length > 0 && (
             <div style={cardSt}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Мерч</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Мерч</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {merch.map(item => {
                   const qty = inCart(item.id, 'warehouse')
                   return (
-                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'rgba(139,92,246,0.06)' : 'var(--bg-elevated)', border: `1px solid ${qty > 0 ? 'rgba(139,92,246,0.3)' : 'var(--glass-border)'}`, borderRadius: 10, gap: 10 }}>
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'rgba(139,92,246,0.06)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'rgba(139,92,246,0.3)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{item.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>На складе: {item.quantity} {item.unit ?? 'шт.'}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                        {item.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{fmt(item.price)} ₸</span>}
+                        {item.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{fmt(item.price)} ₸</span>}
                         <button
                           onClick={() => addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? '#8b5cf6' : 'var(--bg-elevated)', border: `1px solid ${qty > 0 ? '#8b5cf6' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? '#8b5cf6' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? '#8b5cf6' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                           <Plus size={12} />{qty > 0 ? `В корзине (${qty})` : 'В корзину'}
                         </button>
                       </div>
@@ -765,21 +765,21 @@ export default function SalePage() {
           {/* Nutrition */}
           {nutrition.length > 0 && (
             <div style={cardSt}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Питание</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Питание</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {nutrition.map(item => {
                   const qty = inCart(item.id, 'warehouse')
                   return (
-                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'rgba(16,185,129,0.06)' : 'var(--bg-elevated)', border: `1px solid ${qty > 0 ? 'rgba(16,185,129,0.3)' : 'var(--glass-border)'}`, borderRadius: 10, gap: 10 }}>
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'rgba(16,185,129,0.06)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{item.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>На складе: {item.quantity} {item.unit ?? 'шт.'}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                        {item.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{fmt(item.price)} ₸</span>}
+                        {item.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{fmt(item.price)} ₸</span>}
                         <button
                           onClick={() => addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? '#10b981' : 'var(--bg-elevated)', border: `1px solid ${qty > 0 ? '#10b981' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? '#10b981' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? '#10b981' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                           <Plus size={12} />{qty > 0 ? `В корзине (${qty})` : 'В корзину'}
                         </button>
                       </div>
@@ -791,7 +791,7 @@ export default function SalePage() {
           )}
 
           {templates.length === 0 && merch.length === 0 && nutrition.length === 0 && (
-            <div style={{ ...cardSt, textAlign: 'center', padding: 34 }}>
+            <div style={{ ...cardSt, textAlign: 'center', padding: 28 }}>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Нет доступных товаров для продажи</div>
             </div>
           )}

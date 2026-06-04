@@ -26,7 +26,7 @@ const TYPE_LABELS = {
 }
 
 const TYPE_COLORS = {
-  client:       '#02BDB6',
+  client:       'var(--accent)',
   lead:         '#f59e0b',
   task:         '#8b5cf6',
   subscription: '#263CD9',
@@ -130,19 +130,19 @@ export function GlobalSearch() {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 80 }}>
       <div onClick={closeSearch} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 560, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 560, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
         {/* Input */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: results.length > 0 || loading ? '1px solid var(--glass-border)' : 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: results.length > 0 || loading ? '1px solid var(--border)' : 'none' }}>
           <Search size={16} color="var(--text-muted)" />
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Поиск клиентов, лидов, задач..."
-            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: 15, fontFamily: 'inherit' }}
+            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text)', fontSize: 15, fontFamily: 'inherit' }}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <kbd style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>ESC</kbd>
+            <kbd style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>ESC</kbd>
             <button onClick={closeSearch} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2, display: 'flex' }}><X size={14} /></button>
           </div>
         </div>
@@ -167,7 +167,7 @@ export function GlobalSearch() {
                   {TYPE_ICONS[r.type]}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
                   {r.subtitle && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.subtitle}</div>}
                 </div>
                 <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: TYPE_COLORS[r.type] + '18', color: TYPE_COLORS[r.type], flexShrink: 0 }}>
@@ -181,9 +181,9 @@ export function GlobalSearch() {
         {/* Footer hint */}
         {!loading && query.length < 2 && (
           <div style={{ padding: '10px 16px', fontSize: 11, color: 'var(--text-muted)', display: 'flex', gap: 13 }}>
-            <span><kbd style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'var(--bg-surface)', border: '1px solid var(--glass-border)' }}>↑↓</kbd> навигация</span>
-            <span><kbd style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'var(--bg-surface)', border: '1px solid var(--glass-border)' }}>Enter</kbd> выбрать</span>
-            <span><kbd style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'var(--bg-surface)', border: '1px solid var(--glass-border)' }}>Ctrl+K</kbd> закрыть</span>
+            <span><kbd style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>↑↓</kbd> навигация</span>
+            <span><kbd style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>Enter</kbd> выбрать</span>
+            <span><kbd style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>Ctrl+K</kbd> закрыть</span>
           </div>
         )}
       </div>

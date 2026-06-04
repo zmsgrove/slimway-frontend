@@ -15,7 +15,7 @@ import { VERSION } from '../../version'
 interface SectionProps { title: string; icon: React.ReactNode; children: React.ReactNode }
 function Section({ title, icon, children }: SectionProps) {
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 21, overflow: 'hidden', marginBottom: 13 }}>
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', marginBottom: 13 }}>
       <div style={{ padding: '13px 21px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
         {icon}{title}
       </div>
@@ -414,7 +414,7 @@ function SecuritySection() {
       {showEnroll && enrollData && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
           <div onClick={closeEnroll} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} />
-          <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+          <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Настройка 2FA</div>
               <button onClick={closeEnroll} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={16} /></button>
@@ -508,7 +508,7 @@ function SecuritySection() {
 
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => void handleVerify()} disabled={verifyLoading || verifyCode.length !== 6}
-                    style={{ flex: 1, height: 40, background: (verifyLoading || verifyCode.length !== 6) ? 'rgba(2,189,182,0.4)' : 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (verifyLoading || verifyCode.length !== 6) ? 'not-allowed' : 'pointer' }}>
+                    style={{ flex: 1, height: 40, background: (verifyLoading || verifyCode.length !== 6) ? 'color-mix(in srgb, var(--accent) 40%, transparent)' : 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (verifyLoading || verifyCode.length !== 6) ? 'not-allowed' : 'pointer' }}>
                     {verifyLoading ? 'Проверка...' : 'Активировать'}
                   </button>
                   <button onClick={() => { setEnrollStep(1); setVerifyCode(''); setVerifyError('') }}
@@ -526,7 +526,7 @@ function SecuritySection() {
       {showUnenroll && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
           <div onClick={() => setShowUnenroll(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} />
-          <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+          <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', textAlign: 'center' }}>
             <div style={{ fontSize: 34, marginBottom: 13 }}>⚠️</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Отключить 2FA?</div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 21, lineHeight: 1.6 }}>
@@ -585,7 +585,7 @@ export default function SettingsPage() {
       <div style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 4 }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ flex: 1, height: 34, borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-elevated)' : 'transparent', color: tab === t.id ? 'var(--text)' : 'var(--text-muted)', transition: 'all 0.15s' }}>
+            style={{ flex: 1, height: 34, borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-card)' : 'transparent', color: tab === t.id ? 'var(--text)' : 'var(--text-muted)', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
             {t.label}
           </button>
         ))}
@@ -621,7 +621,7 @@ export default function SettingsPage() {
 
       {tab === 'security' && <SecuritySection />}
 
-      <div style={{ padding: '13px 21px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 21, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: '13px 21px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Slimway CRM</span>
         <span style={{ fontSize: 11, color: 'var(--accent)', background: 'var(--accent-muted)', border: '1px solid var(--accent)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>v{VERSION}</span>
       </div>

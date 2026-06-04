@@ -18,7 +18,7 @@ const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
 }
 const DEVICE_TYPE_COLORS: Record<string, string> = {
-  vacuactiv: '#02BDB6', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
+  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
 }
 const SUB_STATUS_COLOR: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A', cancelled: '#ef4444' }
 const SUB_STATUS_LABEL: Record<string, string> = { active: 'Активный', frozen: 'Заморожен', expired: 'Истёк', cancelled: 'Отменён' }
@@ -43,6 +43,24 @@ const PRESET_TAGS = ['VIP', 'Пробный', 'Реферал', 'Корпора�
 const TAG_COLORS: Record<string, string> = {
   'VIP': '#f59e0b', 'Пробный': '#3b82f6', 'Реферал': '#10b981',
   'Корпоративный': '#8b5cf6', 'Онлайн': '#06b6d4',
+}
+
+function tagBg(tag: string, opacity = 9): string {
+  const c = TAG_COLORS[tag]
+  return c
+    ? `color-mix(in srgb, ${c} ${opacity}%, transparent)`
+    : `color-mix(in srgb, var(--accent) ${opacity}%, transparent)`
+}
+
+function tagBorder(tag: string, opacity = 20): string {
+  const c = TAG_COLORS[tag]
+  return c
+    ? `color-mix(in srgb, ${c} ${opacity}%, transparent)`
+    : `color-mix(in srgb, var(--accent) ${opacity}%, transparent)`
+}
+
+function tagColor(tag: string): string {
+  return TAG_COLORS[tag] ?? 'var(--accent)'
 }
 
 function getTimeUntilEnd(dateEnd: string): string {
@@ -84,11 +102,13 @@ function calcAge(birthDate: string): number {
 }
 
 const inputStyle: React.CSSProperties = {
-  height: 40, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  height: 36, padding: '0 12px', background: 'transparent',
+  border: '1px solid var(--border)', borderRadius: 8,
+  color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  fontFamily: 'inherit',
+  transition: 'border-color 150ms ease-out, box-shadow 150ms ease-out',
 }
-const labelStyle: React.CSSProperties = { fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }
+const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 5, display: 'block' }
 
 // ─── ClientModal (create/edit) ────────────────────────────────────────────────
 
@@ -137,24 +157,30 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+      <div className="modal-animate" style={{
+        position: 'relative', width: '100%', maxWidth: 480,
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{initial ? 'Редактировать клиента' : 'Новый клиент'}</div>
-            {initial && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{initial.full_name}</div>}
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+              {initial ? 'Редактировать клиента' : 'Новый клиент'}
+            </div>
+            {initial && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{initial.full_name}</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
+          <button onClick={onClose} className="icon-btn"><X size={16} /></button>
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: '#ef4444' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <label style={labelStyle}>Имя *</label>
             <input style={inputStyle} placeholder="Фамилия Имя Отчество" value={fullName} onChange={e => setFullName(e.target.value)} />
@@ -184,19 +210,32 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
               {PRESET_TAGS.map(t => (
                 <button key={t} type="button" onClick={() => tags.includes(t) ? removeTag(t) : addTag(t)}
-                  style={{ padding: '2px 8px', borderRadius: 20, fontSize: 11, cursor: 'pointer', border: `1px solid ${tags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--glass-border)'}`, background: tags.includes(t) ? `${TAG_COLORS[t] ?? '#02BDB6'}18` : 'transparent', color: tags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--text-secondary)' }}>
+                  style={{
+                    padding: '3px 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer',
+                    border: `1px solid ${tags.includes(t) ? tagBorder(t, 40) : 'var(--border)'}`,
+                    background: tags.includes(t) ? tagBg(t, 10) : 'transparent',
+                    color: tags.includes(t) ? tagColor(t) : 'var(--text-secondary)',
+                    transition: 'background 150ms ease-out, border-color 150ms ease-out',
+                  }}>
                   {t}
                 </button>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              <input style={{ ...inputStyle, height: 34 }} placeholder="Свой тег..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }} />
-              <button type="button" onClick={() => addTag(tagInput)} style={{ height: 34, padding: '0 10px', background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.3)', borderRadius: 8, color: '#02BDB6', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>+</button>
+              <input
+                style={{ ...inputStyle, height: 32 }}
+                placeholder="Свой тег..."
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
+              />
+              <button type="button" onClick={() => addTag(tagInput)}
+                style={{ height: 32, padding: '0 12px', background: 'color-mix(in srgb, var(--accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', borderRadius: 8, color: 'var(--accent)', fontSize: 13, cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>+</button>
             </div>
             {tags.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
                 {tags.map(t => (
-                  <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 20, fontSize: 11, background: `${TAG_COLORS[t] ?? '#02BDB6'}18`, border: `1px solid ${TAG_COLORS[t] ?? '#02BDB6'}33`, color: TAG_COLORS[t] ?? '#02BDB6' }}>
+                  <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, fontSize: 11, background: tagBg(t, 10), border: `1px solid ${tagBorder(t, 25)}`, color: tagColor(t) }}>
                     {t}<button type="button" onClick={() => removeTag(t)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X size={9} /></button>
                   </span>
                 ))}
@@ -212,15 +251,11 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
               onChange={e => setNotes(e.target.value)}
             />
           </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button onClick={() => void handleSubmit()} disabled={saving}
-              style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button onClick={() => void handleSubmit()} disabled={saving} className="btn btn-primary" style={{ flex: 1 }}>
               {saving ? 'Сохранение...' : initial ? 'Сохранить' : 'Добавить клиента'}
             </button>
-            <button onClick={onClose}
-              style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-              Отмена
-            </button>
+            <button onClick={onClose} className="btn btn-secondary">Отмена</button>
           </div>
         </div>
       </div>
@@ -237,10 +272,10 @@ function SubProgressBar({ used, total, color }: { used: number; total: number | 
     <div style={{ marginTop: 6 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
         <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Использовано</span>
-        <span style={{ fontSize: 10, fontWeight: 600, color }}>{used}/{total}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, color, fontVariantNumeric: 'tabular-nums' }}>{used}/{total}</span>
       </div>
-      <div style={{ height: 4, borderRadius: 4, background: 'var(--glass-border)', overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.3s' }} />
+      <div style={{ height: 4, borderRadius: 4, background: 'var(--border)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 300ms ease-out' }} />
       </div>
     </div>
   )
@@ -380,7 +415,6 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
   const activeSubs  = subs.filter(s => s.status === 'active')
   const pastSubs    = subs.filter(s => s.status !== 'active')
 
-  // Stats
   const totalVisits    = bookings.length
   const attendedVisits = bookings.filter(b => b.attended).length
   const lastVisit      = bookings[0]?.date ?? null
@@ -392,11 +426,12 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
   const tabBtn = (t: DetailTab, label: string, icon: React.ReactNode) => (
     <button onClick={() => setTab(t)} style={{
-      flex: 1, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-      background: tab === t ? 'rgba(2,189,182,0.10)' : 'transparent',
-      border: 'none', borderRadius: 8,
-      color: tab === t ? '#02BDB6' : 'var(--text-muted)',
-      fontSize: 12, fontWeight: tab === t ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s',
+      flex: 1, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+      background: tab === t ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+      border: 'none', borderRadius: 7,
+      color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
+      fontSize: 12, fontWeight: tab === t ? 600 : 400, cursor: 'pointer',
+      transition: 'background 150ms ease-out, color 150ms ease-out',
     }}>
       {icon}{label}
     </button>
@@ -404,22 +439,37 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
   return (
     <>
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 540, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div className="modal-animate" style={{
+        position: 'relative', width: '100%', maxWidth: 540,
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+      }}>
 
         {/* Header */}
-        <div style={{ padding: 34, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 13, marginBottom: 21 }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', background: isFrozen ? 'rgba(99,102,241,0.12)' : 'rgba(2,189,182,0.12)', border: `2px solid ${isFrozen ? 'rgba(99,102,241,0.3)' : 'rgba(2,189,182,0.3)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: isFrozen ? '#6366f1' : '#02BDB6', flexShrink: 0 }}>
-              {isFrozen ? <Snowflake size={22} /> : initials}
+        <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+              background: isFrozen ? 'color-mix(in srgb, #6366f1 12%, transparent)' : 'color-mix(in srgb, var(--accent) 12%, transparent)',
+              border: `2px solid ${isFrozen ? 'color-mix(in srgb, #6366f1 30%, transparent)' : 'color-mix(in srgb, var(--accent) 30%, transparent)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 18, fontWeight: 700,
+              color: isFrozen ? '#6366f1' : 'var(--accent)',
+            }}>
+              {isFrozen ? <Snowflake size={20} /> : initials}
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
                 {client.full_name}
-                {isFrozen && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', color: '#6366f1' }}>Заморожен</span>}
+                {isFrozen && (
+                  <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'color-mix(in srgb, #6366f1 10%, transparent)', border: '1px solid color-mix(in srgb, #6366f1 25%, transparent)', color: '#6366f1' }}>
+                    Заморожен
+                  </span>
+                )}
               </div>
-              {client.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>{client.phone}</div>}
+              {client.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{client.phone}</div>}
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                 В базе с {new Date(client.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                 {isFrozen && currentClient.freeze_until && ` · заморожен до ${new Date(currentClient.freeze_until + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`}
@@ -427,19 +477,19 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
             </div>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
               <button onClick={() => { void handleGetToken(); setTab('profile') }}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', transition: 'border-color 150ms ease-out' }}>
                 <Link size={12} />Кабинет
               </button>
               <button onClick={onEdit}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', transition: 'border-color 150ms ease-out' }}>
                 <Edit2 size={12} />Изменить
               </button>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+              <button onClick={onClose} className="icon-btn"><X size={16} /></button>
             </div>
           </div>
 
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', borderRadius: 10, padding: 4 }}>
+          <div style={{ display: 'flex', gap: 2, background: 'var(--bg-surface)', borderRadius: 9, padding: 3 }}>
             {tabBtn('profile', 'Профиль',   <Eye size={12} />)}
             {tabBtn('visits',  'Визиты',    <CheckCircle2 size={12} />)}
             {tabBtn('subs',    'Абонем.',   <CreditCard size={12} />)}
@@ -449,47 +499,45 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
         </div>
 
         {loadingDetail && (
-          <div style={{ padding: 34, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+          <div style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[80, 60, 100, 70].map((w, i) => (
+              <div key={i} className="skeleton" style={{ height: 14, width: `${w}%`, borderRadius: 6 }} />
+            ))}
+          </div>
         )}
 
         {/* Profile tab */}
         {!loadingDetail && tab === 'profile' && (
-          <div style={{ padding: 34, display: 'flex', flexDirection: 'column', gap: 13, maxHeight: 460, overflowY: 'auto' }}>
-            {/* Stats block */}
+          <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 460, overflowY: 'auto' }}>
+            {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#02BDB6' }}>{totalVisits}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Визитов</div>
-              </div>
-              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>{activeSubs.length}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Активных</div>
-              </div>
-              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {lastVisit ? new Date(lastVisit + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : '—'}
+              {[
+                { val: totalVisits, label: 'Визитов', color: 'var(--accent)' },
+                { val: activeSubs.length, label: 'Активных', color: '#10b981' },
+                { val: lastVisit ? new Date(lastVisit + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : '—', label: 'Посл. визит', color: 'var(--text)' },
+                { val: totalSpent > 0 ? totalSpent.toLocaleString('ru-RU') : '—', label: 'Потрачено ₸', color: 'var(--text)' },
+              ].map((s, i) => (
+                <div key={i} style={{ padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 10, textAlign: 'center' }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: s.color, fontVariantNumeric: 'tabular-nums' }}>{s.val}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Посл. визит</div>
-              </div>
-              <div style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 13, textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {totalSpent > 0 ? `${totalSpent.toLocaleString('ru-RU')}` : '—'}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Потрачено ₸</div>
-              </div>
+              ))}
             </div>
+
             {activeSubEnd && (() => {
               const countdown = getTimeUntilEnd(activeSubEnd)
               const cdColor = getCountdownColor(activeSubEnd)
               const isExpired = countdown === 'Истёк'
               const isUrgent = !isExpired && cdColor === '#ef4444'
               return (
-                <div style={{ padding: '8px 13px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ padding: '8px 12px', background: 'color-mix(in srgb, #10b981 6%, transparent)', border: '1px solid color-mix(in srgb, #10b981 20%, transparent)', borderRadius: 8, fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <Clock size={12} />
                   Активный абонемент до {new Date(activeSubEnd + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                   <span style={{
                     fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
-                    background: `${cdColor}18`, border: `1px solid ${cdColor}44`, color: cdColor,
+                    background: `color-mix(in srgb, ${cdColor} 10%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${cdColor} 30%, transparent)`,
+                    color: cdColor,
                     animation: isUrgent ? 'pulse 1.5s ease-in-out infinite' : undefined,
                     flexShrink: 0,
                   }}>
@@ -499,27 +547,27 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               )
             })()}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {client.phone && (
-                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Телефон</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Телефон</div>
+                  <div style={{ fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Phone size={12} color="var(--text-muted)" />{client.phone}
                   </div>
                 </div>
               )}
               {client.email && (
-                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Email</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Email</div>
+                  <div style={{ fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Mail size={12} color="var(--text-muted)" />{client.email}
                   </div>
                 </div>
               )}
               {client.birth_date && (
-                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Дата рождения</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Дата рождения</div>
+                  <div style={{ fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Calendar size={12} color="var(--text-muted)" />
                     {new Date(client.birth_date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({calcAge(client.birth_date)} лет)</span>
@@ -527,24 +575,25 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                 </div>
               )}
               {client.source && (
-                <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Источник</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{SOURCE_LABELS[client.source] ?? client.source}</div>
+                <div style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Источник</div>
+                  <div style={{ fontSize: 13, color: 'var(--text)' }}>{SOURCE_LABELS[client.source] ?? client.source}</div>
                 </div>
               )}
             </div>
+
             {client.notes && (
-              <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Заметки</div>
+              <div style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 10 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Заметки</div>
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{client.notes}</div>
               </div>
             )}
             {client.tags && client.tags.length > 0 && (
-              <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13 }}>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Теги</div>
+              <div style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 10 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Теги</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                   {client.tags.map(t => (
-                    <span key={t} style={{ padding: '2px 8px', borderRadius: 20, fontSize: 11, background: `${TAG_COLORS[t] ?? '#02BDB6'}18`, border: `1px solid ${TAG_COLORS[t] ?? '#02BDB6'}33`, color: TAG_COLORS[t] ?? '#02BDB6' }}>
+                    <span key={t} style={{ padding: '2px 8px', borderRadius: 20, fontSize: 11, background: tagBg(t, 10), border: `1px solid ${tagBorder(t, 25)}`, color: tagColor(t) }}>
                       {t}
                     </span>
                   ))}
@@ -553,20 +602,20 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
             )}
 
             {/* Quick actions */}
-            <div style={{ display: 'flex', gap: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
               <button onClick={onSellSub}
-                style={{ flex: 1, minWidth: 140, height: 36, background: 'rgba(2,189,182,0.10)', border: '1px solid rgba(2,189,182,0.25)', borderRadius: 8, color: '#02BDB6', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                style={{ flex: 1, minWidth: 140, height: 34, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', borderRadius: 8, color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'background 150ms ease-out' }}>
                 <CreditCard size={13} />Продать абонемент
               </button>
               {canManage && !isFrozen && (
                 <button onClick={() => setShowFreezeClient(true)}
-                  style={{ height: 36, padding: '0 13px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 8, color: '#6366f1', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  style={{ height: 34, padding: '0 12px', background: 'color-mix(in srgb, #6366f1 8%, transparent)', border: '1px solid color-mix(in srgb, #6366f1 25%, transparent)', borderRadius: 8, color: '#6366f1', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Snowflake size={13} />Заморозить
                 </button>
               )}
               {canManage && isFrozen && (
                 <button onClick={async () => { await clientsApi.unfreeze(client.id); await loadDetail() }}
-                  style={{ height: 36, padding: '0 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, color: '#10b981', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  style={{ height: 34, padding: '0 12px', background: 'color-mix(in srgb, #10b981 8%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', borderRadius: 8, color: '#10b981', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <TrendingUp size={13} />Разморозить
                 </button>
               )}
@@ -576,11 +625,11 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
         {/* Visits tab */}
         {!loadingDetail && tab === 'visits' && (
-          <div style={{ padding: 34, maxHeight: 460, overflowY: 'auto' }}>
+          <div style={{ padding: 24, maxHeight: 460, overflowY: 'auto' }}>
             {bookings.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
-                <CheckCircle2 size={24} strokeWidth={1.5} color="var(--text-muted)" />
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Визитов пока нет</div>
+              <div className="empty-state" style={{ padding: '32px 0' }}>
+                <CheckCircle2 size={24} strokeWidth={1.5} />
+                <span>Визитов пока нет</span>
               </div>
             ) : (
               <>
@@ -591,13 +640,15 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                   {bookings.map((b: ClientBooking) => {
                     const deviceLabel = b.slot?.device ? DEVICE_TYPE_LABELS[b.slot.device.type] ?? b.slot.device.type : null
                     const timeLabel   = b.slot ? `${b.slot.time_start.slice(0, 5)}–${b.slot.time_end.slice(0, 5)}` : null
+                    const attended = b.attended
+                    const statusColor = attended ? '#10b981' : attended === false ? '#ef4444' : '#71717A'
                     return (
-                      <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: b.attended ? 'rgba(16,185,129,0.12)' : b.attended === false ? 'rgba(239,68,68,0.10)' : 'rgba(113,113,122,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <CheckCircle2 size={14} color={b.attended ? '#10b981' : b.attended === false ? '#ef4444' : '#71717A'} />
+                      <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: `color-mix(in srgb, ${statusColor} 10%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <CheckCircle2 size={14} color={statusColor} />
                         </div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                             {new Date(b.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 8 }}>
@@ -605,8 +656,8 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                             {deviceLabel && <span>· {deviceLabel} {b.slot?.device?.number && `#${b.slot.device.number}`}</span>}
                           </div>
                         </div>
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: b.attended ? 'rgba(16,185,129,0.10)' : b.attended === false ? 'rgba(239,68,68,0.08)' : 'rgba(113,113,122,0.08)', color: b.attended ? '#10b981' : b.attended === false ? '#ef4444' : '#71717A', border: `1px solid ${b.attended ? 'rgba(16,185,129,0.2)' : b.attended === false ? 'rgba(239,68,68,0.2)' : 'rgba(113,113,122,0.2)'}` }}>
-                          {b.attended ? 'Посетил' : b.attended === false ? 'Не пришёл' : 'Запись'}
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: `color-mix(in srgb, ${statusColor} 10%, transparent)`, color: statusColor, border: `1px solid color-mix(in srgb, ${statusColor} 25%, transparent)` }}>
+                          {attended ? 'Посетил' : attended === false ? 'Не пришёл' : 'Запись'}
                         </span>
                       </div>
                     )
@@ -619,16 +670,16 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
         {/* Subscriptions tab */}
         {!loadingDetail && tab === 'subs' && (
-          <div style={{ padding: 34, maxHeight: 460, overflowY: 'auto' }}>
+          <div style={{ padding: 24, maxHeight: 460, overflowY: 'auto' }}>
             {subs.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
-                <CreditCard size={24} strokeWidth={1.5} color="var(--text-muted)" />
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Абонементов нет</div>
+              <div className="empty-state" style={{ padding: '32px 0' }}>
+                <CreditCard size={24} strokeWidth={1.5} />
+                <span>Абонементов нет</span>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {activeSubs.length > 0 && (
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Активные</div>
+                  <div className="section-label" style={{ marginBottom: 4 }}>Активные</div>
                 )}
                 {activeSubs.map(sub => (
                   <SubCard key={sub.id} sub={sub}
@@ -639,7 +690,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                   />
                 ))}
                 {pastSubs.length > 0 && (
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 4 }}>Прошлые</div>
+                  <div className="section-label" style={{ marginTop: 8, marginBottom: 4 }}>Прошлые</div>
                 )}
                 {pastSubs.map(sub => (
                   <SubCard key={sub.id} sub={sub}
@@ -654,29 +705,29 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
 
         {/* History tab */}
         {!loadingDetail && tab === 'history' && (
-          <div style={{ padding: 34, maxHeight: 460, overflowY: 'auto' }}>
+          <div style={{ padding: 24, maxHeight: 460, overflowY: 'auto' }}>
             {(loadingAudit && leadCmts.length === 0) ? (
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '21px 0' }}>Загрузка...</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>Загрузка...</div>
             ) : (auditLog?.length === 0 && leadCmts.length === 0) ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '21px 0', textAlign: 'center' }}>
-                <History size={24} strokeWidth={1.5} color="var(--text-muted)" />
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>История пуста</div>
+              <div className="empty-state" style={{ padding: '32px 0' }}>
+                <History size={24} strokeWidth={1.5} />
+                <span>История пуста</span>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {leadCmts.length > 0 && (
                   <>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Комментарии менеджеров</div>
+                    <div className="section-label" style={{ marginBottom: 4 }}>Комментарии менеджеров</div>
                     {leadCmts.map(c => (
-                      <div key={c.id} style={{ padding: '10px 13px', background: 'rgba(2,189,182,0.04)', borderRadius: 10, border: '1px solid rgba(2,189,182,0.15)' }}>
-                        <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.5 }}>{c.text}</div>
+                      <div key={c.id} style={{ padding: '10px 12px', background: 'color-mix(in srgb, var(--accent) 4%, transparent)', borderRadius: 10, border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)' }}>
+                        <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{c.text}</div>
                         <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
                           {new Date(c.created_at).toLocaleDateString('ru-RU')}
                           {c.profiles?.full_name && ` · ${c.profiles.full_name}`}
                         </div>
                       </div>
                     ))}
-                    {(auditLog ?? []).length > 0 && <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 4 }}>Действия</div>}
+                    {(auditLog ?? []).length > 0 && <div className="section-label" style={{ marginTop: 8, marginBottom: 4 }}>Действия</div>}
                   </>
                 )}
                 {(auditLog ?? []).map(entry => {
@@ -685,9 +736,9 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                   const timeStr = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
                   const actionLabel = AUDIT_ACTION_LABELS[entry.action] ?? entry.action
                   return (
-                    <div key={entry.id} style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+                    <div key={entry.id} style={{ padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{actionLabel}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{actionLabel}</div>
                         <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0 }}>{timeStr}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
@@ -705,47 +756,46 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
             )}
           </div>
         )}
+
         {/* Chat tab */}
         {!loadingDetail && tab === 'chat' && (
           <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 460 }}>
-            {/* Portal link row */}
-            <div style={{ padding: '10px 21px', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <button onClick={() => { void handleGetToken() }}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.2)', borderRadius: 7, color: '#02BDB6', fontSize: 11, cursor: 'pointer' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)', borderRadius: 7, color: 'var(--accent)', fontSize: 11, cursor: 'pointer' }}>
                 <Link size={11} />{tokenLoading ? 'Генерация...' : 'Ссылка кабинета'}
               </button>
               {clientToken && (
                 <>
                   <button onClick={handleCopy}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 7, color: copied ? '#10b981' : 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 7, color: copied ? '#10b981' : 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
                     <Copy size={11} />{copied ? 'Скопировано!' : 'Копировать'}
                   </button>
                   <button onClick={() => setShowQR(v => !v)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 7, color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
                     <QrCode size={11} />QR
                   </button>
                 </>
               )}
             </div>
             {showQR && clientToken && (
-              <div style={{ padding: '13px 21px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ padding: 12, background: '#fff', borderRadius: 12, display: 'inline-block' }}>
                   <QRCodeSVG value={portalUrl} size={160} />
                 </div>
               </div>
             )}
-            {/* Messages */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '13px 21px', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
-              {messages === null && <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', padding: 21 }}>Загрузка...</div>}
-              {messages?.length === 0 && <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', padding: 21 }}>Сообщений пока нет</div>}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
+              {messages === null && <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', padding: 20 }}>Загрузка...</div>}
+              {messages?.length === 0 && <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', padding: 20 }}>Сообщений пока нет</div>}
               {messages?.map(m => (
                 <div key={m.id} style={{ display: 'flex', justifyContent: m.sender === 'manager' ? 'flex-end' : 'flex-start' }}>
                   <div style={{
                     maxWidth: '75%', padding: '8px 12px', fontSize: 13, lineHeight: 1.4,
                     borderRadius: m.sender === 'manager' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                    background: m.sender === 'manager' ? '#02BDB6' : 'var(--bg-surface)',
-                    color: m.sender === 'manager' ? '#fff' : 'var(--text-primary)',
-                    border: m.sender === 'manager' ? 'none' : '1px solid var(--glass-border)',
+                    background: m.sender === 'manager' ? 'var(--accent)' : 'var(--bg-surface)',
+                    color: m.sender === 'manager' ? '#fff' : 'var(--text)',
+                    border: m.sender === 'manager' ? 'none' : '1px solid var(--border)',
                   }}>
                     {m.sender === 'client' && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Клиент</div>}
                     {m.text}
@@ -757,17 +807,16 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               ))}
               <div ref={msgEndRef} />
             </div>
-            {/* Input */}
-            <div style={{ padding: '10px 21px', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 8 }}>
+            <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
               <input
-                style={{ flex: 1, height: 36, padding: '0 13px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+                style={{ flex: 1, height: 36, padding: '0 12px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
                 placeholder="Написать клиенту..."
                 value={msgText}
                 onChange={e => setMsgText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSendMsg() } }}
               />
               <button onClick={() => void handleSendMsg()} disabled={!msgText.trim() || sendingMsg}
-                style={{ width: 36, height: 36, background: msgText.trim() ? '#02BDB6' : 'transparent', border: msgText.trim() ? 'none' : '1px solid var(--glass-border)', borderRadius: 8, cursor: msgText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                style={{ width: 36, height: 36, background: msgText.trim() ? 'var(--accent)' : 'transparent', border: msgText.trim() ? 'none' : '1px solid var(--border)', borderRadius: 8, cursor: msgText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 150ms ease-out' }}>
                 <Send size={14} color={msgText.trim() ? '#fff' : 'var(--text-muted)'} />
               </button>
             </div>
@@ -777,7 +826,6 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
       </div>
     </div>
 
-    {/* Sub modals */}
     {freezeSubTarget && (
       <FreezeModal
         sub={freezeSubTarget}
@@ -821,31 +869,27 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
     : null
 
   return (
-    <div style={{ padding: 13, background: 'var(--bg-surface)', borderRadius: 13, border: `1px solid ${sc}22` }}>
+    <div style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 12, border: `1px solid color-mix(in srgb, ${sc} 15%, transparent)` }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{sub.name}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: sc + '18', color: sc, border: `1px solid ${sc}33` }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{sub.name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: `color-mix(in srgb, ${sc} 10%, transparent)`, color: sc, border: `1px solid color-mix(in srgb, ${sc} 25%, transparent)` }}>
             {frozenLabel ?? SUB_STATUS_LABEL[sub.status]}
           </span>
           {onFreeze && sub.status === 'active' && (
-            <button onClick={() => onFreeze(sub)} title="Заморозить" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.25)', cursor: 'pointer', padding: 0, fontSize: 10 }}>
-              ❄
-            </button>
+            <button onClick={() => onFreeze(sub)} title="Заморозить" className="icon-btn" style={{ width: 22, height: 22, fontSize: 10 }}>❄</button>
           )}
           {onUnfreeze && sub.status === 'frozen' && (
-            <button onClick={() => onUnfreeze(sub.id)} title="Разморозить" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.25)', cursor: 'pointer', padding: 0, fontSize: 10 }}>
-              ☀
-            </button>
+            <button onClick={() => onUnfreeze(sub.id)} title="Разморозить" className="icon-btn" style={{ width: 22, height: 22, fontSize: 10 }}>☀</button>
           )}
           {onShowRenewals && (
-            <button onClick={() => onShowRenewals(sub)} title="История продлений" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(2,189,182,0.10)', border: '1px solid rgba(2,189,182,0.25)', cursor: 'pointer', padding: 0 }}>
-              <History size={11} color="#02BDB6" />
+            <button onClick={() => onShowRenewals(sub)} title="История продлений" className="icon-btn" style={{ width: 22, height: 22 }}>
+              <History size={11} />
             </button>
           )}
           {onDelete && sub.status !== 'cancelled' && (
-            <button onClick={onDelete} title="Отменить абонемент" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer', padding: 0 }}>
-              <Trash2 size={11} color="#ef4444" />
+            <button onClick={onDelete} title="Отменить абонемент" className="icon-btn" style={{ width: 22, height: 22, color: '#ef4444' }}>
+              <Trash2 size={11} />
             </button>
           )}
         </div>
@@ -854,7 +898,7 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
         <div>
           <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Слот 1 — {DEVICE_TYPE_LABELS[sub.slot_1_type]}</div>
           <SubProgressBar used={sub.slot_1_sessions_total - sub.slot_1_sessions_left} total={sub.slot_1_sessions_total} color={DEVICE_TYPE_COLORS[sub.slot_1_type]} />
-          <div style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[sub.slot_1_type], marginTop: 3 }}>
+          <div style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[sub.slot_1_type], marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
             {sub.slot_1_sessions_left} из {sub.slot_1_sessions_total} осталось
           </div>
         </div>
@@ -862,13 +906,13 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Слот 2 — {DEVICE_TYPE_LABELS[sub.slot_2_type]}</div>
             <SubProgressBar used={sub.slot_2_sessions_total - sub.slot_2_sessions_left} total={sub.slot_2_sessions_total} color={DEVICE_TYPE_COLORS[sub.slot_2_type]} />
-            <div style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[sub.slot_2_type], marginTop: 3 }}>
+            <div style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[sub.slot_2_type], marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
               {sub.slot_2_sessions_left} из {sub.slot_2_sessions_total} осталось
             </div>
           </div>
         )}
       </div>
-      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 13, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)', display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap', alignItems: 'center' }}>
         <span>С {new Date(sub.date_start).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
         {sub.date_end && (
           <>
@@ -880,7 +924,9 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
               return (
                 <span style={{
                   fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
-                  background: `${cdColor}18`, border: `1px solid ${cdColor}44`, color: cdColor,
+                  background: `color-mix(in srgb, ${cdColor} 10%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${cdColor} 30%, transparent)`,
+                  color: cdColor,
                   animation: isUrgent ? 'pulse 1.5s ease-in-out infinite' : undefined,
                 }}>
                   {countdown === 'Истёк' ? 'Истёк' : `⏱ ${countdown}`}
@@ -915,16 +961,16 @@ function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: (
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Заморозить абонемент</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>Заморозить абонемент</div>
+          <button onClick={onClose} className="icon-btn"><X size={15} /></button>
         </div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 13 }}>{sub.name}</div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8 }}>{error}</div>}
-        <div style={{ marginBottom: 21 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>{sub.name}</div>
+        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', borderRadius: 8 }}>{error}</div>}
+        <div style={{ marginBottom: 20 }}>
           <label style={labelStyle}>Заморозить до (макс. 30 дней)</label>
           <input type="date" style={inputStyle}
             min={today.toISOString().split('T')[0]}
@@ -934,10 +980,11 @@ function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: (
           />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => void handle()} disabled={saving} style={{ flex: 1, height: 40, background: '#f59e0b', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+          <button onClick={() => void handle()} disabled={saving}
+            style={{ flex: 1, height: 36, background: '#f59e0b', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, transition: 'opacity 150ms' }}>
             {saving ? 'Заморозка...' : 'Заморозить'}
           </button>
-          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={onClose} className="btn btn-secondary">Отмена</button>
         </div>
       </div>
     </div>
@@ -960,26 +1007,34 @@ function CancelSubModal({ subId, onClose, onCancelled }: { subId: string; onClos
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 400, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Причина отмены</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 400, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>Причина отмены</div>
+          <button onClick={onClose} className="icon-btn"><X size={15} /></button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 21 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
           {CANCELLATION_REASONS.map(r => (
-            <button key={r.value} onClick={() => setReason(r.value)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: reason === r.value ? 'rgba(239,68,68,0.08)' : 'transparent', border: `1px solid ${reason === r.value ? 'rgba(239,68,68,0.35)' : 'var(--glass-border)'}`, borderRadius: 8, color: reason === r.value ? '#ef4444' : 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', textAlign: 'left' }}>
+            <button key={r.value} onClick={() => setReason(r.value)} style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
+              background: reason === r.value ? 'color-mix(in srgb, #ef4444 8%, transparent)' : 'transparent',
+              border: `1px solid ${reason === r.value ? 'color-mix(in srgb, #ef4444 35%, transparent)' : 'var(--border)'}`,
+              borderRadius: 8, color: reason === r.value ? '#ef4444' : 'var(--text-secondary)',
+              fontSize: 13, cursor: 'pointer', textAlign: 'left',
+              transition: 'background 150ms ease-out, border-color 150ms ease-out',
+            }}>
               {r.label}
             </button>
           ))}
           <textarea style={{ ...inputStyle, height: 60, paddingTop: 8, paddingBottom: 8, resize: 'none' }} placeholder="Комментарий (необязательно)..." value={comment} onChange={e => setComment(e.target.value)} />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => void handle()} disabled={saving} style={{ flex: 1, height: 40, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+          <button onClick={() => void handle()} disabled={saving}
+            style={{ flex: 1, height: 36, background: 'color-mix(in srgb, #ef4444 12%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 30%, transparent)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
             {saving ? 'Отмена...' : 'Отменить абонемент'}
           </button>
-          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
+          <button onClick={onClose} className="btn btn-secondary">Закрыть</button>
         </div>
       </div>
     </div>
@@ -997,24 +1052,24 @@ function RenewalsModal({ sub, onClose }: { sub: Subscription; onClose: () => voi
   }, [sub.id])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>История продлений · {sub.name}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>История продлений · {sub.name}</div>
+          <button onClick={onClose} className="icon-btn"><X size={15} /></button>
         </div>
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {renewals === null ? (
-            <div style={{ textAlign: 'center', padding: 34, fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+            <div style={{ textAlign: 'center', padding: 32, fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
           ) : renewals.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 34, fontSize: 13, color: 'var(--text-muted)' }}>История продлений пуста</div>
+            <div style={{ textAlign: 'center', padding: 32, fontSize: 13, color: 'var(--text-muted)' }}>История продлений пуста</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {renewals.map(r => (
-                <div key={r.id} style={{ padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+                <div key={r.id} style={{ padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.profiles?.full_name ?? '—'}</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
@@ -1050,16 +1105,16 @@ function FreezeClientModal({ client, onClose, onFrozen }: { client: Client; onCl
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Заморозить клиента</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={16} /></button>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>Заморозить клиента</div>
+          <button onClick={onClose} className="icon-btn"><X size={15} /></button>
         </div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 13 }}>{client.full_name}</div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8 }}>{error}</div>}
-        <div style={{ marginBottom: 21 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>{client.full_name}</div>
+        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', borderRadius: 8 }}>{error}</div>}
+        <div style={{ marginBottom: 20 }}>
           <label style={labelStyle}>Заморозить до (макс. 90 дней)</label>
           <input type="date" style={inputStyle}
             min={today.toISOString().split('T')[0]}
@@ -1069,10 +1124,11 @@ function FreezeClientModal({ client, onClose, onFrozen }: { client: Client; onCl
           />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => void handle()} disabled={saving} style={{ flex: 1, height: 40, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.35)', borderRadius: 8, color: '#6366f1', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <button onClick={() => void handle()} disabled={saving}
+            style={{ flex: 1, height: 36, background: 'color-mix(in srgb, #6366f1 12%, transparent)', border: '1px solid color-mix(in srgb, #6366f1 30%, transparent)', borderRadius: 8, color: '#6366f1', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <Snowflake size={13} />{saving ? 'Заморозка...' : 'Заморозить'}
           </button>
-          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={onClose} className="btn btn-secondary">Отмена</button>
         </div>
       </div>
     </div>
@@ -1088,52 +1144,55 @@ interface ClientRowProps {
 }
 
 function ClientRow({ client, onClick, onContextMenu }: ClientRowProps) {
-  const [hovered, setHovered] = useState(false)
   const activeSub = client.memberships?.find(m => m.status === 'active')
+  const isBirthday = isTodayBirthday(client.birth_date ?? null)
 
   return (
     <div
       onClick={onClick}
       onContextMenu={onContextMenu}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="table-row"
       style={{
-        background: hovered ? 'rgba(255,255,255,0.04)' : 'var(--glass-bg)',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: 13, padding: '13px 21px',
-        display: 'flex', alignItems: 'center', gap: 13,
-        cursor: 'pointer', transition: 'background 0.15s',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 12, padding: '12px 16px',
+        display: 'flex', alignItems: 'center', gap: 12,
+        cursor: 'pointer',
       }}
     >
       {/* Avatar */}
-      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <span style={{ fontSize: 15, fontWeight: 600, color: '#02BDB6' }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: '50%',
+        background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)' }}>
           {client.full_name.charAt(0).toUpperCase()}
         </span>
       </div>
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {client.full_name}
           </span>
-          {isTodayBirthday(client.birth_date ?? null) && (
-            <span title="День рождения сегодня!" style={{ fontSize: 14, flexShrink: 0 }}>🎂</span>
+          {isBirthday && (
+            <span title="День рождения сегодня!" style={{ fontSize: 13, flexShrink: 0 }}>🎂</span>
           )}
           {client.tags && client.tags.slice(0, 2).map(t => (
-            <span key={t} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: `${TAG_COLORS[t] ?? '#02BDB6'}18`, border: `1px solid ${TAG_COLORS[t] ?? '#02BDB6'}33`, color: TAG_COLORS[t] ?? '#02BDB6', flexShrink: 0 }}>
+            <span key={t} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: tagBg(t, 10), border: `1px solid ${tagBorder(t, 25)}`, color: tagColor(t), flexShrink: 0 }}>
               {t}
             </span>
           ))}
           {activeSub && (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(2,189,182,0.12)', border: '1px solid rgba(2,189,182,0.25)', color: '#02BDB6', flexShrink: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 6, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)', color: 'var(--accent)', flexShrink: 0 }}>
               Активный
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {client.phone && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
               <Phone size={11} strokeWidth={1.75} />{client.phone}
@@ -1152,15 +1211,15 @@ function ClientRow({ client, onClick, onContextMenu }: ClientRowProps) {
           )}
         </div>
         {activeSub && (
-          <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+          <div style={{ marginTop: 3, fontSize: 11, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
             {activeSub.used_sessions} / {activeSub.total_sessions ?? '∞'} сеансов
             {activeSub.end_date && ` · до ${new Date(activeSub.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`}
           </div>
         )}
       </div>
 
-      {/* More icon hint */}
-      <div style={{ color: 'var(--text-muted)', opacity: hovered ? 0.6 : 0.2, transition: 'opacity 0.15s', flexShrink: 0 }}>
+      {/* More icon */}
+      <div style={{ color: 'var(--text-muted)', opacity: 0.35, flexShrink: 0 }}>
         <MoreVertical size={15} />
       </div>
     </div>
@@ -1266,95 +1325,111 @@ export default function ClientsPage() {
   const hasFilters = !!filterSource || filterTags.length > 0
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Клиенты</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{filtered.length} из {clients.length} клиентов</p>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 3, letterSpacing: '-0.02em' }}>Клиенты</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+            {filtered.length} из {clients.length} клиентов
+          </p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button
-            onClick={() => void handleExport()}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
-          >
+          <button onClick={() => void handleExport()} className="btn btn-secondary" style={{ gap: 6 }}>
             <Download size={14} />Excel
           </button>
-          <button
-            onClick={() => { setEditTarget(null); setShowModal(true) }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
-          >
-            <Plus size={15} strokeWidth={2} />Добавить клиента
+          <button onClick={() => { setEditTarget(null); setShowModal(true) }} className="btn btn-primary" style={{ gap: 6 }}>
+            <Plus size={15} strokeWidth={2.5} />Добавить клиента
           </button>
         </div>
       </div>
 
       {/* Search */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 13px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8, marginBottom: 8, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
-        <Search size={15} strokeWidth={1.75} color="var(--text-muted)" />
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8, height: 38,
+        padding: '0 12px', background: 'var(--bg-card)',
+        border: '1px solid var(--border)', borderRadius: 8, marginBottom: 8,
+        transition: 'border-color 150ms ease-out',
+      }}>
+        <Search size={14} strokeWidth={1.75} color="var(--text-muted)" />
         <input
-          style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}
+          style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
           placeholder="Поиск по имени, телефону или email..."
           value={search}
           onChange={e => handleSearch(e.target.value)}
         />
         {search && (
-          <button onClick={() => handleSearch('')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
-            <X size={13} />
+          <button onClick={() => handleSearch('')} className="icon-btn" style={{ width: 20, height: 20 }}>
+            <X size={12} />
           </button>
         )}
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
         <PeriodFilter value={period} onChange={setPeriod} />
         <select
           value={filterSource}
           onChange={e => setFilterSource(e.target.value)}
-          style={{ height: 32, padding: '0 8px', background: 'var(--bg-elevated)', border: `1px solid ${filterSource ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: filterSource ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', outline: 'none' }}
+          style={{
+            height: 30, padding: '0 8px', background: 'transparent',
+            border: `1px solid ${filterSource ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
+            borderRadius: 8,
+            color: filterSource ? 'var(--accent)' : 'var(--text-secondary)',
+            fontSize: 12, cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
+          }}
         >
           <option value="">Все источники</option>
           {CLIENT_SOURCES.filter(s => s.value).map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
         {PRESET_TAGS.map(t => (
           <button key={t} onClick={() => toggleFilterTag(t)}
-            style={{ height: 32, padding: '0 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer', border: `1px solid ${filterTags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--glass-border)'}`, background: filterTags.includes(t) ? `${TAG_COLORS[t] ?? '#02BDB6'}18` : 'transparent', color: filterTags.includes(t) ? (TAG_COLORS[t] ?? '#02BDB6') : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            style={{
+              height: 30, padding: '0 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer',
+              border: `1px solid ${filterTags.includes(t) ? tagBorder(t, 40) : 'var(--border)'}`,
+              background: filterTags.includes(t) ? tagBg(t, 10) : 'transparent',
+              color: filterTags.includes(t) ? tagColor(t) : 'var(--text-muted)',
+              display: 'flex', alignItems: 'center', gap: 4,
+              transition: 'background 150ms ease-out, border-color 150ms ease-out',
+            }}>
             <Tag size={10} />{t}
           </button>
         ))}
         {hasFilters && (
           <button onClick={() => { setFilterSource(''); setFilterTags([]) }}
-            style={{ height: 32, padding: '0 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
+            style={{ height: 30, padding: '0 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: '1px solid color-mix(in srgb, #ef4444 30%, transparent)', background: 'color-mix(in srgb, #ef4444 8%, transparent)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
             <X size={10} />Сбросить
           </button>
         )}
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: '#ef4444' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}
 
       {loading ? (
-        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
+          ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: 300 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 21, background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
-            <Users size={24} strokeWidth={1.5} color="#02BDB6" />
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: 260 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+            <Users size={22} strokeWidth={1.5} color="var(--accent)" />
           </div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 6, letterSpacing: '-0.01em' }}>
             {search || hasFilters ? 'Ничего не найдено' : 'Клиентов пока нет'}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 300, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 280, lineHeight: 1.6 }}>
             {search || hasFilters ? 'Попробуйте изменить фильтры' : 'Нажмите «Добавить клиента» чтобы создать первого'}
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {filtered.map(c => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {filtered.map((c, i) => (
             <ClientRow
               key={c.id}
               client={c}

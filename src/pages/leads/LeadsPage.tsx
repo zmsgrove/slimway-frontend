@@ -54,17 +54,21 @@ function daysInStage(statusChangedAt: string | null | undefined, createdAt: stri
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', height: 36, padding: '0 13px',
-  background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
-  borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  width: '100%', height: 36, padding: '0 12px',
+  background: 'transparent', border: '1px solid var(--border)',
+  borderRadius: 8, color: 'var(--text)', fontSize: 13,
   outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+  transition: 'border-color 150ms ease-out, box-shadow 150ms ease-out',
 }
 const textareaStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 13px',
-  background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
-  borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+  width: '100%', padding: '8px 12px',
+  background: 'transparent', border: '1px solid var(--border)',
+  borderRadius: 8, color: 'var(--text)', fontSize: 13,
   outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
   resize: 'vertical', lineHeight: 1.5,
+}
+const labelStyle: React.CSSProperties = {
+  fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block',
 }
 
 function fmtDate(iso: string) {
@@ -104,7 +108,6 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
         assigned_to: assignedTo || undefined,
         source:    source as Lead['source'],
       })
-      // If not 'new', move to the correct status
       if (initialStatus !== 'new') {
         const result = await leadsApi.updateStatus(lead.id, initialStatus)
         onCreate(result.lead)
@@ -119,38 +122,42 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Новый лид</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+      <div className="modal-animate" style={{
+        position: 'relative', width: '100%', maxWidth: 440,
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>Новый лид</div>
+          <button onClick={onClose} className="icon-btn"><X size={16} /></button>
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: '#ef4444' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Имя *</div>
+            <label style={labelStyle}>Имя *</label>
             <input style={inputStyle} placeholder="Имя клиента" value={fullName} onChange={e => setFullName(e.target.value)} autoFocus />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Телефон</div>
+            <label style={labelStyle}>Телефон</label>
             <input style={inputStyle} placeholder="+7 ..." value={phone} onChange={e => setPhone(e.target.value)} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Источник</div>
+              <label style={labelStyle}>Источник</label>
               <select style={{ ...inputStyle, cursor: 'pointer' }} value={source} onChange={e => setSource(e.target.value)}>
                 {LEAD_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
             <div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Ответственный</div>
+              <label style={labelStyle}>Ответственный</label>
               <select style={{ ...inputStyle, cursor: 'pointer' }} value={assignedTo} onChange={e => setAssignedTo(e.target.value)}>
                 <option value="">Не назначен</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
@@ -158,19 +165,16 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Заметки</div>
+            <label style={labelStyle}>Заметки</label>
             <textarea style={textareaStyle} placeholder="Комментарий..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--glass-border)' }}>
-          <button onClick={() => void handleCreate()} disabled={saving}
-            style={{ flex: 1, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+          <button onClick={() => void handleCreate()} disabled={saving} className="btn btn-primary" style={{ flex: 1 }}>
             {saving ? 'Создание...' : 'Создать'}
           </button>
-          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-            Отмена
-          </button>
+          <button onClick={onClose} className="btn btn-secondary">Отмена</button>
         </div>
       </div>
     </div>
@@ -208,7 +212,6 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
   const commentsEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // load full detail with comments
     leadsApi.getById(lead.id)
       .then(d => { setDetail(d); setComments(d.lead_comments ?? []) })
       .catch(() => { /* use cached */ })
@@ -286,77 +289,71 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
         onClose={() => setShowClientAdded(null)}
       />
     )}
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
       <div className="modal-animate" style={{
         position: 'relative', width: '100%', maxWidth: 680, maxHeight: '90vh',
-        background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
-        borderRadius: 21, boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '21px 34px', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {editing ? (
-              <input style={{ ...inputStyle, fontSize: 16, fontWeight: 700, height: 38 }} value={editName} onChange={e => setEditName(e.target.value)} autoFocus />
+              <input style={{ ...inputStyle, fontSize: 15, fontWeight: 600, height: 36 }} value={editName} onChange={e => setEditName(e.target.value)} autoFocus />
             ) : (
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{detail.full_name}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 4 }}>{detail.full_name}</div>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {detail.phone && <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{detail.phone}</span>}
               {col && (
-                <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: col.color + '18', color: col.color, border: `1px solid ${col.color}33` }}>
+                <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: `color-mix(in srgb, ${col.color} 10%, transparent)`, color: col.color, border: `1px solid color-mix(in srgb, ${col.color} 25%, transparent)` }}>
                   {col.label}
                 </span>
               )}
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{SOURCE_LABELS[detail.source] ?? detail.source}</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 13 }}>
+          <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 12 }}>
             {editing ? (
-              <button onClick={() => void handleSave()} disabled={saving}
-                style={{ height: 34, padding: '0 13px', background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
+              <button onClick={() => void handleSave()} disabled={saving} className="icon-btn" style={{ background: 'color-mix(in srgb, #10b981 12%, transparent)', color: '#10b981' }}>
                 <Check size={14} />
               </button>
             ) : (
-              <button onClick={() => setEditing(true)}
-                style={{ height: 34, width: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <Edit2 size={14} />
-              </button>
+              <button onClick={() => setEditing(true)} className="icon-btn"><Edit2 size={14} /></button>
             )}
-            <button onClick={() => { if (confirm('Удалить лид?')) { onDelete(detail.id) } }}
-              style={{ height: 34, width: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#ef4444', cursor: 'pointer' }}>
+            <button onClick={() => { if (confirm('Удалить лид?')) { onDelete(detail.id) } }} className="icon-btn" style={{ color: '#ef4444' }}>
               <Trash2 size={14} />
             </button>
-            <button onClick={onClose} style={{ height: 34, width: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer' }}>
-              <X size={14} />
-            </button>
+            <button onClick={onClose} className="icon-btn"><X size={14} /></button>
           </div>
         </div>
 
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Left panel */}
-          <div style={{ width: 280, borderRight: '1px solid var(--glass-border)', padding: 21, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 21, flexShrink: 0 }}>
+          <div style={{ width: 260, borderRight: '1px solid var(--border)', padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20, flexShrink: 0 }}>
 
             {/* Status */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Статус</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className="section-label" style={{ marginBottom: 8 }}>Статус</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 {COLUMNS.map(c => (
                   <button key={c.id} onClick={() => void handleStatusChange(c.id)} disabled={movingTo !== null}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: '7px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                      background: detail.status === c.id ? c.color + '18' : 'transparent',
-                      border: `1px solid ${detail.status === c.id ? c.color + '55' : 'var(--glass-border)'}`,
+                      background: detail.status === c.id ? `color-mix(in srgb, ${c.color} 10%, transparent)` : 'transparent',
+                      border: `1px solid ${detail.status === c.id ? `color-mix(in srgb, ${c.color} 35%, transparent)` : 'var(--border)'}`,
                       color: detail.status === c.id ? c.color : 'var(--text-secondary)',
-                      transition: 'all 0.15s', textAlign: 'left',
+                      transition: 'background 150ms ease-out, border-color 150ms ease-out',
+                      textAlign: 'left',
                       opacity: movingTo !== null && movingTo !== c.id ? 0.5 : 1,
                     }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
                     {c.label}
                     {movingTo === c.id && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>...</span>}
-                    {detail.status === c.id && movingTo === null && <Check size={12} style={{ marginLeft: 'auto' }} />}
+                    {detail.status === c.id && movingTo === null && <Check size={11} style={{ marginLeft: 'auto' }} />}
                   </button>
                 ))}
               </div>
@@ -365,21 +362,21 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
             {/* Phone (edit mode) */}
             {editing && (
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Телефон</div>
+                <label style={labelStyle}>Телефон</label>
                 <input style={inputStyle} value={editPhone} onChange={e => setEditPhone(e.target.value)} />
               </div>
             )}
 
             {/* Assigned */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Ответственный</div>
+              <div className="section-label" style={{ marginBottom: 8 }}>Ответственный</div>
               {editing ? (
                 <select style={{ ...inputStyle, cursor: 'pointer' }} value={editAssigned} onChange={e => setEditAssigned(e.target.value)}>
                   <option value="">Не назначен</option>
                   {employees.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
                 </select>
               ) : (
-                <div style={{ fontSize: 13, color: assignedEmp ? 'var(--text-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontSize: 13, color: assignedEmp ? 'var(--text)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <User size={13} color="var(--text-muted)" />
                   {assignedEmp?.full_name ?? 'Не назначен'}
                 </div>
@@ -388,7 +385,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
 
             {/* Notes */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Заметки</div>
+              <div className="section-label" style={{ marginBottom: 8 }}>Заметки</div>
               {editing ? (
                 <textarea style={textareaStyle} value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={4} />
               ) : (
@@ -399,14 +396,14 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
             </div>
 
             {/* Meta */}
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', borderTop: '1px solid var(--glass-border)', paddingTop: 13 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
               <div>Создан: {fmtDate(detail.created_at)}</div>
               <div>Обновлён: {fmtDate(detail.updated_at)}</div>
             </div>
 
             {/* Success action */}
             {detail.status === 'success' && detail.client_id && (
-              <div style={{ padding: 13, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 13 }}>
+              <div style={{ padding: 12, background: 'color-mix(in srgb, #10b981 8%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', borderRadius: 10 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#10b981', marginBottom: 4 }}>Клиент создан!</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>Клиент добавлен в базу и ожидает активации.</div>
               </div>
@@ -416,18 +413,24 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
           {/* Right panel — comments */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {/* Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--glass-border)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               {(['info', 'comments'] as const).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
-                  style={{ flex: 1, padding: '12px 0', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: activeTab === tab ? 600 : 400, color: activeTab === tab ? '#02BDB6' : 'var(--text-secondary)', borderBottom: `2px solid ${activeTab === tab ? '#02BDB6' : 'transparent'}`, transition: 'all 0.15s' }}>
+                  style={{
+                    flex: 1, padding: '12px 0', background: 'transparent', border: 'none', cursor: 'pointer',
+                    fontSize: 13, fontWeight: activeTab === tab ? 600 : 400,
+                    color: activeTab === tab ? 'var(--accent)' : 'var(--text-secondary)',
+                    borderBottom: `2px solid ${activeTab === tab ? 'var(--accent)' : 'transparent'}`,
+                    transition: 'color 150ms ease-out, border-color 150ms ease-out',
+                  }}>
                   {tab === 'info' ? 'Информация' : `Комментарии (${comments.length})`}
                 </button>
               ))}
             </div>
 
             {activeTab === 'info' && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: 21 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <InfoRow label="Имя" value={detail.full_name} />
                   <InfoRow label="Телефон" value={detail.phone ?? '—'} />
                   <InfoRow label="Источник" value={SOURCE_LABELS[detail.source] ?? detail.source} />
@@ -443,13 +446,13 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
 
             {activeTab === 'comments' && (
               <>
-                <div style={{ flex: 1, overflowY: 'auto', padding: 21, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {comments.length === 0 ? (
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '34px 0' }}>Комментариев пока нет</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>Комментариев пока нет</div>
                   ) : comments.map(c => (
-                    <div key={c.id} style={{ padding: '10px 13px', background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 13 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#02BDB6' }}>
+                    <div key={c.id} style={{ padding: '10px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
                           {c.profiles?.full_name ?? 'Сотрудник'}
                         </span>
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDateTime(c.created_at)}</span>
@@ -459,7 +462,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
                   ))}
                   <div ref={commentsEndRef} />
                 </div>
-                <div style={{ padding: '13px 21px', borderTop: '1px solid var(--glass-border)', flexShrink: 0, display: 'flex', gap: 8 }}>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', flexShrink: 0, display: 'flex', gap: 8 }}>
                   <textarea
                     style={{ ...textareaStyle, flex: 1 }}
                     placeholder="Написать комментарий..."
@@ -469,7 +472,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleAddComment() } }}
                   />
                   <button onClick={() => void handleAddComment()} disabled={addingComment || !commentText.trim()}
-                    style={{ width: 36, height: 36, alignSelf: 'flex-end', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', cursor: (addingComment || !commentText.trim()) ? 'not-allowed' : 'pointer', opacity: (addingComment || !commentText.trim()) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    style={{ width: 36, height: 36, alignSelf: 'flex-end', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', cursor: (addingComment || !commentText.trim()) ? 'not-allowed' : 'pointer', opacity: (addingComment || !commentText.trim()) ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'opacity 150ms' }}>
                     <ChevronRight size={16} />
                   </button>
                 </div>
@@ -485,7 +488,7 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 13, paddingBottom: 10, borderBottom: '1px solid var(--glass-border)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
       <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{label}</span>
       <span style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'right', lineHeight: 1.4 }}>{value}</span>
     </div>
@@ -519,23 +522,19 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
       onDragEnd={onDragEnd}
       onClick={onClick}
       onContextMenu={onContextMenu}
+      className="kanban-card"
       style={{
-        background: 'var(--bg-surface)',
-        border: `1px solid var(--glass-border)`,
-        borderRadius: 13,
-        padding: 13,
-        cursor: 'grab',
-        userSelect: 'none',
-        opacity: isDragging ? 0.4 : 1,
-        boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)',
+        opacity: isDragging ? 0.35 : 1,
         transform: isDragging ? 'rotate(2deg) scale(1.02)' : 'none',
-        transition: 'opacity 0.15s, box-shadow 0.15s, transform 0.15s',
+        borderLeft: `3px solid color-mix(in srgb, ${colColor} 60%, transparent)`,
       }}
     >
-      {/* Status stripe */}
-      <div style={{ width: '100%', height: 3, background: colColor + '60', borderRadius: 2, marginBottom: 10 }} />
+      {/* Color bar */}
+      <div style={{ width: '100%', height: 2, background: `color-mix(in srgb, ${colColor} 40%, transparent)`, borderRadius: 2, marginBottom: 10 }} />
 
-      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 5 }}>{lead.full_name}</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 5, letterSpacing: '-0.01em' }}>
+        {lead.full_name}
+      </div>
 
       {lead.phone && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-secondary)', marginBottom: 5 }}>
@@ -545,8 +544,8 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, flexWrap: 'wrap', gap: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--glass-border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 5, background: 'var(--bg-surface)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
             {SOURCE_LABELS[lead.source] ?? lead.source}
           </span>
           {assignedEmp && (
@@ -556,7 +555,7 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ fontSize: 10, color: stageColor, display: 'flex', alignItems: 'center', gap: 3 }}>
             <Clock size={9} />{days}д
           </span>
@@ -582,14 +581,18 @@ function FailReasonModal({ onConfirm, onClose }: FailReasonModalProps) {
   const [reason, setReason] = useState('')
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 420, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Причина отказа</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
+      <div className="modal-animate" style={{
+        position: 'relative', width: '100%', maxWidth: 420,
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>Причина отказа</div>
+          <button onClick={onClose} className="icon-btn"><X size={16} /></button>
         </div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 13 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
           Укажите причину, по которой лид не был успешно закрыт.
         </div>
         <textarea
@@ -600,15 +603,11 @@ function FailReasonModal({ onConfirm, onClose }: FailReasonModalProps) {
           rows={4}
           autoFocus
         />
-        <div style={{ display: 'flex', gap: 13, marginTop: 21 }}>
-          <button onClick={() => onConfirm(reason.trim())}
-            style={{ flex: 1, height: 40, background: '#ef4444', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <button onClick={() => onConfirm(reason.trim())} className="btn btn-danger" style={{ flex: 1 }}>
             Подтвердить отказ
           </button>
-          <button onClick={onClose}
-            style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-            Отмена
-          </button>
+          <button onClick={onClose} className="btn btn-secondary">Отмена</button>
         </div>
       </div>
     </div>
@@ -626,37 +625,39 @@ interface ClientAddedModalProps {
 
 function ClientAddedModal({ clientId, clientName, onGoToClient, onClose }: ClientAddedModalProps) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 380, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-        <div style={{ width: 48, height: 48, borderRadius: 16, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 21px' }}>
+      <div className="modal-animate" style={{
+        position: 'relative', width: '100%', maxWidth: 380,
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', textAlign: 'center',
+      }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: 'color-mix(in srgb, #10b981 12%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
           <UserPlus size={22} color="#10b981" />
         </div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 13 }}>Лид успешно закрыт!</div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 12, letterSpacing: '-0.01em' }}>Лид успешно закрыт!</div>
         {clientName ? (
           <>
-            <div style={{ marginBottom: 21, padding: '10px 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Создана карточка клиента</div>
+            <div style={{ marginBottom: 16, padding: '10px 12px', background: 'color-mix(in srgb, #10b981 8%, transparent)', border: '1px solid color-mix(in srgb, #10b981 20%, transparent)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 3 }}>Создана карточка клиента</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#10b981' }}>{clientName}</div>
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 34, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
               Статус «Черновик». Перейдите в карточку для заполнения данных.
             </div>
           </>
         ) : (
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 34, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
             Статус лида обновлён.
           </div>
         )}
-        <div style={{ display: 'flex', gap: 13 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {clientId && (
-            <button onClick={onGoToClient}
-              style={{ flex: 1, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={onGoToClient} className="btn btn-primary" style={{ flex: 1, background: '#10b981' }}>
               Перейти к клиенту
             </button>
           )}
-          <button onClick={onClose}
-            style={{ flex: clientId ? undefined : 1, height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={onClose} className="btn btn-secondary" style={{ flex: clientId ? undefined : 1 }}>
             Закрыть
           </button>
         </div>
@@ -797,8 +798,12 @@ export default function LeadsPage() {
   if (loading) {
     return (
       <div>
-        <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 21px' }}>Лиды</h1>
-        <div style={{ padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', margin: '0 0 20px', letterSpacing: '-0.02em' }}>Лиды</h1>
+        <div style={{ display: 'flex', gap: 12 }}>
+          {COLUMNS.map((_, i) => (
+            <div key={i} className="skeleton" style={{ flex: '1 0 240px', minWidth: 240, height: 400, borderRadius: 12 }} />
+          ))}
+        </div>
       </div>
     )
   }
@@ -806,48 +811,50 @@ export default function LeadsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px - 42px)', minHeight: 0 }}>
       {/* Page header */}
-      <div style={{ marginBottom: 13, flexShrink: 0 }}>
+      <div style={{ marginBottom: 12, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
           <div>
-            <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Лиды</h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 3, letterSpacing: '-0.02em' }}>Лиды</h1>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>
               {leads.length} лидов · Воронка продаж
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select
-            value={filterSource}
-            onChange={e => setFilterSource(e.target.value)}
-            style={{ height: 36, padding: '0 10px', background: 'var(--bg-elevated)', border: `1px solid ${filterSource ? '#02BDB6' : 'var(--glass-border)'}`, borderRadius: 8, color: filterSource ? '#02BDB6' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', outline: 'none' }}
-          >
-            <option value="">Все источники</option>
-            {LEAD_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-          <button
-            onClick={() => void handleExport()}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
-            <Download size={14} />Excel
-          </button>
-          {canManage && (
-            <button
-              onClick={() => setCreateCol('new')}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              <Plus size={16} />Новый лид
+            <select
+              value={filterSource}
+              onChange={e => setFilterSource(e.target.value)}
+              style={{
+                height: 34, padding: '0 10px', background: 'transparent',
+                border: `1px solid ${filterSource ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
+                borderRadius: 8,
+                color: filterSource ? 'var(--accent)' : 'var(--text-secondary)',
+                fontSize: 12, cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
+              }}
+            >
+              <option value="">Все источники</option>
+              {LEAD_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+            <button onClick={() => void handleExport()} className="btn btn-secondary" style={{ gap: 6 }}>
+              <Download size={14} />Excel
             </button>
-          )}
+            {canManage && (
+              <button onClick={() => setCreateCol('new')} className="btn btn-primary" style={{ gap: 6 }}>
+                <Plus size={15} strokeWidth={2.5} />Новый лид
+              </button>
+            )}
           </div>
         </div>
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: '#ef4444', flexShrink: 0 }}>
           <AlertCircle size={13} />{error}
         </div>
       )}
 
       {/* Kanban board */}
-      <div style={{ display: 'flex', gap: 13, flex: 1, minHeight: 0, overflowX: 'auto', paddingBottom: 8 }}>
+      <div style={{ display: 'flex', gap: 10, flex: 1, minHeight: 0, overflowX: 'auto', paddingBottom: 8 }}>
         {COLUMNS.map(col => {
           const colLeads = leads.filter(l => l.status === col.id && (!filterSource || l.source === filterSource))
           const isOver   = dragOver === col.id
@@ -859,41 +866,39 @@ export default function LeadsPage() {
               onDrop={e => void handleDrop(e, col.id)}
               onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null) }}
               style={{
-                flex: '1 0 260px',
-                minWidth: 260,
-                maxWidth: 320,
-                display: 'flex',
-                flexDirection: 'column',
-                background: isOver ? col.color + '08' : 'var(--glass-bg)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: `1px solid ${isOver ? col.color + '55' : 'var(--glass-border)'}`,
-                borderRadius: 21,
-                overflow: 'hidden',
-                transition: 'border-color 0.18s, background 0.18s',
-                boxShadow: isOver ? `0 0 0 2px ${col.color}33` : 'none',
+                flex: '1 0 240px', minWidth: 240, maxWidth: 300,
+                display: 'flex', flexDirection: 'column',
+                background: isOver ? `color-mix(in srgb, ${col.color} 5%, var(--bg-card))` : 'var(--bg-card)',
+                border: `1px solid ${isOver ? `color-mix(in srgb, ${col.color} 50%, transparent)` : 'var(--border)'}`,
+                borderRadius: 12, overflow: 'hidden',
+                transition: 'border-color 180ms ease-out, background 180ms ease-out',
+                boxShadow: isOver ? `0 0 0 2px color-mix(in srgb, ${col.color} 20%, transparent)` : 'none',
               }}>
               {/* Column header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 13px 8px', borderBottom: `1px solid var(--glass-border)`, flexShrink: 0, background: col.color + '08' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: col.color }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: col.color }}>{col.label}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: col.color + '22', color: col.color }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '11px 12px 8px',
+                borderBottom: `1px solid var(--border)`, flexShrink: 0,
+                background: `color-mix(in srgb, ${col.color} 5%, transparent)`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: col.color }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: col.color }}>{col.label}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 20, background: `color-mix(in srgb, ${col.color} 15%, transparent)`, color: col.color, fontVariantNumeric: 'tabular-nums' }}>
                     {colLeads.length}
                   </span>
                 </div>
                 {canManage && (
-                  <button onClick={() => setCreateCol(col.id)}
-                    style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }}>
-                    <Plus size={12} />
+                  <button onClick={() => setCreateCol(col.id)} className="icon-btn" style={{ width: 22, height: 22 }}>
+                    <Plus size={11} />
                   </button>
                 )}
               </div>
 
               {/* Cards scroll area */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {colLeads.length === 0 && (
-                  <div style={{ fontSize: 12, color: isOver ? col.color : 'var(--text-muted)', textAlign: 'center', padding: '21px 0', border: isOver ? `2px dashed ${col.color}55` : 'none', borderRadius: 8 }}>
+                  <div style={{ fontSize: 12, color: isOver ? col.color : 'var(--text-muted)', textAlign: 'center', padding: '20px 0', border: isOver ? `2px dashed color-mix(in srgb, ${col.color} 40%, transparent)` : 'none', borderRadius: 8 }}>
                     {isOver ? 'Отпустите здесь' : 'Нет лидов'}
                   </div>
                 )}
@@ -916,7 +921,6 @@ export default function LeadsPage() {
         })}
       </div>
 
-      {/* Create modal */}
       {createCol && (
         <CreateLeadModal
           initialStatus={createCol}
@@ -926,7 +930,6 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Detail modal */}
       {selectedLead && (
         <LeadModal
           lead={selectedLead}
@@ -937,7 +940,6 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Context menu */}
       {ctxMenu && (
         <ContextMenu
           x={ctxMenu.x}
@@ -947,7 +949,6 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Success modal (drag-drop / context menu) */}
       {clientAddedModal !== null && (
         <ClientAddedModal
           clientId={clientAddedModal.id}
@@ -957,7 +958,6 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Fail reason modal (drag-drop / context menu) */}
       {failReasonDrop && (
         <FailReasonModal
           onConfirm={reason => { const l = failReasonDrop; setFailReasonDrop(null); void doStatusUpdate(l, 'fail', reason) }}

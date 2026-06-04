@@ -53,18 +53,18 @@ export function BranchSelector({ role, selectedIds, onChange }: Props) {
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '4px 12px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-                background: selected ? 'rgba(2,189,182,0.15)' : 'transparent',
-                border: `1px solid ${selected ? '#02BDB6' : 'rgba(255,255,255,0.12)'}`,
-                color: selected ? '#02BDB6' : 'var(--text-secondary)',
+                background: selected ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
+                border: `1px solid ${selected ? 'var(--accent)' : 'rgba(255,255,255,0.12)'}`,
+                color: selected ? 'var(--accent)' : 'var(--text-secondary)',
                 fontWeight: selected ? 600 : 400,
-                transition: 'all 0.15s',
+                transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out',
               }}
             >
               <span style={{
                 width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                background: selected ? '#02BDB6' : 'var(--text-muted)',
-                border: selected ? 'none' : '1px solid var(--glass-border)',
-                transition: 'all 0.15s',
+                background: selected ? 'var(--accent)' : 'var(--text-muted)',
+                border: selected ? 'none' : '1px solid var(--border)',
+                transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out',
               }} />
               {branch.name}
               {branch.city && (

@@ -22,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  present: '#02BDB6',
+  present: 'var(--accent)',
   absent:  '#ef4444',
   late:    '#f59e0b',
   partial: '#a78bfa',
@@ -30,11 +30,11 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 const STATUS_BG: Record<string, string> = {
-  present: 'rgba(2,189,182,0.15)',
+  present: 'color-mix(in srgb, var(--accent) 15%, transparent)',
   absent:  'rgba(239,68,68,0.15)',
   late:    'rgba(245,158,11,0.15)',
   partial: 'rgba(167,139,250,0.15)',
-  pending: 'var(--bg-elevated)',
+  pending: 'var(--bg-card)',
 }
 
 function currentMonth() {
@@ -102,7 +102,7 @@ export default function TimesheetPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <CalendarCheck size={20} strokeWidth={1.75} color="var(--accent)" />
-            <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Табель</h1>
+            <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Табель</h1>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Учёт рабочего времени сотрудников</p>
         </div>
@@ -112,9 +112,9 @@ export default function TimesheetPage() {
             value={month}
             onChange={e => setMonth(e.target.value)}
             style={{
-              height: 36, padding: '0 10px', background: 'var(--bg-elevated)',
-              border: '1px solid var(--glass-border)', borderRadius: 8,
-              color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer',
+              height: 36, padding: '0 10px', background: 'var(--bg-card)',
+              border: '1px solid var(--border)', borderRadius: 8,
+              color: 'var(--text)', fontSize: 13, cursor: 'pointer',
             }}
           />
           <button
@@ -144,7 +144,7 @@ export default function TimesheetPage() {
       ) : employees.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '60px 0',
-          background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 16,
+          background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16,
         }}>
           <CalendarCheck size={40} strokeWidth={1} color="var(--text-muted)" style={{ marginBottom: 12 }} />
           <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>
@@ -167,19 +167,19 @@ export default function TimesheetPage() {
           </div>
 
           {/* Table */}
-          <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--glass-border)' }}>
+          <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border)' }}>
             <table style={{ borderCollapse: 'collapse', minWidth: '100%', fontSize: 12 }}>
               <thead>
-                <tr style={{ background: 'var(--bg-elevated)' }}>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 500, whiteSpace: 'nowrap', borderBottom: '1px solid var(--glass-border)', position: 'sticky', left: 0, background: 'var(--bg-elevated)', zIndex: 2 }}>
+                <tr style={{ background: 'var(--bg-card)' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 500, whiteSpace: 'nowrap', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2 }}>
                     Сотрудник
                   </th>
                   {days.map(d => (
-                    <th key={d} style={{ padding: '10px 6px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500, minWidth: 32, borderBottom: '1px solid var(--glass-border)' }}>
+                    <th key={d} style={{ padding: '10px 6px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500, minWidth: 32, borderBottom: '1px solid var(--border)' }}>
                       {d}
                     </th>
                   ))}
-                  <th style={{ padding: '10px 10px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500, borderBottom: '1px solid var(--glass-border)', whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '10px 10px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
                     Итого ч.
                   </th>
                 </tr>
@@ -191,18 +191,18 @@ export default function TimesheetPage() {
                   return (
                     <tr key={emp.id} style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
                       <td style={{
-                        padding: '8px 14px', whiteSpace: 'nowrap', borderBottom: '1px solid var(--glass-border)',
+                        padding: '8px 14px', whiteSpace: 'nowrap', borderBottom: '1px solid var(--border)',
                         position: 'sticky', left: 0, background: idx % 2 === 0 ? 'var(--bg-base)' : 'var(--bg-card)',
                         zIndex: 1,
                       }}>
-                        <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{emp.full_name}</div>
+                        <div style={{ fontWeight: 500, color: 'var(--text)' }}>{emp.full_name}</div>
                         {emp.position && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.position}</div>}
                       </td>
                       {days.map(d => {
                         const entry = empEntries[d]
                         const st = entry?.status ?? 'pending'
                         return (
-                          <td key={d} style={{ padding: '4px 3px', textAlign: 'center', borderBottom: '1px solid var(--glass-border)' }}>
+                          <td key={d} style={{ padding: '4px 3px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>
                             <div
                               title={STATUS_LABEL[st]}
                               style={{
@@ -218,7 +218,7 @@ export default function TimesheetPage() {
                           </td>
                         )
                       })}
-                      <td style={{ padding: '8px 10px', textAlign: 'center', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'center', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontWeight: 500 }}>
                         {totalHours > 0 ? totalHours.toFixed(1) : '—'}
                       </td>
                     </tr>

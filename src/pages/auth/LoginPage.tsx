@@ -29,7 +29,7 @@ interface BranchSelectModalProps {
 function BranchSelectModal({ branches, onSelect }: BranchSelectModalProps) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}>
-      <div className="modal-animate" style={{ width: '100%', maxWidth: 400, background: 'rgba(24,24,27,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+      <div className="modal-animate" style={{ width: '100%', maxWidth: 400, background: 'rgba(24,24,27,0.98)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
         <div style={{ marginBottom: 21 }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>Выберите филиал</div>
           <div style={{ fontSize: 13, color: '#71717A' }}>У вас несколько филиалов. Выберите рабочий.</div>
@@ -43,7 +43,7 @@ function BranchSelectModal({ branches, onSelect }: BranchSelectModalProps) {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '13px 21px', background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.08)', borderRadius: 13,
-                cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left',
+                cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out', textAlign: 'left',
                 color: '#FFFFFF',
               }}
             >
@@ -177,14 +177,14 @@ export default function LoginPage() {
     navigate('/dashboard')
   }
 
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#02BDB6' }
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = 'var(--accent)' }
   const handleBlur  = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }
 
   return (
     <div
       style={{
         minHeight: '100vh', display: 'flex', overflow: 'hidden',
-        background: 'radial-gradient(ellipse at 25% 30%, rgba(2,189,182,0.07) 0%, #09090B 55%), radial-gradient(ellipse at 80% 75%, rgba(38,60,217,0.05) 0%, transparent 60%)',
+        background: 'radial-gradient(ellipse at 25% 30%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, #09090B 55%), radial-gradient(ellipse at 80% 75%, rgba(38,60,217,0.05) 0%, transparent 60%)',
         backgroundColor: '#09090B',
       }}
     >
@@ -196,14 +196,14 @@ export default function LoginPage() {
           {/* Brand */}
           <div style={{ marginBottom: 34 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 30, fontWeight: 700, color: '#02BDB6', letterSpacing: 0.5 }}>Slimway</span>
-              <span style={{ background: 'rgba(2,189,182,0.15)', color: '#02BDB6', border: '1px solid rgba(2,189,182,0.3)', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 8, letterSpacing: 1 }}>CRM</span>
+              <span style={{ fontSize: 30, fontWeight: 700, color: 'var(--accent)', letterSpacing: 0.5 }}>Slimway</span>
+              <span style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 8, letterSpacing: 1 }}>CRM</span>
             </div>
             <p style={{ color: '#71717A', fontSize: 13, margin: 0, lineHeight: 1.5 }}>Управляйте фитнес-сетью эффективно</p>
           </div>
 
           {/* Form card */}
-          <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 21, padding: 34 }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 28 }}>
             {!mfaStep ? (
               /* ── Step 1: email + password ── */
               <>
@@ -229,7 +229,7 @@ export default function LoginPage() {
                 <button
                   onClick={() => void handleLogin()}
                   disabled={loading}
-                  style={{ display: 'block', width: '100%', height: 42, marginTop: 21, borderRadius: 8, border: 'none', background: loading ? 'rgba(2,189,182,0.5)' : '#02BDB6', color: '#FFFFFF', fontSize: 13, fontWeight: 600, cursor: loading ? 'default' : 'pointer', transition: 'all 0.18s', letterSpacing: 0.3 }}
+                  style={{ display: 'block', width: '100%', height: 42, marginTop: 21, borderRadius: 8, border: 'none', background: loading ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--accent)', color: '#FFFFFF', fontSize: 13, fontWeight: 600, cursor: loading ? 'default' : 'pointer', transition: 'all 0.18s', letterSpacing: 0.3 }}
                 >
                   {loading ? 'Вход...' : 'Войти'}
                 </button>
@@ -277,7 +277,7 @@ export default function LoginPage() {
                 <button
                   onClick={() => void handleMfaVerify()}
                   disabled={mfaLoading || mfaCode.length !== 6}
-                  style={{ display: 'block', width: '100%', height: 42, borderRadius: 8, border: 'none', background: (mfaLoading || mfaCode.length !== 6) ? 'rgba(2,189,182,0.5)' : '#02BDB6', color: '#FFFFFF', fontSize: 13, fontWeight: 600, cursor: (mfaLoading || mfaCode.length !== 6) ? 'default' : 'pointer', transition: 'all 0.18s' }}
+                  style={{ display: 'block', width: '100%', height: 42, borderRadius: 8, border: 'none', background: (mfaLoading || mfaCode.length !== 6) ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--accent)', color: '#FFFFFF', fontSize: 13, fontWeight: 600, cursor: (mfaLoading || mfaCode.length !== 6) ? 'default' : 'pointer', transition: 'all 0.18s' }}
                 >
                   {mfaLoading ? 'Проверка...' : 'Подтвердить'}
                 </button>
@@ -293,7 +293,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 21, color: '#3F3F46', fontSize: 11 }}>
-            Slimway CRM · <span style={{ color: '#02BDB6' }}>v{VERSION}</span> · 2026
+            Slimway CRM · <span style={{ color: 'var(--accent)' }}>v{VERSION}</span> · 2026
           </div>
         </div>
       </div>
@@ -309,7 +309,7 @@ export default function LoginPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 21 }}>
           {FEATURES.map(f => (
             <div key={f.title} style={{ display: 'flex', gap: 13 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 13, background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{f.icon}</div>
+              <div style={{ width: 42, height: 42, borderRadius: 13, background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{f.icon}</div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', marginBottom: 3 }}>{f.title}</div>
                 <div style={{ fontSize: 12, color: '#71717A', lineHeight: 1.6 }}>{f.desc}</div>
@@ -319,7 +319,7 @@ export default function LoginPage() {
         </div>
 
         <div style={{ marginTop: 'auto', paddingTop: 34, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(2,189,182,0.08)', border: '1px solid rgba(2,189,182,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 11, color: '#02BDB6' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)', borderRadius: 8, padding: '6px 10px', fontSize: 11, color: 'var(--accent)' }}>
             <span>●</span> Система работает
           </div>
         </div>

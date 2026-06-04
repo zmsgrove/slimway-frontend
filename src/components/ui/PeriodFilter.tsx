@@ -48,10 +48,10 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
 
   const btnStyle = (active: boolean): React.CSSProperties => ({
     height: 30, padding: '0 12px',
-    background: active ? 'rgba(2,189,182,0.15)' : 'transparent',
-    border: `1px solid ${active ? 'rgba(2,189,182,0.5)' : 'var(--glass-border)'}`,
+    background: active ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
+    border: `1px solid ${active ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
     borderRadius: 8,
-    color: active ? '#02BDB6' : 'var(--text-secondary)',
+    color: active ? 'var(--accent)' : 'var(--text-secondary)',
     fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
   })
 
@@ -78,8 +78,8 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
 
   const dateInputStyle: React.CSSProperties = {
     height: 30, padding: '0 8px',
-    background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
-    borderRadius: 8, color: 'var(--text-primary)', fontSize: 12, fontFamily: 'inherit',
+    background: 'var(--bg-card)', border: '1px solid var(--border)',
+    borderRadius: 8, color: 'var(--text)', fontSize: 12, fontFamily: 'inherit',
     outline: 'none', boxSizing: 'border-box',
   }
 
@@ -104,7 +104,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
           <input type="date" value={cTo} onChange={e => setCTo(e.target.value)} style={dateInputStyle} />
           <button
             onClick={apply}
-            style={{ height: 30, padding: '0 12px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ height: 30, padding: '0 12px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             Применить
           </button>

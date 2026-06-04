@@ -46,7 +46,7 @@ export function ContextMenu({ x, y, items, onClose }: Props) {
       onContextMenu={e => e.preventDefault()}
       style={{
         position: 'fixed', left, top, zIndex: 9999,
-        background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)',
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 13, padding: 6,
         boxShadow: '0 16px 48px rgba(0,0,0,0.5)', minWidth: MENU_W,
         backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
@@ -55,7 +55,7 @@ export function ContextMenu({ x, y, items, onClose }: Props) {
     >
       {items.map((item, i) => {
         if ('separator' in item && item.separator) {
-          return <div key={i} style={{ height: 1, background: 'var(--glass-border)', margin: '4px 0' }} />
+          return <div key={i} style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
         }
         const mi = item as ContextMenuItem
         return (
@@ -65,7 +65,7 @@ export function ContextMenu({ x, y, items, onClose }: Props) {
             style={{
               display: 'flex', alignItems: 'center', gap: 9, width: '100%',
               padding: '8px 10px', background: 'transparent', border: 'none',
-              borderRadius: 8, color: mi.danger ? '#ef4444' : 'var(--text-primary)',
+              borderRadius: 8, color: mi.danger ? '#ef4444' : 'var(--text)',
               fontSize: 13, cursor: 'pointer', textAlign: 'left',
             }}
             onMouseEnter={e => {

@@ -2,24 +2,26 @@ import { type HTMLAttributes } from 'react'
 import { clsx } from 'clsx'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  padding?: 'sm' | 'md' | 'lg'
+  padding?: 'none' | 'sm' | 'md' | 'lg'
+  hoverable?: boolean
 }
 
-export default function Card({ padding = 'md', className, children, ...props }: CardProps) {
+export default function Card({ padding = 'md', hoverable = false, className, children, style, ...props }: CardProps) {
   return (
     <div
       className={clsx(
-        'rounded-lg',
-        padding === 'sm' && 'p-fib-sm',
-        padding === 'md' && 'p-fib-md',
-        padding === 'lg' && 'p-fib-lg',
+        'rounded-[12px] transition-[border-color] duration-150',
+        padding === 'none' && 'p-0',
+        padding === 'sm'   && 'p-[14px]',
+        padding === 'md'   && 'p-[20px]',
+        padding === 'lg'   && 'p-[24px]',
+        hoverable && 'cursor-pointer',
         className
       )}
       style={{
-        background:           'var(--glass-bg)',
-        backdropFilter:       'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border:               '1px solid var(--glass-border)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        ...style,
       }}
       {...props}
     >

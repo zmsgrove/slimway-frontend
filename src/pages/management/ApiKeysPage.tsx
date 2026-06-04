@@ -16,9 +16,9 @@ const SCOPES = [
 ]
 
 const inputStyle: React.CSSProperties = {
-  height: 36, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  height: 36, padding: '0 13px', background: 'var(--bg-card)',
+  border: '1px solid var(--border)', borderRadius: 8,
+  color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
 }
 const labelStyle: React.CSSProperties = { fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }
 
@@ -37,11 +37,11 @@ function RawKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 520, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 520, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Key size={18} color="var(--accent)" />
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>API-ключ создан</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>API-ключ создан</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={18} /></button>
         </div>
@@ -53,7 +53,7 @@ function RawKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
           </div>
         </div>
 
-        <div style={{ padding: '13px 16px', background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 10, marginBottom: 16, fontFamily: 'monospace', fontSize: 13, color: 'var(--text-primary)', wordBreak: 'break-all', lineHeight: 1.6 }}>
+        <div style={{ padding: '13px 16px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 16, fontFamily: 'monospace', fontSize: 13, color: 'var(--text)', wordBreak: 'break-all', lineHeight: 1.6 }}>
           {rawKey}
         </div>
 
@@ -61,7 +61,7 @@ function RawKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
           <button onClick={handleCopy} style={{ flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copied ? 'rgba(16,185,129,0.12)' : 'var(--accent)', border: copied ? '1px solid rgba(16,185,129,0.3)' : 'none', borderRadius: 8, color: copied ? '#10b981' : 'var(--accent-fg)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             {copied ? <><CheckCircle2 size={15} />Скопировано!</> : <><Copy size={15} />Скопировать ключ</>}
           </button>
-          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
             Закрыть
           </button>
         </div>
@@ -105,9 +105,9 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Новый API-ключ</div>
+      <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 480, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21, paddingBottom: 21, borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Новый API-ключ</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={18} /></button>
         </div>
 
@@ -127,7 +127,7 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
             <label style={labelStyle}>Права доступа (скоупы) *</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {SCOPES.map(s => (
-                <label key={s.value} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 13px', background: scopes.includes(s.value) ? 'var(--accent-muted)' : 'var(--bg-surface)', border: `1px solid ${scopes.includes(s.value) ? 'var(--accent)' : 'var(--glass-border)'}`, borderRadius: 8, cursor: 'pointer', transition: 'all 0.12s' }}>
+                <label key={s.value} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 13px', background: scopes.includes(s.value) ? 'var(--accent-muted)' : 'var(--bg-surface)', border: `1px solid ${scopes.includes(s.value) ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', transition: 'all 0.12s' }}>
                   <input type="checkbox" checked={scopes.includes(s.value)} onChange={() => toggleScope(s.value)} style={{ accentColor: 'var(--accent)', width: 14, height: 14 }} />
                   <span style={{ fontSize: 12, color: scopes.includes(s.value) ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: scopes.includes(s.value) ? 500 : 400 }}>{s.label}</span>
                 </label>
@@ -145,7 +145,7 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
             <button onClick={() => void handleSubmit()} disabled={saving} style={{ flex: 1, height: 40, background: 'var(--accent)', border: 'none', borderRadius: 8, color: 'var(--accent-fg)', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Создание...' : 'Создать ключ'}
             </button>
-            <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+            <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
               Отмена
             </button>
           </div>
@@ -168,8 +168,8 @@ function RawKeyInline({ raw }: { raw: string }) {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '8px 10px', background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 8 }}>
-      <code style={{ flex: 1, fontSize: 11, color: 'var(--text-primary)', wordBreak: 'break-all', fontFamily: 'monospace' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '8px 10px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8 }}>
+      <code style={{ flex: 1, fontSize: 11, color: 'var(--text)', wordBreak: 'break-all', fontFamily: 'monospace' }}>
         {visible ? raw : raw.slice(0, 8) + '••••••••••••••••'}
       </code>
       <button onClick={() => setVisible(v => !v)} title={visible ? 'Скрыть' : 'Показать'} style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
@@ -237,7 +237,7 @@ export default function ApiKeysPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
         <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>API-ключи</h1>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>API-ключи</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Ключи для внешних интеграций через REST API</p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -245,7 +245,7 @@ export default function ApiKeysPage() {
             href={SWAGGER_URL}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, textDecoration: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, textDecoration: 'none', cursor: 'pointer' }}
           >
             <ExternalLink size={14} />Swagger UI
           </a>
@@ -266,11 +266,11 @@ export default function ApiKeysPage() {
       {loading ? (
         <div style={{ padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
       ) : keys.length === 0 ? (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 13 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 21, background: 'var(--accent-muted)', border: '1px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 13 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--accent-muted)', border: '1px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Key size={24} color="var(--accent)" />
           </div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>API-ключей нет</div>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>API-ключей нет</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 320, lineHeight: 1.6 }}>
             Создайте API-ключ для подключения внешних систем к Slimway CRM.
           </div>
@@ -283,14 +283,14 @@ export default function ApiKeysPage() {
             const statusLabel = !key.is_active ? 'Отозван' : isExpired ? 'Истёк' : 'Активен'
 
             return (
-              <div key={key.id} style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 21, opacity: key.is_active ? 1 : 0.6 }}>
+              <div key={key.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 21, opacity: key.is_active ? 1 : 0.6 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--accent-muted)', border: '1px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Key size={16} color="var(--accent)" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{key.name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{key.name}</div>
                       <code style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-surface)', padding: '1px 6px', borderRadius: 4 }}>{key.key_prefix}••••••••</code>
                     </div>
                   </div>

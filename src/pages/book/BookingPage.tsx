@@ -14,7 +14,7 @@ function toISO(d: Date) { return d.toISOString().slice(0, 10) }
 const s = {
   wrap:  { minHeight: '100dvh', background: '#0a0a0a', color: '#f0f0f0', fontFamily: 'system-ui, sans-serif', maxWidth: 430, margin: '0 auto', padding: '24px 16px', boxSizing: 'border-box' as const },
   card:  { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 16 },
-  btn:   (active = true): React.CSSProperties => ({ height: 48, padding: '0 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: active ? 'pointer' : 'not-allowed', fontFamily: 'inherit', background: active ? '#02BDB6' : 'rgba(255,255,255,0.08)', border: 'none', color: active ? '#fff' : '#666', width: '100%', opacity: active ? 1 : 0.5 }),
+  btn:   (active = true): React.CSSProperties => ({ height: 48, padding: '0 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: active ? 'pointer' : 'not-allowed', fontFamily: 'inherit', background: active ? 'var(--accent)' : 'rgba(255,255,255,0.08)', border: 'none', color: active ? '#fff' : '#666', width: '100%', opacity: active ? 1 : 0.5 }),
   input: { height: 48, padding: '0 14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#f0f0f0', fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box' as const, fontFamily: 'inherit' },
   label: { fontSize: 12, color: '#888', marginBottom: 6, display: 'block' },
   muted: { color: '#888', fontSize: 13 },
@@ -105,7 +105,7 @@ export default function BookingPage() {
   const branch = pageData?.branch as Record<string, unknown> | null
 
   if (loading) {
-    return <div style={{ ...s.wrap, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' }}><Loader size={32} color="#02BDB6" /></div>
+    return <div style={{ ...s.wrap, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' }}><Loader size={32} color="var(--accent)" /></div>
   }
 
   if (step === 'error' || !pageData) {
@@ -122,10 +122,10 @@ export default function BookingPage() {
     <div style={s.wrap}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(2,189,182,0.12)', border: '2px solid rgba(2,189,182,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 24 }}>💎</div>
+        <div style={{ width: 56, height: 56, borderRadius: 18, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '2px solid color-mix(in srgb, var(--accent) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 24 }}>💎</div>
         <div style={{ fontSize: 20, fontWeight: 700 }}>{branch?.name as string ?? 'Slimway'}</div>
         {!!branch?.city && <div style={{ color: '#888', fontSize: 13 }}>{branch.city as string}</div>}
-        <div style={{ fontSize: 13, color: '#02BDB6', marginTop: 4 }}>Онлайн-запись</div>
+        <div style={{ fontSize: 13, color: 'var(--accent)', marginTop: 4 }}>Онлайн-запись</div>
       </div>
 
       {/* Phone step */}
@@ -178,13 +178,13 @@ export default function BookingPage() {
       {/* Slot step */}
       {step === 'slot' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <button onClick={() => setStep('date')} style={{ background: 'none', border: 'none', color: '#02BDB6', fontSize: 13, cursor: 'pointer', padding: 0, textAlign: 'left' }}>← Назад</button>
+          <button onClick={() => setStep('date')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 13, cursor: 'pointer', padding: 0, textAlign: 'left' }}>← Назад</button>
           <div style={{ fontSize: 18, fontWeight: 700 }}>
             <Calendar size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />
             {new Date(selDate + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' })}
           </div>
           {slotsLoad ? (
-            <div style={{ textAlign: 'center', padding: 32 }}><Loader size={24} color="#02BDB6" /></div>
+            <div style={{ textAlign: 'center', padding: 32 }}><Loader size={24} color="var(--accent)" /></div>
           ) : slots.length === 0 ? (
             <div style={{ ...s.card, textAlign: 'center', color: '#888', padding: 24 }}>Свободных слотов нет</div>
           ) : (
@@ -194,7 +194,7 @@ export default function BookingPage() {
                 const active = selSlot?.id === slot.id
                 return (
                   <button key={slot.id as string} onClick={() => setSelSlot(slot)}
-                    style={{ padding: '10px 16px', borderRadius: 12, border: `1px solid ${active ? '#02BDB6' : 'rgba(255,255,255,0.12)'}`, background: active ? 'rgba(2,189,182,0.15)' : 'rgba(255,255,255,0.04)', color: active ? '#02BDB6' : '#ccc', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ padding: '10px 16px', borderRadius: 12, border: `1px solid ${active ? 'var(--accent)' : 'rgba(255,255,255,0.12)'}`, background: active ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'rgba(255,255,255,0.04)', color: active ? 'var(--accent)' : '#ccc', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div style={{ fontSize: 15, fontWeight: 600 }}>{slot.time_start as string}</div>
                     {dev && <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{DEVICE_LABELS[dev.type as string] ?? dev.type}</div>}
                   </button>
@@ -213,7 +213,7 @@ export default function BookingPage() {
       {/* Confirm step */}
       {step === 'confirm' && selSlot && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <button onClick={() => setStep('slot')} style={{ background: 'none', border: 'none', color: '#02BDB6', fontSize: 13, cursor: 'pointer', padding: 0, textAlign: 'left' }}>← Назад</button>
+          <button onClick={() => setStep('slot')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 13, cursor: 'pointer', padding: 0, textAlign: 'left' }}>← Назад</button>
           <div style={{ fontSize: 18, fontWeight: 700 }}>Подтверждение записи</div>
           <div style={{ ...s.card, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div><span style={{ ...s.muted }}>Дата:</span> <strong>{new Date(selDate + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</strong></div>

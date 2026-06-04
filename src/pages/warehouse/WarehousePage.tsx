@@ -27,9 +27,9 @@ const CATEGORY_COLORS: Record<WarehouseCategory, string> = {
 }
 
 const inputStyle: React.CSSProperties = {
-  height: 36, padding: '0 13px', background: 'var(--bg-elevated)',
-  border: '1px solid var(--glass-border)', borderRadius: 8,
-  color: 'var(--text-primary)', fontSize: 13, outline: 'none',
+  height: 36, padding: '0 13px', background: 'var(--bg-card)',
+  border: '1px solid var(--border)', borderRadius: 8,
+  color: 'var(--text)', fontSize: 13, outline: 'none',
   width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
 }
 
@@ -94,11 +94,11 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ padding: '21px 21px 13px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ padding: '21px 21px 13px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>{item.name}</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{item.name}</div>
             <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: `${CATEGORY_COLORS[item.category]}18`, color: CATEGORY_COLORS[item.category] }}>
                 {CATEGORY_LABELS[item.category]}
@@ -113,23 +113,23 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
         <div style={{ flex: 1, overflowY: 'auto', padding: 21 }}>
           {/* Stock info */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13, marginBottom: 21 }}>
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 13 }}>
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 13, padding: 13 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Остаток</div>
-              <div style={{ fontSize: 21, fontWeight: 700, color: item.low_stock ? '#ef4444' : 'var(--text-primary)' }}>
+              <div style={{ fontSize: 21, fontWeight: 700, color: item.low_stock ? '#ef4444' : 'var(--text)' }}>
                 {item.quantity} <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-muted)' }}>{item.unit || 'шт.'}</span>
               </div>
               {stockPct !== null && (
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ height: 4, background: 'var(--glass-border)', borderRadius: 2, marginBottom: 4 }}>
+                  <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, marginBottom: 4 }}>
                     <div style={{ height: '100%', width: `${stockPct}%`, background: stockPct < 50 ? '#ef4444' : '#10b981', borderRadius: 2, transition: 'width 0.3s' }} />
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Мин: {item.min_quantity} {item.unit || 'шт.'}</div>
                 </div>
               )}
             </div>
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 13 }}>
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 13, padding: 13 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Стоимость остатка</div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>
                 {item.price != null ? new Intl.NumberFormat('ru-KZ').format(item.quantity * item.price) + ' ₸' : '—'}
               </div>
               {item.price != null && (
@@ -151,7 +151,7 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
                 <button onClick={() => void handleIn()} disabled={saving} style={{ height: 36, padding: '0 13px', background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
                   {saving ? '...' : 'OK'}
                 </button>
-                <button onClick={() => { setShowIn(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                <button onClick={() => { setShowIn(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
               </div>
             </div>
           ) : showSell ? (
@@ -164,7 +164,7 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
                 <button onClick={() => void handleSell()} disabled={saving} style={{ height: 36, padding: '0 13px', background: '#ef4444', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
                   {saving ? '...' : 'OK'}
                 </button>
-                <button onClick={() => { setShowSell(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                <button onClick={() => { setShowSell(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
               </div>
             </div>
           ) : (
@@ -179,7 +179,7 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
               )}
               {canEdit && (
                 <>
-                  <button onClick={() => { onEdit(); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+                  <button onClick={() => { onEdit(); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                     <Edit2 size={13} />Редактировать
                   </button>
                   <button onClick={() => { onDelete(); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 13, cursor: 'pointer' }}>
@@ -195,7 +195,7 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
           {loading && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>}
           {!loading && movements.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '13px 0' }}>Нет движений</div>}
           {movements.map(m => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
+            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: m.type === 'in' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', flexShrink: 0 }}>
                 {m.type === 'in' ? <ArrowDown size={13} color="#10b981" /> : <ArrowUp size={13} color="#ef4444" />}
               </div>
@@ -257,9 +257,9 @@ function BulkIntakeModal({ onClose, onDone }: { onClose: () => void; onDone: () 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '21px 21px 13px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>Приход на склад</div>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '21px 21px 13px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>Приход на склад</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 21 }}>
@@ -271,14 +271,14 @@ function BulkIntakeModal({ onClose, onDone }: { onClose: () => void; onDone: () 
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '21px 0' }}>Каталог пуст. Добавьте товары в разделе Управление → Каталог.</div>
           ) : (
             <div style={{ marginBottom: 21 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--glass-border)', marginBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)', marginBottom: 8 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Товар</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Приход</div>
               </div>
               {catalogItems.map(item => (
-                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--glass-border)', alignItems: 'center' }}>
+                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{item.name}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text)' }}>{item.name}</div>
                     {item.sku && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.sku}</div>}
                   </div>
                   <input
@@ -312,8 +312,8 @@ function BulkIntakeModal({ onClose, onDone }: { onClose: () => void; onDone: () 
           )}
         </div>
 
-        <div style={{ padding: '13px 21px', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+        <div style={{ padding: '13px 21px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
           <button onClick={() => void handleSubmit()} disabled={saving || loading} style={{ flex: 2, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || loading) ? 'not-allowed' : 'pointer', opacity: (saving || loading) ? 0.7 : 1 }}>
             {saving ? 'Оформляем...' : 'Оформить приход'}
           </button>
@@ -359,9 +359,9 @@ function EditItemModal({ item, onClose, onSave }: { item: WarehouseItem; onClose
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Редактировать</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Редактировать</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
         {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
@@ -396,8 +396,8 @@ function EditItemModal({ item, onClose, onSave }: { item: WarehouseItem; onClose
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 21 }}>
-          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
-          <button onClick={() => void handleSave()} disabled={saving} style={{ flex: 2, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={() => void handleSave()} disabled={saving} style={{ flex: 2, height: 40, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Сохранение...' : 'Сохранить'}
           </button>
         </div>
@@ -442,9 +442,9 @@ function CreateItemModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 440, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Новая позиция</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Новая позиция</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
         {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
@@ -483,8 +483,8 @@ function CreateItemModal({ onClose, onCreate }: { onClose: () => void; onCreate:
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 21 }}>
-          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
-          <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 2, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={() => void handleCreate()} disabled={saving} style={{ flex: 2, height: 40, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Создание...' : 'Создать'}
           </button>
         </div>
@@ -516,9 +516,9 @@ function SupplierModal({ initial, onClose, onSave }: { initial?: Supplier | null
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 420, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 21, padding: 34, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 420, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{initial ? 'Редактировать поставщика' : 'Новый поставщик'}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{initial ? 'Редактировать поставщика' : 'Новый поставщик'}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
         {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8 }}>{error}</div>}
@@ -543,8 +543,8 @@ function SupplierModal({ initial, onClose, onSave }: { initial?: Supplier | null
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 21 }}>
-          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
-          <button onClick={() => void handle()} disabled={saving} style={{ flex: 2, height: 40, background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
+          <button onClick={() => void handle()} disabled={saving} style={{ flex: 2, height: 40, background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Сохранение...' : initial ? 'Сохранить' : 'Добавить'}
           </button>
         </div>
@@ -611,15 +611,15 @@ function SupplierOrdersTab({ orders, suppliers, canEdit, onReload }: {
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 13 }}>
         {canEdit && !showForm && (
-          <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             <Plus size={15} />Новый заказ
           </button>
         )}
       </div>
 
       {showForm && (
-        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 13, padding: 21, marginBottom: 13 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 13 }}>Новый заказ поставщику</div>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 21, marginBottom: 13 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Новый заказ поставщику</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8, alignItems: 'end' }}>
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>Поставщик</div>
@@ -637,10 +637,10 @@ function SupplierOrdersTab({ orders, suppliers, canEdit, onReload }: {
               <input style={inputStyle} placeholder="Примечание" value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => void handleCreate()} disabled={saving} style={{ height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+              <button onClick={() => void handleCreate()} disabled={saving} style={{ height: 36, padding: '0 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
                 {saving ? '...' : 'Создать'}
               </button>
-              <button onClick={() => setShowForm(false)} style={{ height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setShowForm(false)} style={{ height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer' }}>✕</button>
             </div>
           </div>
         </div>
@@ -653,10 +653,10 @@ function SupplierOrdersTab({ orders, suppliers, canEdit, onReload }: {
           <div style={{ fontSize: 13 }}>Создайте первый заказ поставщику</div>
         </div>
       ) : (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
                 {['Поставщик', 'Дата', 'Статус', 'Заметки', ''].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                 ))}
@@ -664,8 +664,8 @@ function SupplierOrdersTab({ orders, suppliers, canEdit, onReload }: {
             </thead>
             <tbody>
               {orders.map((o, i) => (
-                <tr key={o.id} style={{ borderBottom: i < orders.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
-                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <tr key={o.id} style={{ borderBottom: i < orders.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                     {o.suppliers?.name ?? 'Не указан'}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -697,7 +697,7 @@ function SupplierOrdersTab({ orders, suppliers, canEdit, onReload }: {
                             Отмена
                           </button>
                         )}
-                        <button onClick={() => void handleDelete(o.id)} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }}>
+                        <button onClick={() => void handleDelete(o.id)} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }}>
                           <Trash2 size={11} />
                         </button>
                       </div>
@@ -829,7 +829,7 @@ export default function WarehousePage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13 }}>
         <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>Склад</h1>
+          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Склад</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Учёт товаров и расходников</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -841,7 +841,7 @@ export default function WarehousePage() {
           )}
           <button
             onClick={() => void handleExport()}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
           >
             <Download size={14} />Excel
           </button>
@@ -864,7 +864,7 @@ export default function WarehousePage() {
           { id: 'orders',    label: 'Заказы',      count: orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length },
         ].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id as 'items' | 'suppliers' | 'orders')}
-            style={{ height: 32, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: activeTab === t.id ? 600 : 400, background: activeTab === t.id ? 'rgba(2,189,182,0.12)' : 'transparent', border: 'none', color: activeTab === t.id ? '#02BDB6' : 'var(--text-secondary)', cursor: 'pointer' }}>
+            style={{ height: 32, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: activeTab === t.id ? 600 : 400, background: activeTab === t.id ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent', border: 'none', color: activeTab === t.id ? 'var(--accent)' : 'var(--text-secondary)', cursor: 'pointer' }}>
             {t.label}
             {t.count > 0 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700 }}>({t.count})</span>}
           </button>
@@ -880,8 +880,8 @@ export default function WarehousePage() {
             onClick={() => setFilterCat(cat)}
             style={{
               height: 32, padding: '0 13px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-              background: filterCat === cat ? (cat === 'all' ? '#02BDB6' : CATEGORY_COLORS[cat as WarehouseCategory]) : 'transparent',
-              border: `1px solid ${filterCat === cat ? (cat === 'all' ? '#02BDB6' : CATEGORY_COLORS[cat as WarehouseCategory]) : 'var(--glass-border)'}`,
+              background: filterCat === cat ? (cat === 'all' ? 'var(--accent)' : CATEGORY_COLORS[cat as WarehouseCategory]) : 'transparent',
+              border: `1px solid ${filterCat === cat ? (cat === 'all' ? 'var(--accent)' : CATEGORY_COLORS[cat as WarehouseCategory]) : 'var(--border)'}`,
               color: filterCat === cat ? '#fff' : 'var(--text-secondary)',
               fontWeight: filterCat === cat ? 600 : 400,
             }}
@@ -897,7 +897,7 @@ export default function WarehousePage() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 13 }}>
             {canEdit && (
-              <button onClick={() => setSuppModal('new')} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: '#02BDB6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => setSuppModal('new')} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 <Plus size={15} />Добавить
               </button>
             )}
@@ -908,10 +908,10 @@ export default function WarehousePage() {
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Нет поставщиков</div>
             </div>
           ) : (
-            <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
                     {['Название', 'Телефон', 'Email', 'Заметки', ''].map(h => (
                       <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                     ))}
@@ -919,15 +919,15 @@ export default function WarehousePage() {
                 </thead>
                 <tbody>
                   {suppliers.map((s, i) => (
-                    <tr key={s.id} style={{ borderBottom: i < suppliers.length - 1 ? '1px solid var(--glass-border)' : 'none', transition: 'background 0.15s' }}>
-                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{s.name}</td>
+                    <tr key={s.id} style={{ borderBottom: i < suppliers.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background 0.15s' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{s.name}</td>
                       <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{s.phone ?? '—'}</td>
                       <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{s.email ?? '—'}</td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.notes ?? '—'}</td>
                       {canEdit && (
                         <td style={{ padding: '8px 16px' }}>
                           <div style={{ display: 'flex', gap: 6 }}>
-                            <button onClick={() => setSuppModal(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-muted)', cursor: 'pointer' }}><Edit2 size={12} /></button>
+                            <button onClick={() => setSuppModal(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer' }}><Edit2 size={12} /></button>
                             <button onClick={async () => { if (!confirm('Удалить?')) return; await suppliersApi.delete(s.id); setSuppliers(prev => prev.filter(x => x.id !== s.id)) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={12} /></button>
                           </div>
                         </td>
@@ -953,7 +953,7 @@ export default function WarehousePage() {
 
       {/* Table (items tab) */}
       {activeTab === 'items' && loading ? (
-        <div style={{ textAlign: 'center', padding: 34, color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>
+        <div style={{ textAlign: 'center', padding: 28, color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>
       ) : activeTab === 'items' && filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 55, color: 'var(--text-muted)' }}>
           <Package size={40} strokeWidth={1} style={{ marginBottom: 13, opacity: 0.3 }} />
@@ -961,10 +961,10 @@ export default function WarehousePage() {
           <div style={{ fontSize: 13 }}>Добавьте первую позицию</div>
         </div>
       ) : activeTab === 'items' ? (
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 21, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
                 {[...(multiBranch ? ['Филиал'] : []), 'Название', 'Категория', 'Количество', 'Мин.', 'Цена'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                 ))}
@@ -977,7 +977,7 @@ export default function WarehousePage() {
                   onClick={() => setCardItem(item)}
                   onContextMenu={e => { e.preventDefault(); setCtxMenu({ item, x: e.clientX, y: e.clientY }) }}
                   style={{
-                    borderBottom: i < filtered.length - 1 ? '1px solid var(--glass-border)' : 'none',
+                    borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
                     background: item.low_stock ? 'rgba(239,68,68,0.04)' : 'transparent',
                     cursor: 'pointer', transition: 'background 0.15s',
                   }}
@@ -991,7 +991,7 @@ export default function WarehousePage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {item.low_stock && <AlertTriangle size={13} color="#ef4444" />}
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{item.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
                         {item.sku && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.sku}</div>}
                       </div>
                     </div>
@@ -1002,13 +1002,13 @@ export default function WarehousePage() {
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: item.low_stock ? '#ef4444' : 'var(--text-primary)' }}>{item.quantity}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: item.low_stock ? '#ef4444' : 'var(--text)' }}>{item.quantity}</span>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 4 }}>{item.unit || 'шт.'}</span>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-muted)' }}>
                     {item.min_quantity ?? '—'}
                   </td>
-                  <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-primary)' }}>
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text)' }}>
                     {item.price != null ? new Intl.NumberFormat('ru-KZ').format(item.price) + ' ₸' : '—'}
                   </td>
                 </tr>
