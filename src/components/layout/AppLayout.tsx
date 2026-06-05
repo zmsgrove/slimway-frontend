@@ -1,10 +1,10 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Calendar, Settings, LogOut,
-  CreditCard, ShoppingCart, Target, CheckSquare, MessageSquare,
-  UserCheck, CalendarClock, CalendarCheck, ChevronDown, Package,
+  CreditCard, ShoppingCart, CheckSquare, MessageSquare,
+  UserCheck, CalendarClock, ChevronDown, Package,
   Wrench, Shield, X, DollarSign, ChevronLeft, ChevronRight,
-  TrendingUp, ClipboardList,
+  TrendingUp, ClipboardList, Search, User,
 } from 'lucide-react'
 import { NotificationBell } from '../ui/NotificationBell'
 import { useEffect, useState, useRef, useCallback } from 'react'
@@ -19,7 +19,31 @@ import { branchesApi, type BranchRaw } from '../../api/branches.api'
 import { badgesApi } from '../../api/badges.api'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { Sheet, SheetContent } from '../ui/sheet'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 import type { Badges } from '../../types'
+
+// ─── Page title map ───────────────────────────────────────────────────────────
+
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard':     'Дашборд',
+  '/clients':       'Клиенты',
+  '/subscriptions': 'Абонементы',
+  '/sale':          'Продажа',
+  '/schedule':      'Расписание',
+  '/leads':         'Лиды',
+  '/tasks':         'Задачи',
+  '/chat':          'Чат',
+  '/employees':     'Сотрудники',
+  '/schedule-work': 'График смен',
+  '/timesheet':     'Табель',
+  '/warehouse':     'Склад',
+  '/payroll':       'Зарплата',
+  '/management':    'Управление',
+  '/settings':      'Настройки',
+}
 
 // ─── Weather helpers ──────────────────────────────────────────────────────────
 
@@ -749,8 +773,63 @@ function AppLayoutInner() {
           zIndex: 'var(--z-header)' as unknown as number,
           transition: 'left 200ms var(--ease-out)',
         }}>
-          {/* Left: page title placeholder (pages override via document.title) */}
-          <div style={{ flex: 1, minWidth: 0 }} />
+          {/* Left: page title */}
+          <div style={{ flex: '0 0 auto', minWidth: 0 }}>
+            <h1 style={{
+              margin: 0,
+              fontSize: 15,
+              fontWeight: 600,
+              color: 'var(--text)',
+              letterSpacing: '-0.01em',
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
+            }}>
+              {PAGE_TITLES[location.pathname] ?? ''}
+            </h1>
+          </div>
+
+          {/* Center: search bar */}
+          <div style={{ flex: 1, maxWidth: 380, margin: '0 auto' }}>
+            <button
+              onClick={() => {
+                window.dispatchEvent(new KeyboardEvent('keydown', {
+                  key: 'k', ctrlKey: true, bubbles: true, cancelable: true,
+                }))
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                width: '100%', height: 32,
+                padding: '0 12px',
+                background: 'var(--bg)',
+                border: '1px solid var(--border)',
+                borderRadius: 99,
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                fontSize: 12,
+                transition: 'border-color 150ms ease-out, background 150ms ease-out',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--text-muted)'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'
+              }}
+            >
+              <Search size={13} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1, textAlign: 'left' }}>Поиск...</span>
+              <span style={{
+                fontSize: 10, fontWeight: 500,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 4, padding: '1px 5px',
+                color: 'var(--text-muted)',
+                flexShrink: 0,
+                fontFamily: 'ui-monospace, monospace',
+              }}>
+                Ctrl K
+              </span>
+            </button>
+          </div>
 
           {/* Right side controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -789,25 +868,52 @@ function AppLayoutInner() {
             {/* Notification bell */}
             <NotificationBell />
 
-            {/* User avatar + dropdown info */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3, whiteSpace: 'nowrap' }}>
-                  {user?.fullName || user?.email || ''}
-                </div>
-                {user?.role && (
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
-                    {roleLabel[user.role] ?? user.role}
+            {/* Avatar dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    padding: '2px 4px', borderRadius: 'var(--radius-sm)',
+                    transition: 'background 150ms ease-out',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-card)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                >
+                  <div className="avatar-initials avatar-sm">{userInitials}</div>
+                  <ChevronDown size={11} color="var(--text-muted)" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" style={{ minWidth: 180 }}>
+                <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
+                    {user?.fullName || user?.email || ''}
                   </div>
-                )}
-              </div>
-              <div
-                className="avatar-initials avatar-sm"
-                title={user?.fullName || user?.email || ''}
-              >
-                {userInitials}
-              </div>
-            </div>
+                  {user?.role && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
+                      {roleLabel[user.role] ?? user.role}
+                    </div>
+                  )}
+                </div>
+                <DropdownMenuItem onClick={() => navigate('/settings')} style={{ gap: 8 }}>
+                  <User size={13} strokeWidth={1.75} />
+                  Профиль
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/settings')} style={{ gap: 8 }}>
+                  <Settings size={13} strokeWidth={1.75} />
+                  Настройки
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  style={{ gap: 8, color: '#ef4444' }}
+                >
+                  <LogOut size={13} strokeWidth={1.75} />
+                  Выйти
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
