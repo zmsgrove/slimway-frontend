@@ -3,6 +3,7 @@ import { api } from '../../lib/api'
 import { CalendarCheck, RefreshCw, Download } from 'lucide-react'
 import { format, getDaysInMonth, parseISO } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface TimesheetEntry {
   id: string
@@ -140,7 +141,10 @@ export default function TimesheetPage() {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Skeleton className="h-10 w-full rounded-lg mb-2" />
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
+        </div>
       ) : employees.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '60px 0',

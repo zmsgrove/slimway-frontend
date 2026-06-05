@@ -7,6 +7,7 @@ import { clientsApi } from '../../api/clients.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { useAuth } from '../../hooks/useAuth'
 import type { Device, ScheduleSlot, Client, Subscription, Role } from '../../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ─── constants & helpers ────────────────────────────────────────────────────
 
@@ -1383,7 +1384,10 @@ export default function SchedulePage() {
           )}
         </div>
       ) : loading ? (
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Skeleton className="h-10 rounded-xl mb-1" />
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+        </div>
       ) : !error && devices.length === 0 ? (
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <Calendar size={28} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: 13 }} />
@@ -1397,8 +1401,8 @@ export default function SchedulePage() {
 
               {/* Current time line */}
               {isToday && timeLeft !== null && (
-                <div style={{ position: 'absolute', top: 0, bottom: 0, left: timeLeft, width: 2, background: 'var(--accent)', zIndex: 10, pointerEvents: 'none', opacity: 0.8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', position: 'absolute', top: 8, left: -3 }} />
+                <div style={{ position: 'absolute', top: 0, bottom: 0, left: timeLeft, width: 2, background: 'var(--accent)', zIndex: 10, pointerEvents: 'none', opacity: 0.9, boxShadow: '0 0 8px color-mix(in srgb, var(--accent) 60%, transparent)' }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent)', position: 'absolute', top: 6, left: -4, boxShadow: '0 0 6px var(--accent)' }} />
                 </div>
               )}
 
