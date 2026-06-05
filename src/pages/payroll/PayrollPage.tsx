@@ -5,6 +5,7 @@ import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { employeesApi } from '../../api/employees.api'
 import { usePermissions } from '../../hooks/usePermissions'
 import type { Employee } from '../../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const inputStyle: React.CSSProperties = {
   width: '100%', height: 36, padding: '0 13px',
@@ -143,7 +144,9 @@ export default function PayrollPage() {
     return (
       <div>
         <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: '0 0 21px' }}>Зарплата</h1>
-        <div style={{ padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+        </div>
       </div>
     )
   }

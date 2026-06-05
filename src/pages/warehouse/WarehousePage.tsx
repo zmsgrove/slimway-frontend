@@ -11,6 +11,7 @@ import { BranchSelector } from '../../components/ui/BranchSelector'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
 import type { WarehouseItem, WarehouseMovement, WarehouseCategory, CatalogItem, Supplier, SupplierOrder, SupplierOrderStatus } from '../../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -964,7 +965,9 @@ export default function WarehousePage() {
 
       {/* Table (items tab) */}
       {activeTab === 'items' && loading ? (
-        <div style={{ textAlign: 'center', padding: 28, color: 'var(--text-muted)', fontSize: 13 }}>Загрузка...</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+        </div>
       ) : activeTab === 'items' && filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 55, color: 'var(--text-muted)' }}>
           <Package size={40} strokeWidth={1} style={{ marginBottom: 13, opacity: 0.3 }} />
