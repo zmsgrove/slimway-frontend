@@ -1,12 +1,13 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Calendar, Settings, LogOut, Sun, Moon,
+  LayoutDashboard, Users, Calendar, Settings, LogOut,
   CreditCard, ShoppingCart, Target, CheckSquare, MessageSquare,
   UserCheck, CalendarClock, CalendarCheck, ChevronDown, Package,
-  Wrench, Shield, X, DollarSign,
+  Wrench, Shield, X, DollarSign, ChevronLeft, ChevronRight,
+  TrendingUp, ClipboardList,
 } from 'lucide-react'
 import { NotificationBell } from '../ui/NotificationBell'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../lib/ThemeContext'
@@ -16,6 +17,8 @@ import { HotkeyHelp } from '../ui/HotkeyHelp'
 import { GlobalSearch } from '../GlobalSearch'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
 import { badgesApi } from '../../api/badges.api'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
+import { Sheet, SheetContent } from '../ui/sheet'
 import type { Badges } from '../../types'
 
 // ─── Weather helpers ──────────────────────────────────────────────────────────
@@ -60,17 +63,22 @@ function ServerStatusDot({ status, latency }: { status: ServerStatus; latency: n
     : 'Проверка...'
 
   return (
-    <div
-      title={label}
-      style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, cursor: 'default', flexShrink: 0 }}
-    >
-      <div style={{
-        width: 7, height: 7, borderRadius: '50%', background: color,
-        animation: status === 'error' ? 'pulse 1.5s ease-in-out infinite' : undefined,
-        boxShadow: `0 0 0 2px ${color}33`,
-        transition: 'background 300ms ease-out',
-      }} />
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 20, height: 20, cursor: 'default', flexShrink: 0,
+        }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: '50%', background: color,
+            animation: status === 'error' ? 'pulse 1.5s ease-in-out infinite' : undefined,
+            boxShadow: `0 0 0 2px ${color}33`,
+            transition: 'background 300ms ease-out',
+          }} />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -145,7 +153,7 @@ const roleLabel: Record<string, string> = {
 
 // ─── BranchSwitcher ────────────────────────────────────────────────────────────
 
-function BranchSwitcher({ role }: { role: string }) {
+function BranchSwitcher({ role, collapsed }: { role: string; collapsed: boolean }) {
   const [branches, setBranches] = useState<BranchRaw[]>([])
   const [active, setActive]   = useState<string | null>(null)
   const [open, setOpen]       = useState(false)
@@ -194,18 +202,39 @@ function BranchSwitcher({ role }: { role: string }) {
 
   if (!activeBranch) return null
 
+  if (collapsed) {
+    return (
+      <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+              color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700, cursor: 'default', flexShrink: 0,
+            }}>
+              {activeBranch.name[0]?.toUpperCase() ?? 'B'}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">{activeBranch.name}</TooltipContent>
+        </Tooltip>
+      </div>
+    )
+  }
+
   if (!canSwitch) {
     return (
-      <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Филиал</div>
-        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)' }}>{activeBranch.name}</div>
+      <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Филиал</div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeBranch.name}</div>
       </div>
     )
   }
 
   return (
-    <div ref={ref} style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
-      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Филиал</div>
+    <div ref={ref} style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
+      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Филиал</div>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -266,36 +295,267 @@ function BranchSwitcher({ role }: { role: string }) {
 
 // ─── NavButton ────────────────────────────────────────────────────────────────
 
-function NavButton({ to, icon: Icon, label, badge }: { to: string; icon: React.ElementType; label: string; badge?: number }) {
-  return (
+function NavButton({
+  to, icon: Icon, label, badge, collapsed,
+}: {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  badge?: number;
+  collapsed: boolean;
+}) {
+  const content = (
     <NavLink
       to={to}
       className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+      style={collapsed ? { justifyContent: 'center', padding: '8px 0' } : undefined}
     >
-      <Icon size={15} strokeWidth={1.75} style={{ flexShrink: 0 }} />
-      <span style={{ flex: 1, fontSize: 13 }}>{label}</span>
-      {badge !== undefined && badge > 0 && (
+      <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+      {!collapsed && (
+        <>
+          <span className="nav-item-label">{label}</span>
+          {badge !== undefined && badge > 0 && (
+            <span style={{
+              minWidth: 17, height: 17, borderRadius: 9,
+              background: '#ef4444', color: '#fff',
+              fontSize: 10, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '0 4px', flexShrink: 0, lineHeight: 1,
+            }}>
+              {badge > 99 ? '99+' : badge}
+            </span>
+          )}
+        </>
+      )}
+      {collapsed && badge !== undefined && badge > 0 && (
         <span style={{
-          minWidth: 17, height: 17, borderRadius: 9,
-          background: '#ef4444', color: '#fff',
-          fontSize: 10, fontWeight: 700,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '0 4px', flexShrink: 0, lineHeight: 1,
-        }}>
-          {badge > 99 ? '99+' : badge}
-        </span>
+          position: 'absolute', top: 4, right: 8,
+          width: 6, height: 6, borderRadius: '50%',
+          background: '#ef4444', flexShrink: 0,
+        }} />
       )}
     </NavLink>
   )
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div style={{ position: 'relative' }}>{content}</div>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          {label}
+          {badge !== undefined && badge > 0 && ` (${badge > 99 ? '99+' : badge})`}
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return content
 }
 
 // ─── NavSection label ─────────────────────────────────────────────────────────
 
-function NavSection({ label }: { label: string }) {
+function NavSection({ label, collapsed }: { label: string; collapsed: boolean }) {
+  if (collapsed) return <div style={{ height: 8 }} />
   return (
-    <div style={{ padding: '8px 12px 4px', fontSize: 10, fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-      {label}
-    </div>
+    <div className="nav-group-label">{label}</div>
+  )
+}
+
+// ─── SidebarContent (shared between desktop and Sheet) ─────────────────────────
+
+function SidebarContent({
+  collapsed,
+  user,
+  perm,
+  badges,
+  navItems,
+  handleSignOut,
+  onToggle,
+}: {
+  collapsed: boolean;
+  user: ReturnType<typeof useAuth>['user'];
+  perm: ReturnType<typeof usePermissions>;
+  badges: Badges;
+  navItems: Array<{ to: string; label: string; icon: React.ElementType; group?: string }>;
+  handleSignOut: () => Promise<void>;
+  onToggle?: () => void;
+}) {
+  const userInitials = (user?.fullName ?? user?.email ?? '?')
+    .split(' ')
+    .slice(0, 2)
+    .map(s => s[0] ?? '')
+    .join('')
+    .toUpperCase()
+
+  const groups: Record<string, typeof navItems> = {
+    main: navItems.filter(i => i.group === 'main'),
+    work: navItems.filter(i => i.group === 'work'),
+    finance: navItems.filter(i => i.group === 'finance'),
+    system: navItems.filter(i => i.group === 'system'),
+  }
+
+  return (
+    <>
+      {/* Logo + toggle */}
+      <div style={{
+        padding: collapsed ? '16px 0' : '16px 14px 14px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'space-between',
+        gap: 8,
+      }}>
+        {!collapsed && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+              background: 'var(--accent)', color: 'var(--accent-fg)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 700, letterSpacing: -0.5,
+            }}>
+              S
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', letterSpacing: -0.3, lineHeight: 1.2, whiteSpace: 'nowrap' }}>
+                Slimway
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400 }}>CRM</div>
+            </div>
+          </div>
+        )}
+
+        {collapsed && (
+          <div style={{
+            width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+            background: 'var(--accent)', color: 'var(--accent-fg)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 14, fontWeight: 700, letterSpacing: -0.5,
+          }}>
+            S
+          </div>
+        )}
+
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            className="sidebar-toggle"
+            title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+            style={{ flexShrink: 0 }}
+          >
+            {collapsed
+              ? <ChevronRight size={13} strokeWidth={2} />
+              : <ChevronLeft size={13} strokeWidth={2} />
+            }
+          </button>
+        )}
+      </div>
+
+      {/* Branch switcher */}
+      {user?.role && <BranchSwitcher role={user.role} collapsed={collapsed} />}
+
+      {/* Nav */}
+      <nav style={{
+        flex: 1,
+        padding: collapsed ? '6px 8px' : '6px 8px',
+        display: 'flex', flexDirection: 'column', gap: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+      }}>
+        {groups.main.length > 0 && (
+          <>
+            <NavSection label="Основное" collapsed={collapsed} />
+            {groups.main.map(({ to, label, icon }) => {
+              let badge: number | undefined
+              if (to === '/leads') badge = badges.leads_new || undefined
+              return <NavButton key={to} to={to} icon={icon} label={label} badge={badge} collapsed={collapsed} />
+            })}
+          </>
+        )}
+        {groups.work.length > 0 && (
+          <>
+            <NavSection label="Рабочее время" collapsed={collapsed} />
+            {groups.work.map(({ to, label, icon }) => {
+              let badge: number | undefined
+              if (to === '/tasks') badge = badges.tasks_overdue || undefined
+              return <NavButton key={to} to={to} icon={icon} label={label} badge={badge} collapsed={collapsed} />
+            })}
+          </>
+        )}
+        {groups.finance.length > 0 && (
+          <>
+            <NavSection label="Финансы" collapsed={collapsed} />
+            {groups.finance.map(({ to, label, icon }) => {
+              let badge: number | undefined
+              if (to === '/warehouse') badge = badges.low_stock_items || undefined
+              return <NavButton key={to} to={to} icon={icon} label={label} badge={badge} collapsed={collapsed} />
+            })}
+          </>
+        )}
+      </nav>
+
+      {/* Bottom nav */}
+      <div style={{
+        padding: collapsed ? '6px 8px' : '6px 8px',
+        borderTop: '1px solid var(--border)',
+        display: 'flex', flexDirection: 'column', gap: 1,
+      }}>
+        {groups.system.length > 0 && (
+          <>
+            <NavSection label="Система" collapsed={collapsed} />
+            {groups.system.map(({ to, label, icon }) => (
+              <NavButton key={to} to={to} icon={icon} label={label} collapsed={collapsed} />
+            ))}
+          </>
+        )}
+
+        {!collapsed && (
+          <div style={{
+            marginTop: 4,
+            padding: '8px 10px',
+            borderRadius: 'var(--radius-sm)',
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'transparent',
+          }}>
+            <div className="avatar-initials avatar-sm" style={{ flexShrink: 0 }}>{userInitials}</div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.fullName || user?.email || ''}
+              </div>
+              {user?.role && (
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
+                  {roleLabel[user.role] ?? user.role}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleSignOut}
+              title="Выйти"
+              className="icon-btn"
+              style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', width: 24, height: 24, borderRadius: 6 }}
+            >
+              <LogOut size={13} strokeWidth={1.75} />
+            </button>
+          </div>
+        )}
+
+        {collapsed && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleSignOut}
+                className="nav-item"
+                style={{ border: 'none', width: '100%', cursor: 'pointer', justifyContent: 'center', padding: '8px 0', color: 'var(--text-muted)' }}
+              >
+                <LogOut size={16} strokeWidth={1.75} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Выйти</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -315,6 +575,22 @@ function AppLayoutInner() {
   const [serverStatus, setServerStatus] = useState<ServerStatus>('unknown')
   const [serverLatency, setServerLatency] = useState<number | null>(null)
   const [serverErrorToastShown, setServerErrorToastShown] = useState(false)
+
+  // Sidebar state
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem('sidebarCollapsed') === 'true' } catch { return false }
+  })
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const sidebarWidth = collapsed ? 64 : 240
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed(prev => {
+      const next = !prev
+      try { localStorage.setItem('sidebarCollapsed', String(next)) } catch { /* ignore */ }
+      return next
+    })
+  }, [])
 
   useEffect(() => {
     if (perm.isTechnical && location.pathname !== '/schedule-work') {
@@ -388,20 +664,27 @@ function AppLayoutInner() {
   }
 
   const navItems = perm.isTechnical
-    ? [{ to: '/schedule-work', label: 'График', icon: CalendarClock }]
+    ? [{ to: '/schedule-work', label: 'График', icon: CalendarClock, group: 'main' }]
     : [
-        { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard, show: true },
-        { to: '/clients',       label: 'Клиенты',    icon: Users,           show: perm.can('clients', 'view') },
-        { to: '/subscriptions', label: 'Абонементы', icon: CreditCard,      show: perm.can('subscriptions', 'view') },
-        { to: '/sale',          label: 'Продажа',    icon: ShoppingCart,    show: perm.can('subscriptions', 'create') },
-        { to: '/schedule',      label: 'Расписание', icon: Calendar,        show: perm.can('schedule', 'view') },
-        { to: '/leads',         label: 'Лиды',       icon: Target,          show: perm.can('leads', 'view') },
-        { to: '/tasks',         label: 'Задачи',     icon: CheckSquare,     show: perm.can('tasks', 'view') },
-        { to: '/chat',          label: 'Чат',        icon: MessageSquare,   show: true },
-        { to: '/employees',     label: 'Сотрудники', icon: UserCheck,       show: perm.can('employees', 'view') },
-        { to: '/schedule-work', label: 'График',     icon: CalendarClock,   show: perm.can('shifts', 'view') },
-        { to: '/timesheet',     label: 'Табель',     icon: CalendarCheck,   show: user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' },
-        { to: '/warehouse',     label: 'Склад',      icon: Package,         show: perm.can('warehouse', 'view') },
+        // ОСНОВНОЕ
+        { to: '/dashboard',     label: 'Дашборд',    icon: LayoutDashboard, group: 'main',    show: true },
+        { to: '/clients',       label: 'Клиенты',    icon: Users,           group: 'main',    show: perm.can('clients', 'view') },
+        { to: '/subscriptions', label: 'Абонементы', icon: CreditCard,      group: 'main',    show: perm.can('subscriptions', 'view') },
+        { to: '/sale',          label: 'Продажа',    icon: ShoppingCart,    group: 'main',    show: perm.can('subscriptions', 'create') },
+        { to: '/schedule',      label: 'Расписание', icon: Calendar,        group: 'main',    show: perm.can('schedule', 'view') },
+        { to: '/leads',         label: 'Лиды',       icon: TrendingUp,      group: 'main',    show: perm.can('leads', 'view') },
+        { to: '/tasks',         label: 'Задачи',     icon: CheckSquare,     group: 'main',    show: perm.can('tasks', 'view') },
+        { to: '/chat',          label: 'Чат',        icon: MessageSquare,   group: 'main',    show: true },
+        // РАБОЧЕЕ ВРЕМЯ
+        { to: '/employees',     label: 'Сотрудники', icon: UserCheck,       group: 'work',    show: perm.can('employees', 'view') },
+        { to: '/schedule-work', label: 'График',     icon: CalendarClock,   group: 'work',    show: perm.can('shifts', 'view') },
+        { to: '/timesheet',     label: 'Табель',     icon: ClipboardList,   group: 'work',    show: user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' },
+        // ФИНАНСЫ
+        { to: '/warehouse',     label: 'Склад',      icon: Package,         group: 'finance', show: perm.can('warehouse', 'view') },
+        { to: '/payroll',       label: 'Зарплата',   icon: DollarSign,      group: 'finance', show: perm.can('employees', 'view') },
+        // СИСТЕМА
+        { to: '/management',    label: 'Управление', icon: Wrench,          group: 'system',  show: perm.can('management', 'view') },
+        { to: '/settings',      label: 'Настройки',  icon: Settings,        group: 'system',  show: true },
       ].filter(item => item.show)
 
   const userInitials = (user?.fullName ?? user?.email ?? '?')
@@ -411,132 +694,119 @@ function AppLayoutInner() {
     .join('')
     .toUpperCase()
 
+  const sidebarProps = { collapsed, user, perm, badges, navItems: navItems as typeof navItems, handleSignOut }
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
 
-      {/* ── Sidebar ── */}
+      {/* ── Desktop Sidebar ── */}
       <aside style={{
-        position: 'fixed', top: 0, left: 0, bottom: 0, width: 216,
+        position: 'fixed', top: 0, left: 0, bottom: 0,
+        width: sidebarWidth,
         display: 'flex', flexDirection: 'column',
         background: 'var(--bg-sidebar)',
         borderRight: '1px solid var(--border)',
-        zIndex: 20,
+        zIndex: 'var(--z-sidebar)' as unknown as number,
+        transition: 'width 200ms var(--ease-out)',
+        overflow: 'hidden',
       }}>
-        {/* Logo */}
-        <div style={{ padding: '18px 14px 14px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: 'var(--accent)', color: 'var(--accent-fg)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 700, letterSpacing: -0.5, flexShrink: 0,
-            }}>
-              S
-            </div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', letterSpacing: -0.3, lineHeight: 1.2 }}>
-                Slimway
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400 }}>
-                CRM
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Branch switcher */}
-        {user?.role && <BranchSwitcher role={user.role} />}
-
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: '8px 8px', display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
-          {!perm.isTechnical && <NavSection label="Основное" />}
-          {navItems.map(({ to, label, icon }) => {
-            let badge: number | undefined
-            if (to === '/leads')     badge = badges.leads_new       || undefined
-            if (to === '/tasks')     badge = badges.tasks_overdue   || undefined
-            if (to === '/warehouse') badge = badges.low_stock_items || undefined
-            return <NavButton key={to} to={to} icon={icon} label={label} badge={badge} />
-          })}
-        </nav>
-
-        {/* Bottom nav */}
-        <div style={{ padding: '8px 8px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {perm.can('employees', 'view') && (
-            <NavButton to="/payroll" icon={DollarSign} label="Зарплата" />
-          )}
-          {perm.can('management', 'view') && (
-            <NavButton to="/management" icon={Wrench} label="Управление" />
-          )}
-          <NavButton to="/settings" icon={Settings} label="Настройки" />
-
-          <button
-            onClick={handleSignOut}
-            className="nav-item"
-            style={{ border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', marginTop: 2, fontSize: 13, color: 'var(--text-muted)' }}
-          >
-            <LogOut size={15} strokeWidth={1.75} style={{ flexShrink: 0 }} />
-            Выйти
-          </button>
-        </div>
+        <SidebarContent {...sidebarProps} onToggle={toggleCollapsed} />
       </aside>
 
+      {/* ── Mobile sidebar via Sheet ── */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side="left"
+          style={{
+            width: 240, padding: 0,
+            background: 'var(--bg-sidebar)',
+            display: 'flex', flexDirection: 'column',
+          }}
+        >
+          <SidebarContent {...sidebarProps} collapsed={false} />
+        </SheetContent>
+      </Sheet>
+
       {/* ── Main area ── */}
-      <div style={{ marginLeft: 216, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{
+        marginLeft: sidebarWidth,
+        display: 'flex', flexDirection: 'column',
+        minHeight: '100vh',
+        transition: 'margin-left 200ms var(--ease-out)',
+      }}>
 
         {/* Header */}
         <header style={{
-          position: 'fixed', top: 0, right: 0, left: 216, height: 52,
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          padding: '0 20px', gap: 10,
+          position: 'fixed',
+          top: 0, right: 0,
+          left: sidebarWidth,
+          height: 56,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 20px',
+          gap: 12,
           background: 'var(--bg-sidebar)',
           borderBottom: '1px solid var(--border)',
-          zIndex: 10,
+          zIndex: 'var(--z-header)' as unknown as number,
+          transition: 'left 200ms var(--ease-out)',
         }}>
-          {/* Theme toggle */}
-          <button
-            onClick={handleThemeToggle}
-            title={isDark ? 'Светлая тема' : 'Тёмная тема'}
-            className="icon-btn"
-            style={{ border: '1px solid var(--border)', width: 32, height: 32 }}
-          >
-            {isDark ? <Sun size={14} strokeWidth={1.75} /> : <Moon size={14} strokeWidth={1.75} />}
-          </button>
+          {/* Left: page title placeholder (pages override via document.title) */}
+          <div style={{ flex: 1, minWidth: 0 }} />
 
-          {/* Notification bell */}
-          <NotificationBell />
+          {/* Right side controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <WeatherTimeBlock city={branchCity} timezone={branchTimezone} />
 
-          <WeatherTimeBlock city={branchCity} timezone={branchTimezone} />
+            <ServerStatusDot status={serverStatus} latency={serverLatency} />
 
-          <ServerStatusDot status={serverStatus} latency={serverLatency} />
+            {user?.role === 'developer' && (
+              <span style={{
+                background: 'rgba(38,60,217,0.12)', color: '#263CD9',
+                border: '1px solid rgba(38,60,217,0.3)',
+                fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
+                letterSpacing: '0.05em', flexShrink: 0,
+              }}>
+                DEV
+              </span>
+            )}
 
-          {user?.role === 'developer' && (
-            <span style={{
-              background: 'rgba(38,60,217,0.12)', color: '#263CD9',
-              border: '1px solid rgba(38,60,217,0.3)',
-              fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
-              letterSpacing: '0.05em', flexShrink: 0,
-            }}>
-              DEV
-            </span>
-          )}
+            {/* Theme toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleThemeToggle}
+                  className="icon-btn"
+                  style={{ border: '1px solid var(--border)', width: 32, height: 32 }}
+                >
+                  {isDark
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                  }
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{isDark ? 'Светлая тема' : 'Тёмная тема'}</TooltipContent>
+            </Tooltip>
 
-          {/* User block */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3 }}>
-                {user?.fullName || user?.email || ''}
-              </div>
-              {user?.role && (
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
-                  {roleLabel[user.role] ?? user.role}
+            {/* Notification bell */}
+            <NotificationBell />
+
+            {/* User avatar + dropdown info */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3, whiteSpace: 'nowrap' }}>
+                  {user?.fullName || user?.email || ''}
                 </div>
-              )}
-            </div>
-            <div
-              className="avatar-initials avatar-sm"
-              title={user?.fullName || user?.email || ''}
-            >
-              {userInitials}
+                {user?.role && (
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
+                    {roleLabel[user.role] ?? user.role}
+                  </div>
+                )}
+              </div>
+              <div
+                className="avatar-initials avatar-sm"
+                title={user?.fullName || user?.email || ''}
+              >
+                {userInitials}
+              </div>
             </div>
           </div>
         </header>
@@ -544,10 +814,11 @@ function AppLayoutInner() {
         {/* MFA баннер */}
         {showMfaBanner && (
           <div style={{
-            position: 'fixed', top: 52, left: 216, right: 0, zIndex: 9,
+            position: 'fixed', top: 56, left: sidebarWidth, right: 0, zIndex: 9,
             background: 'color-mix(in srgb, #f59e0b 8%, var(--bg-sidebar) 92%)',
             borderBottom: '1px solid rgba(245,158,11,0.25)',
             padding: '9px 20px', display: 'flex', alignItems: 'center', gap: 10,
+            transition: 'left 200ms var(--ease-out)',
           }}>
             <Shield size={15} color="#f59e0b" strokeWidth={1.75} style={{ flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>
@@ -604,7 +875,7 @@ function AppLayoutInner() {
         <main style={{
           flex: 1,
           padding: 20,
-          paddingTop: showMfaBanner ? 'calc(52px + 38px + 20px)' : 'calc(52px + 20px)',
+          paddingTop: showMfaBanner ? 'calc(56px + 38px + 20px)' : 'calc(56px + 20px)',
         }}>
           <Outlet />
         </main>
