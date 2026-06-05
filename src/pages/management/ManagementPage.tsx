@@ -2143,7 +2143,7 @@ export default function ManagementPage() {
       <div className="mgmt-tabs" style={{ display: 'flex', gap: 4, marginBottom: 21, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 4, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, height: 34, padding: '0 10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg-card)' : 'transparent', color: tab === t.id ? 'var(--text)' : 'var(--text-muted)', whiteSpace: 'nowrap', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, height: 34, padding: '0 10px', borderRadius: 10, border: tab === t.id ? '1px solid var(--border)' : '1px solid transparent', cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 600 : 400, background: tab === t.id ? 'var(--bg)' : 'transparent', boxShadow: tab === t.id ? 'var(--shadow-xs)' : 'none', color: tab === t.id ? 'var(--text)' : 'var(--text-muted)', whiteSpace: 'nowrap', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out' }}>
             {t.icon}{t.label}
           </button>
         ))}
