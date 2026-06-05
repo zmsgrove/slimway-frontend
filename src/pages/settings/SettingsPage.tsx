@@ -552,6 +552,68 @@ function SecuritySection() {
   )
 }
 
+// ─── Notification Center settings ────────────────────────────────────────────
+
+const NOTIF_TYPES = [
+  { type: 'lead.assigned',      label: 'Назначен лид',               desc: 'Когда вам назначают нового лида' },
+  { type: 'task.assigned',      label: 'Назначена задача',            desc: 'Когда вам назначают задачу' },
+  { type: 'booking.pending',    label: 'Новая бронь от клиента',      desc: 'Онлайн-запись через клиентский портал' },
+  { type: 'subscription.sold',  label: 'Продан абонемент',            desc: 'Оформление нового абонемента' },
+  { type: 'system.update',      label: 'Системные уведомления',       desc: 'Обновления CRM и важные сообщения' },
+]
+
+function loadNotifV2(): { disabledTypes: string[] } {
+  try { return { disabledTypes: [], ...JSON.parse(localStorage.getItem('notificationSettings_v2') || '{}') } }
+  catch { return { disabledTypes: [] } }
+}
+
+function NotificationCenterSection() {
+  const [settings, setSettings] = useState(loadNotifV2)
+  const [saving,   setSaving]   = useState(false)
+
+  const isEnabled = (type: string) => !settings.disabledTypes.includes(type)
+
+  const toggle = async (type: string) => {
+    const next = isEnabled(type)
+      ? { disabledTypes: [...settings.disabledTypes, type] }
+      : { disabledTypes: settings.disabledTypes.filter(t => t !== type) }
+    setSettings(next)
+    localStorage.setItem('notificationSettings_v2', JSON.stringify(next))
+    setSaving(true)
+    try { await api.patch('/profile/notification-settings', next) } catch { /* */ } finally { setSaving(false) }
+  }
+
+  return (
+    <Section title="Центр уведомлений" icon={<Bell size={15} strokeWidth={1.75} color="var(--accent)" />}>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>
+        Выберите, какие уведомления получать в колоколе уведомлений. «Системные» отключить нельзя.
+        {saving && <span style={{ marginLeft: 8, color: 'var(--text-muted)' }}>Сохранение...</span>}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {NOTIF_TYPES.map((item, i) => {
+          const enabled  = isEnabled(item.type)
+          const isSystem = item.type === 'system.update'
+          return (
+            <div key={item.type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: i < NOTIF_TYPES.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{item.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.desc}</div>
+              </div>
+              <button
+                disabled={isSystem}
+                onClick={() => void toggle(item.type)}
+                style={{ flexShrink: 0, width: 44, height: 24, borderRadius: 12, border: 'none', cursor: isSystem ? 'not-allowed' : 'pointer', position: 'relative', background: enabled ? 'var(--accent)' : 'var(--border)', transition: 'background 0.2s', opacity: isSystem ? 0.5 : 1 }}
+              >
+                <span style={{ position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', left: enabled ? 22 : 2 }} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </Section>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 type SettingsTab = 'profile' | 'security'
@@ -616,6 +678,7 @@ export default function SettingsPage() {
 
           <AppearanceSection />
           <NotificationsSection />
+          <NotificationCenterSection />
         </>
       )}
 

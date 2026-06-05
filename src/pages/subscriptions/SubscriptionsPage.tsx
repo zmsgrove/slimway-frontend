@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { CreditCard, Plus, X, AlertCircle, Trash2, Eye, ToggleLeft, ToggleRight, Search, Link, Unlink } from 'lucide-react'
+import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { subscriptionTemplatesApi } from '../../api/subscription-templates.api'
 import { branchSubscriptionTemplatesApi } from '../../api/branch-subscription-templates.api'
 import { subscriptionsApi } from '../../api/subscriptions.api'
@@ -149,6 +151,15 @@ export default function SubscriptionsPage() {
   const [loadingSold,  setLoadingSold]  = useState(false)
   const [soldError,    setSoldError]    = useState<string | null>(null)
   const [search,       setSearch]       = useState('')
+  const { period, customFrom, customTo, dateFromStr, dateToStr, setPeriod, remember, setRemember } = usePeriodFilter('subscriptions')
+
+  const loadSold = useCallback(async () => {
+    setLoadingSold(true); setSoldError(null)
+    subscriptionsApi.getAll()
+      .then(data => setSold(data))
+      .catch(e => setSoldError(getServerError(e) ?? 'Ошибка загрузки'))
+      .finally(() => setLoadingSold(false))
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -165,14 +176,8 @@ export default function SubscriptionsPage() {
   }, [])
 
   useEffect(() => {
-    if (tab === 'sold' && sold.length === 0) {
-      setLoadingSold(true); setSoldError(null)
-      subscriptionsApi.getAll()
-        .then(setSold)
-        .catch(e => setSoldError(getServerError(e) ?? 'Ошибка загрузки'))
-        .finally(() => setLoadingSold(false))
-    }
-  }, [tab, sold.length])
+    if (tab === 'sold') void loadSold()
+  }, [tab, loadSold])
 
   const connectedTemplates = connected
     .map(c => c.subscription_templates)
@@ -227,12 +232,24 @@ export default function SubscriptionsPage() {
             {connected.length} подключено к филиалу · {allTemplates.length} в каталоге
           </p>
         </div>
-        {tab === 'branch' && (
-          <button onClick={() => setShowCatalog(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
-            <Plus size={15} strokeWidth={2} />Добавить из каталога
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {tab === 'sold' && (
+            <PeriodFilter
+              period={period}
+              customFrom={customFrom}
+              customTo={customTo}
+              remember={remember}
+              onChange={setPeriod}
+              onRememberChange={setRemember}
+            />
+          )}
+          {tab === 'branch' && (
+            <button onClick={() => setShowCatalog(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
+              <Plus size={15} strokeWidth={2} />Добавить из каталога
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}

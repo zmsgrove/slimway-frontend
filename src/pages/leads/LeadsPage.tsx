@@ -10,7 +10,8 @@ import { employeesApi } from '../../api/employees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
-import { PeriodFilter, type PeriodValue } from '../../components/ui/PeriodFilter'
+import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import type { Lead, LeadStatus, LeadComment, Employee } from '../../types'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -682,7 +683,7 @@ export default function LeadsPage() {
   const [clientAddedModal, setClientAddedModal] = useState<{ id: string | null; full_name: string | null; phone: string | null } | null>(null)
   const [filterSource, setFilterSource] = useState('')
   const [failReasonDrop, setFailReasonDrop] = useState<Lead | null>(null)
-  const [period, setPeriod] = useState<PeriodValue | null>(null)
+  const { period, customFrom, customTo, dateFromStr, dateToStr, setPeriod, remember, setRemember } = usePeriodFilter('leads')
   const draggingRef = useRef<Lead | null>(null)
 
   const canManage = user?.role === 'developer' || user?.role === 'owner' || user?.role === 'franchisee' || user?.role === 'admin' || user?.role === 'staff'
@@ -707,7 +708,7 @@ export default function LeadsPage() {
     setLoading(true); setError(null)
     try {
       const [leadsData, empsData] = await Promise.all([
-        leadsApi.getAll(period ? { from: period.from, to: period.to } : undefined),
+        leadsApi.getAll({ from: dateFromStr, to: dateToStr }),
         employeesApi.getAll().catch(() => [] as Employee[]),
       ])
       setLeads(leadsData)
@@ -717,7 +718,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [dateFromStr, dateToStr])
 
   useEffect(() => { void loadData() }, [loadData])
 
@@ -844,7 +845,14 @@ export default function LeadsPage() {
             )}
           </div>
         </div>
-        <PeriodFilter value={period} onChange={setPeriod} />
+        <PeriodFilter
+          period={period}
+          customFrom={customFrom}
+          customTo={customTo}
+          remember={remember}
+          onChange={setPeriod}
+          onRememberChange={setRemember}
+        />
       </div>
 
       {error && (

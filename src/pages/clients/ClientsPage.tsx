@@ -8,7 +8,8 @@ import {
 import { QRCodeSVG } from 'qrcode.react'
 import { clientsApi } from '../../api/clients.api'
 import { api } from '../../lib/api'
-import { PeriodFilter, type PeriodValue } from '../../components/ui/PeriodFilter'
+import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { useAuth } from '../../hooks/useAuth'
@@ -1241,14 +1242,14 @@ export default function ClientsPage() {
   const [editTarget,   setEditTarget]  = useState<Client | null>(null)
   const [viewTarget,   setViewTarget]  = useState<Client | null>(null)
   const [ctxMenu,      setCtxMenu]     = useState<CtxMenu | null>(null)
-  const [period,       setPeriod]      = useState<PeriodValue | null>(null)
+  const { period, customFrom, customTo, dateFromStr, dateToStr, setPeriod, remember, setRemember } = usePeriodFilter('clients')
 
   const load = useCallback(async (q?: string) => {
     setLoading(true); setError(null)
     try {
       setClients(await clientsApi.getAll({
         ...(q ? { search: q } : {}),
-        ...(period ? { from: period.from, to: period.to } : {}),
+        from: dateFromStr, to: dateToStr,
       }))
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
@@ -1256,7 +1257,7 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [dateFromStr, dateToStr])
 
   useEffect(() => { void load() }, [load])
 
@@ -1367,7 +1368,14 @@ export default function ClientsPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-        <PeriodFilter value={period} onChange={setPeriod} />
+        <PeriodFilter
+          period={period}
+          customFrom={customFrom}
+          customTo={customTo}
+          remember={remember}
+          onChange={setPeriod}
+          onRememberChange={setRemember}
+        />
         <select
           value={filterSource}
           onChange={e => setFilterSource(e.target.value)}

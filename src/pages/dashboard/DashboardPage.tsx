@@ -3,6 +3,8 @@ import {
   Users, CreditCard, Calendar, Activity, Target, Package,
   AlertTriangle, TrendingUp, Cake,
 } from 'lucide-react'
+import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import type { LucideIcon } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -132,6 +134,7 @@ export default function DashboardPage() {
   const [overview, setOverview]   = useState<AnalyticsOverview | null>(null)
   const [loading, setLoading]     = useState(true)
   const [birthdays, setBirthdays] = useState<Client[]>([])
+  const { period, customFrom, customTo, setPeriod, remember, setRemember } = usePeriodFilter('dashboard')
   const [selectedBranches, setSelectedBranches] = useState<string[]>(() => {
     const id = localStorage.getItem('activeBranchId')
     return id ? [id] : []
@@ -176,13 +179,23 @@ export default function DashboardPage() {
           <h1 className="page-title" style={{ margin: 0, marginBottom: 3 }}>Дашборд</h1>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, textTransform: 'capitalize' }}>{today}</p>
         </div>
-        {user?.role && (
-          <BranchSelector
-            role={user.role}
-            selectedIds={selectedBranches}
-            onChange={setSelectedBranches}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <PeriodFilter
+            period={period}
+            customFrom={customFrom}
+            customTo={customTo}
+            remember={remember}
+            onChange={setPeriod}
+            onRememberChange={setRemember}
           />
-        )}
+          {user?.role && (
+            <BranchSelector
+              role={user.role}
+              selectedIds={selectedBranches}
+              onChange={setSelectedBranches}
+            />
+          )}
+        </div>
       </div>
 
       {/* KPI row */}

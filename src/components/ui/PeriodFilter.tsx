@@ -1,115 +1,187 @@
-import React, { useState } from 'react'
-import { Calendar } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Calendar, Check } from 'lucide-react'
+import type { PeriodType } from '../../hooks/usePeriodFilter'
 
-export type PeriodType = 'today' | 'week' | 'month' | 'custom'
+export type { PeriodType }
 
-export interface PeriodValue {
-  type: PeriodType
-  from: string  // YYYY-MM-DD
-  to: string    // YYYY-MM-DD
-}
-
-function toISO(d: Date): string {
-  return d.toISOString().slice(0, 10)
-}
-
-export function getDefaultPeriod(type: Exclude<PeriodType, 'custom'>): PeriodValue {
-  const today = new Date()
-  if (type === 'today') {
-    const s = toISO(today)
-    return { type, from: s, to: s }
-  }
-  if (type === 'week') {
-    const start = new Date(today)
-    const dow = today.getDay() === 0 ? 6 : today.getDay() - 1
-    start.setDate(today.getDate() - dow)
-    return { type, from: toISO(start), to: toISO(today) }
-  }
-  const start = new Date(today.getFullYear(), today.getMonth(), 1)
-  return { type, from: toISO(start), to: toISO(today) }
-}
+const PERIODS: { type: PeriodType; label: string }[] = [
+  { type: 'today',     label: 'Сегодня' },
+  { type: 'yesterday', label: 'Вчера'   },
+  { type: 'week',      label: 'Неделя'  },
+  { type: 'month',     label: 'Месяц'   },
+  { type: 'quarter',   label: 'Квартал' },
+]
 
 interface PeriodFilterProps {
-  value: PeriodValue | null
-  onChange: (v: PeriodValue | null) => void
-  className?: string
+  period: PeriodType
+  customFrom?: string
+  customTo?: string
+  remember: boolean
+  onChange: (type: PeriodType, custom?: { from: string; to: string }) => void
+  onRememberChange: (v: boolean) => void
 }
 
-export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
-  const [showCustom, setShowCustom] = useState(false)
-  const [cFrom, setCFrom] = useState('')
-  const [cTo, setCTo]     = useState('')
+export function PeriodFilter({
+  period,
+  customFrom,
+  customTo,
+  remember,
+  onChange,
+  onRememberChange,
+}: PeriodFilterProps) {
+  const [showPicker, setShowPicker] = useState(false)
+  const [pickFrom, setPickFrom] = useState(customFrom ?? '')
+  const [pickTo,   setPickTo]   = useState(customTo   ?? '')
 
-  const QUICK: { type: Exclude<PeriodType, 'custom'>; label: string }[] = [
-    { type: 'today', label: 'Сегодня' },
-    { type: 'week',  label: 'Неделя'  },
-    { type: 'month', label: 'Месяц'   },
-  ]
+  useEffect(() => {
+    if (period === 'custom') {
+      setPickFrom(customFrom ?? '')
+      setPickTo(customTo ?? '')
+    }
+  }, [period, customFrom, customTo])
 
-  const btnStyle = (active: boolean): React.CSSProperties => ({
-    height: 30, padding: '0 12px',
-    background: active ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
-    border: `1px solid ${active ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
-    borderRadius: 8,
-    color: active ? 'var(--accent)' : 'var(--text-secondary)',
-    fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    height: 28,
+    padding: '0 11px',
+    background: active
+      ? 'color-mix(in srgb, var(--accent) 14%, transparent)'
+      : 'transparent',
+    border: `1px solid ${active
+      ? 'color-mix(in srgb, var(--accent) 45%, transparent)'
+      : 'var(--border)'}`,
+    borderRadius: 20,
+    color: active ? 'var(--accent)' : 'var(--text-muted)',
+    fontSize: 12,
+    fontWeight: active ? 500 : 400,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap' as const,
+    transition: 'all 150ms ease-out',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
   })
 
-  const handleQuick = (type: Exclude<PeriodType, 'custom'>) => {
-    setShowCustom(false)
-    if (value?.type === type) { onChange(null); return }
-    onChange(getDefaultPeriod(type))
+  const handleQuick = (type: PeriodType) => {
+    setShowPicker(false)
+    onChange(type)
   }
 
-  const handleCustomClick = () => {
-    if (value?.type === 'custom' && !showCustom) { onChange(null); return }
-    const s = toISO(new Date())
-    setCFrom(value?.from ?? s)
-    setCTo(value?.to ?? s)
-    setShowCustom(v => !v)
-  }
-
-  const apply = () => {
-    if (cFrom && cTo) {
-      onChange({ type: 'custom', from: cFrom, to: cTo })
-      setShowCustom(false)
+  const handleCustomToggle = () => {
+    if (showPicker) {
+      setShowPicker(false)
+    } else {
+      const today = new Date().toISOString().slice(0, 10)
+      setPickFrom(customFrom ?? today)
+      setPickTo(customTo ?? today)
+      setShowPicker(true)
     }
   }
 
+  const handleApply = () => {
+    if (pickFrom && pickTo) {
+      onChange('custom', { from: pickFrom, to: pickTo })
+      setShowPicker(false)
+    }
+  }
+
+  const customLabel =
+    period === 'custom' && customFrom && customTo
+      ? `${customFrom.slice(5).replace('-', '.')} — ${customTo.slice(5).replace('-', '.')}`
+      : null
+
   const dateInputStyle: React.CSSProperties = {
-    height: 30, padding: '0 8px',
-    background: 'var(--bg-card)', border: '1px solid var(--border)',
-    borderRadius: 8, color: 'var(--text)', fontSize: 12, fontFamily: 'inherit',
-    outline: 'none', boxSizing: 'border-box',
+    height: 28,
+    padding: '0 8px',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
+    color: 'var(--text)',
+    fontSize: 12,
+    fontFamily: 'inherit',
+    outline: 'none',
+    boxSizing: 'border-box' as const,
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-      {QUICK.map(b => (
-        <button key={b.type} onClick={() => handleQuick(b.type)} style={btnStyle(value?.type === b.type)}>
-          {b.label}
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+      flexWrap: 'wrap' as const,
+    }}>
+      {PERIODS.map(p => (
+        <button
+          key={p.type}
+          onClick={() => handleQuick(p.type)}
+          style={pillStyle(period === p.type)}
+        >
+          {p.label}
         </button>
       ))}
+
       <button
-        onClick={handleCustomClick}
-        style={{ ...btnStyle(value?.type === 'custom'), display: 'flex', alignItems: 'center', gap: 5 }}
+        onClick={handleCustomToggle}
+        style={pillStyle(period === 'custom')}
       >
-        <Calendar size={12} />
-        {value?.type === 'custom' ? `${value.from} — ${value.to}` : 'Даты'}
+        <Calendar size={11} />
+        {customLabel ?? 'Диапазон'}
       </button>
-      {showCustom && (
-        <>
-          <input type="date" value={cFrom} onChange={e => setCFrom(e.target.value)} style={dateInputStyle} />
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>—</span>
-          <input type="date" value={cTo} onChange={e => setCTo(e.target.value)} style={dateInputStyle} />
+
+      {showPicker && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 5, marginLeft: 4,
+        }}>
+          <input
+            type="date"
+            value={pickFrom}
+            onChange={e => setPickFrom(e.target.value)}
+            style={dateInputStyle}
+          />
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
+          <input
+            type="date"
+            value={pickTo}
+            onChange={e => setPickTo(e.target.value)}
+            style={dateInputStyle}
+          />
           <button
-            onClick={apply}
-            style={{ height: 30, padding: '0 12px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+            onClick={handleApply}
+            style={{
+              height: 28, padding: '0 12px',
+              background: 'var(--accent)', border: 'none', borderRadius: 8,
+              color: '#fff', fontSize: 12,
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'opacity 150ms ease-out',
+            }}
           >
             Применить
           </button>
-        </>
+        </div>
       )}
+
+      <button
+        onClick={() => onRememberChange(!remember)}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          cursor: 'pointer', marginLeft: 6,
+          fontSize: 12, color: remember ? 'var(--accent)' : 'var(--text-muted)',
+          background: 'transparent', border: 'none',
+          fontFamily: 'inherit', padding: 0,
+          transition: 'color 150ms ease-out',
+        }}
+      >
+        <span style={{
+          width: 14, height: 14, borderRadius: 3, flexShrink: 0,
+          border: `1px solid ${remember ? 'var(--accent)' : 'var(--border)'}`,
+          background: remember ? 'var(--accent)' : 'transparent',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 150ms ease-out',
+        }}>
+          {remember && <Check size={8} strokeWidth={3} color="#fff" />}
+        </span>
+        Запомнить
+      </button>
     </div>
   )
 }

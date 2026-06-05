@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2, Plus, Download, Truck, ShoppingCart } from 'lucide-react'
+import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { warehouseApi } from '../../api/warehouse.api'
 import { catalogApi } from '../../api/catalog.api'
 import { branchesApi, type BranchRaw } from '../../api/branches.api'
@@ -738,6 +740,7 @@ export default function WarehousePage() {
   const canEdit = user?.role === 'developer' || user?.role === 'owner'
   const canIntake = canEdit || user?.role === 'franchisee'
   const multiBranch = selectedBranchIds.length > 1
+  const { period, customFrom, customTo, setPeriod, remember, setRemember } = usePeriodFilter('warehouse')
 
   useEffect(() => {
     if (user?.role !== 'developer' && user?.role !== 'owner') return
@@ -832,7 +835,15 @@ export default function WarehousePage() {
           <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Склад</h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Учёт товаров и расходников</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <PeriodFilter
+            period={period}
+            customFrom={customFrom}
+            customTo={customTo}
+            remember={remember}
+            onChange={setPeriod}
+            onRememberChange={setRemember}
+          />
           {lowStockCount > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8 }}>
               <AlertTriangle size={13} color="#ef4444" />

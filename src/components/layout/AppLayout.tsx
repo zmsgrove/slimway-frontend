@@ -5,6 +5,7 @@ import {
   UserCheck, CalendarClock, CalendarCheck, ChevronDown, Package,
   Wrench, Shield, X, DollarSign,
 } from 'lucide-react'
+import { NotificationBell } from '../ui/NotificationBell'
 import { useEffect, useState, useRef } from 'react'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
@@ -306,7 +307,7 @@ function AppLayoutInner() {
   const perm = usePermissions()
   const navigate = useNavigate()
   const location = useLocation()
-  const [badges, setBadges] = useState<Badges>({ leads_new: 0, tasks_overdue: 0, low_stock_items: 0 })
+  const [badges, setBadges] = useState<Badges>({ leads_new: 0, tasks_overdue: 0, low_stock_items: 0, notifications_unread: 0 })
   const badgeTimer = useRef<ReturnType<typeof setInterval>>()
   const [showMfaBanner, setShowMfaBanner] = useState(false)
   const [branchCity, setBranchCity] = useState<string | null>(null)
@@ -500,6 +501,9 @@ function AppLayoutInner() {
           >
             {isDark ? <Sun size={14} strokeWidth={1.75} /> : <Moon size={14} strokeWidth={1.75} />}
           </button>
+
+          {/* Notification bell */}
+          <NotificationBell />
 
           <WeatherTimeBlock city={branchCity} timezone={branchTimezone} />
 

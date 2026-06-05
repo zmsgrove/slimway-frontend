@@ -461,6 +461,7 @@ export interface Badges {
   leads_new: number
   tasks_overdue: number
   low_stock_items: number
+  notifications_unread: number
 }
 
 export interface BranchSubscriptionTemplate {

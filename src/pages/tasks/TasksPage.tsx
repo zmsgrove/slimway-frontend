@@ -13,7 +13,8 @@ import { employeesApi } from '../../api/employees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
-import { PeriodFilter, type PeriodValue } from '../../components/ui/PeriodFilter'
+import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import type {
   Task, TaskStatus, TaskPriority,
   TaskChecklistItem, TaskChecklistGroup, TaskComment, Employee,
@@ -860,7 +861,7 @@ export default function TasksPage() {
   const [search,       setSearch]       = useState('')
   const [filterPri,    setFilterPri]    = useState<TaskPriority | null>(null)
   const [myFilter,     setMyFilter]     = useState<MyFilter>('all')
-  const [period,       setPeriod]       = useState<PeriodValue | null>(null)
+  const { period, customFrom, customTo, dateFromStr, dateToStr, setPeriod, remember, setRemember } = usePeriodFilter('tasks')
   const [dateField,    setDateField]    = useState<'created_at' | 'deadline'>('created_at')
   const [showAutoOnly, setShowAutoOnly] = useState(false)
 
@@ -868,11 +869,11 @@ export default function TasksPage() {
 
   const loadTasks = useCallback(async () => {
     try {
-      const params = period ? { from: period.from, to: period.to, date_field: dateField } : undefined
+      const params = { from: dateFromStr, to: dateToStr, date_field: dateField }
       const data = await tasksApi.getAll(params)
       setTasks(data)
     } catch { /* ignore */ } finally { setLoading(false) }
-  }, [period, dateField])
+  }, [dateFromStr, dateToStr, dateField])
 
   useEffect(() => {
     void loadTasks()
@@ -1042,8 +1043,15 @@ export default function TasksPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <PeriodFilter value={period} onChange={p => { setPeriod(p) }} />
-          {period && (
+          <PeriodFilter
+            period={period}
+            customFrom={customFrom}
+            customTo={customTo}
+            remember={remember}
+            onChange={setPeriod}
+            onRememberChange={setRemember}
+          />
+          {true && (
             <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
               {(['created_at', 'deadline'] as const).map((f, i) => (
                 <button key={f} onClick={() => setDateField(f)}
