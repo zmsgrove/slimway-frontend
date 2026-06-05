@@ -19,6 +19,7 @@ import type {
   Task, TaskStatus, TaskPriority,
   TaskChecklistItem, TaskChecklistGroup, TaskComment, Employee,
 } from '../../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -968,12 +969,12 @@ export default function TasksPage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="skeleton" style={{ height: 24, width: 120, borderRadius: 6 }} />
-          <div className="skeleton" style={{ height: 36, width: 120, borderRadius: 8 }} />
+          <Skeleton className="h-6 w-28 rounded-md" />
+          <Skeleton className="h-9 w-32 rounded-lg" />
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {COLUMNS.map((_, i) => (
-            <div key={i} className="skeleton" style={{ flex: '0 0 240px', height: 400, borderRadius: 12 }} />
+            <Skeleton key={i} className="h-[400px] rounded-xl" style={{ flex: '0 0 240px' }} />
           ))}
         </div>
       </div>

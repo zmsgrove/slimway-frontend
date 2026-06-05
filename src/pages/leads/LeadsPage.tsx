@@ -13,6 +13,7 @@ import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu
 import { PeriodFilter } from '../../components/ui/PeriodFilter'
 import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import type { Lead, LeadStatus, LeadComment, Employee } from '../../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -802,7 +803,7 @@ export default function LeadsPage() {
         <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', margin: '0 0 20px', letterSpacing: '-0.02em' }}>Лиды</h1>
         <div style={{ display: 'flex', gap: 12 }}>
           {COLUMNS.map((_, i) => (
-            <div key={i} className="skeleton" style={{ flex: '1 0 240px', minWidth: 240, height: 400, borderRadius: 12 }} />
+            <Skeleton key={i} style={{ flex: '1 0 240px', minWidth: 240 }} className="h-[400px] rounded-xl" />
           ))}
         </div>
       </div>
