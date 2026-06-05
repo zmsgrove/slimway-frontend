@@ -1,3 +1,7 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "./styles/design-system.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -136,6 +140,49 @@
 :root[data-accent="pink"]   { --accent: #db2777; --accent-hover: #be185d; --accent-muted: #fce7f3; --accent-fg: #fff; }
 :root[data-accent="gray"]   { --accent: #6b7280; --accent-hover: #4b5563; --accent-muted: #f3f4f6; --accent-fg: #fff; }
 
+/* ─── Shadcn variable mapping → our theme tokens ───────────────────────────
+   Applied per theme so shadcn components pick up our design system.
+   --accent in each theme block = muted hover surface (shadcn semantic meaning).
+   The [data-accent="..."] block below overrides --accent back to primary for
+   our own badge/button usage (accent selectors come later in the cascade).
+────────────────────────────────────────────────────────────────────────── */
+
+:root[data-theme="black"],
+:root[data-theme="dark"],
+:root[data-theme="dark-blue"],
+:root[data-theme="dark-green"],
+:root[data-theme="dark-purple"],
+:root[data-theme="coffee"],
+:root[data-theme="white"],
+:root[data-theme="cream"],
+:root[data-theme="light-blue"],
+:root[data-theme="light-green"],
+:root[data-theme="lavender"],
+:root[data-theme="light-gray"],
+:root[data-theme="light"],
+:root {
+  --background:          var(--bg);
+  --foreground:          var(--text);
+  --card:                var(--bg-card);
+  --card-foreground:     var(--text);
+  --popover:             var(--bg-card);
+  --popover-foreground:  var(--text);
+  --primary:             var(--accent);
+  --primary-foreground:  var(--accent-fg);
+  --muted:               var(--bg-card);
+  --muted-foreground:    var(--text-muted);
+  --accent:              var(--accent-muted);
+  --accent-foreground:   var(--text);
+  --input:               var(--border);
+  --ring:                var(--accent);
+  --radius:              8px;
+  --sidebar:             var(--bg-sidebar);
+  --sidebar-foreground:  var(--text);
+  --sidebar-accent:      color-mix(in srgb, var(--accent) 10%, transparent);
+  --sidebar-accent-foreground: var(--accent);
+  --sidebar-border:      var(--border);
+}
+
 /* ─── Global Resets ─── */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -147,7 +194,7 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  font-family: 'Geist Variable', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: var(--text-base);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -590,4 +637,87 @@ input, textarea, select { font-family: inherit; }
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
+}
+
+@layer base {
+  .theme {
+    --font-heading:      var(--font-sans);
+    --font-sans:      'Geist Variable', sans-serif;
+  }
+  :root {
+    --background:      oklch(1 0 0);
+    --foreground:      oklch(0.145 0 0);
+    --card:      oklch(1 0 0);
+    --card-foreground:      oklch(0.145 0 0);
+    --popover:      oklch(1 0 0);
+    --popover-foreground:      oklch(0.145 0 0);
+    --primary:      oklch(0.205 0 0);
+    --primary-foreground:      oklch(0.985 0 0);
+    --secondary:      oklch(0.97 0 0);
+    --secondary-foreground:      oklch(0.205 0 0);
+    --muted:      oklch(0.97 0 0);
+    --muted-foreground:      oklch(0.556 0 0);
+    --accent:      oklch(0.97 0 0);
+    --accent-foreground:      oklch(0.205 0 0);
+    --destructive:      oklch(0.577 0.245 27.325);
+    --border:      oklch(0.922 0 0);
+    --input:      oklch(0.922 0 0);
+    --ring:      oklch(0.708 0 0);
+    --chart-1:      oklch(0.87 0 0);
+    --chart-2:      oklch(0.556 0 0);
+    --chart-3:      oklch(0.439 0 0);
+    --chart-4:      oklch(0.371 0 0);
+    --chart-5:      oklch(0.269 0 0);
+    --radius:      0.625rem;
+    --sidebar:      oklch(0.985 0 0);
+    --sidebar-foreground:      oklch(0.145 0 0);
+    --sidebar-primary:      oklch(0.205 0 0);
+    --sidebar-primary-foreground:      oklch(0.985 0 0);
+    --sidebar-accent:      oklch(0.97 0 0);
+    --sidebar-accent-foreground:      oklch(0.205 0 0);
+    --sidebar-border:      oklch(0.922 0 0);
+    --sidebar-ring:      oklch(0.708 0 0);
+  }
+  .dark {
+    --background:      oklch(0.145 0 0);
+    --foreground:      oklch(0.985 0 0);
+    --card:      oklch(0.205 0 0);
+    --card-foreground:      oklch(0.985 0 0);
+    --popover:      oklch(0.205 0 0);
+    --popover-foreground:      oklch(0.985 0 0);
+    --primary:      oklch(0.922 0 0);
+    --primary-foreground:      oklch(0.205 0 0);
+    --secondary:      oklch(0.269 0 0);
+    --secondary-foreground:      oklch(0.985 0 0);
+    --muted:      oklch(0.269 0 0);
+    --muted-foreground:      oklch(0.708 0 0);
+    --accent:      oklch(0.269 0 0);
+    --accent-foreground:      oklch(0.985 0 0);
+    --destructive:      oklch(0.704 0.191 22.216);
+    --border:      oklch(1 0 0 / 10%);
+    --input:      oklch(1 0 0 / 15%);
+    --ring:      oklch(0.556 0 0);
+    --chart-1:      oklch(0.87 0 0);
+    --chart-2:      oklch(0.556 0 0);
+    --chart-3:      oklch(0.439 0 0);
+    --chart-4:      oklch(0.371 0 0);
+    --chart-5:      oklch(0.269 0 0);
+    --sidebar:      oklch(0.205 0 0);
+    --sidebar-foreground:      oklch(0.985 0 0);
+    --sidebar-primary:      oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground:      oklch(0.985 0 0);
+    --sidebar-accent:      oklch(0.269 0 0);
+    --sidebar-accent-foreground:      oklch(0.985 0 0);
+    --sidebar-border:      oklch(1 0 0 / 10%);
+    --sidebar-ring:      oklch(0.556 0 0);
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

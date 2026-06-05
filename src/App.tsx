@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from './hooks/useAuth'
 import { ThemeProvider } from './lib/ThemeContext'
+import { TooltipProvider } from './components/ui/tooltip'
 
 import AppLayout from './components/layout/AppLayout'
 import LoginPage from './pages/auth/LoginPage'
@@ -50,6 +51,7 @@ function InnerApp() {
 
   return (
     <ThemeProvider userId={user?.id ?? null}>
+      <TooltipProvider delayDuration={400}>
       <BrowserRouter>
         <Routes>
           {/* Public routes — no auth required */}
@@ -85,6 +87,7 @@ function InnerApp() {
           />
         </Routes>
       </BrowserRouter>
+      </TooltipProvider>
     </ThemeProvider>
   )
 }
