@@ -10,6 +10,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { usePermissions } from '../../hooks/usePermissions'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { Employee, Shift } from '../../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -630,7 +631,11 @@ export default function EmployeesPage() {
       )}
 
       {loading ? (
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 13 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-44 rounded-2xl" />
+          ))}
+        </div>
       ) : employees.length === 0 ? (
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 13, textAlign: 'center' }}>
           <Briefcase size={28} strokeWidth={1.5} color="var(--text-muted)" />

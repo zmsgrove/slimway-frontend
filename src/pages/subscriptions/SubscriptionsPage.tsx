@@ -8,6 +8,7 @@ import { subscriptionsApi } from '../../api/subscriptions.api'
 import { useAuth } from '../../hooks/useAuth'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import type { SubscriptionTemplate, BranchSubscriptionTemplate, Subscription, DeviceType } from '../../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
@@ -253,10 +254,22 @@ export default function SubscriptionsPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 21, borderBottom: '1px solid var(--border)' }}>
+      <div style={{
+        display: 'flex', gap: 2, marginBottom: 20,
+        padding: 4, background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 10, width: 'fit-content',
+      }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ padding: '10px 21px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, color: tab === t.id ? 'var(--accent)' : 'var(--text-secondary)', borderBottom: `2px solid ${tab === t.id ? 'var(--accent)' : 'transparent'}`, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out', marginBottom: -1 }}>
+            style={{
+              padding: '7px 18px', borderRadius: 7,
+              background: tab === t.id ? 'var(--bg)' : 'transparent',
+              border: tab === t.id ? '1px solid var(--border)' : '1px solid transparent',
+              boxShadow: tab === t.id ? 'var(--shadow-xs)' : 'none',
+              cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 600 : 400,
+              color: tab === t.id ? 'var(--text)' : 'var(--text-muted)',
+              transition: 'all 150ms ease-out',
+            }}>
             {t.label}
           </button>
         ))}
@@ -271,8 +284,8 @@ export default function SubscriptionsPage() {
             </div>
           )}
           {loadingBranch ? (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 13 }}>
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-xl" />)}
             </div>
           ) : connectedTemplates.length === 0 ? (
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -369,7 +382,9 @@ export default function SubscriptionsPage() {
             </div>
           )}
           {loadingSold ? (
-            <div style={{ padding: 55, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+            </div>
           ) : filteredSold.length === 0 ? (
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 55, textAlign: 'center' }}>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{search ? 'Ничего не найдено' : 'Проданных абонементов нет'}</div>

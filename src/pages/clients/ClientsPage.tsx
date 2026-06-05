@@ -8,6 +8,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react'
 import { clientsApi } from '../../api/clients.api'
 import { api } from '../../lib/api'
+import { Skeleton } from '@/components/ui/skeleton'
 import { PeriodFilter } from '../../components/ui/PeriodFilter'
 import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { subscriptionsApi } from '../../api/subscriptions.api'
@@ -44,6 +45,11 @@ const PRESET_TAGS = ['VIP', 'Пробный', 'Реферал', 'Корпора�
 const TAG_COLORS: Record<string, string> = {
   'VIP': '#f59e0b', 'Пробный': '#3b82f6', 'Реферал': '#10b981',
   'Корпоративный': '#8b5cf6', 'Онлайн': '#06b6d4',
+}
+
+const AVATAR_COLORS = ['var(--accent)', '#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#f97316', '#ec4899', '#06b6d4']
+function avatarColor(name: string): string {
+  return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
 }
 
 function tagBg(tag: string, opacity = 9): string {
@@ -1147,6 +1153,8 @@ interface ClientRowProps {
 function ClientRow({ client, onClick, onContextMenu }: ClientRowProps) {
   const activeSub = client.memberships?.find(m => m.status === 'active')
   const isBirthday = isTodayBirthday(client.birth_date ?? null)
+  const color    = avatarColor(client.full_name)
+  const initials = client.full_name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
   return (
     <div
@@ -1164,13 +1172,12 @@ function ClientRow({ client, onClick, onContextMenu }: ClientRowProps) {
       {/* Avatar */}
       <div style={{
         width: 38, height: 38, borderRadius: '50%',
-        background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-        border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+        background: `color-mix(in srgb, ${color} 12%, transparent)`,
+        border: `2px solid color-mix(in srgb, ${color} 25%, transparent)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        fontSize: 13, fontWeight: 700, color,
       }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)' }}>
-          {client.full_name.charAt(0).toUpperCase()}
-        </span>
+        {initials}
       </div>
 
       {/* Info */}
@@ -1420,7 +1427,7 @@ export default function ClientsPage() {
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
+            <Skeleton key={i} className="h-[72px] rounded-xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
