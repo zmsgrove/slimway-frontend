@@ -1101,8 +1101,6 @@ export default function SchedulePage() {
     setLoading(true); setError(null)
     try {
       const [devs, slotList] = await Promise.all([devicesApi.getAll(), scheduleSlotsApi.getByDate(d)])
-      console.log('[SchedulePage] devices:', devs)
-      console.log('[SchedulePage] slots:', slotList)
       setDevices(devs.filter(dev => dev.status !== 'disabled'))
       setSlots(slotList)
     } catch (err) {

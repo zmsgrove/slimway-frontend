@@ -140,10 +140,18 @@ export interface Subscription {
   slot_3_duration_min: number | null
   slot_3_sessions_total: number | null
   slot_3_sessions_left: number | null
+  slot_3_device_id?: string | null
+  slot_3_schedule_slot_id?: string | null
+  slot_3_time_start?: string | null
+  slot_3_weekday?: number | null
   slot_4_type: DeviceType | null
   slot_4_duration_min: number | null
   slot_4_sessions_total: number | null
   slot_4_sessions_left: number | null
+  slot_4_device_id?: string | null
+  slot_4_schedule_slot_id?: string | null
+  slot_4_time_start?: string | null
+  slot_4_weekday?: number | null
   is_trial: boolean
   finish_slot: number | null
   date_start: string
@@ -155,6 +163,7 @@ export interface Subscription {
   freeze_days_used: number | null
   cancellation_reason: string | null
   created_at: string
+  deleted_at?: string | null
   clients?: { full_name: string; phone: string | null }
 }
 
@@ -225,6 +234,9 @@ export interface ShiftCheckin {
   is_own_shift: boolean
   location: string | null
   created_at: string
+  checkin_type?: 'self' | 'replacement'
+  replaces_employee_id?: string | null
+  replacement_note?: string | null
 }
 
 export interface Shift {
@@ -494,5 +506,106 @@ export interface SubscriptionTemplate {
   validity_days: number
   price: number | null
   is_active: boolean
+  created_at: string
+}
+
+// ── v1.6.x (migrations 023–029) ──────────────────────────────
+
+export interface BookingV2 {
+  id: string
+  client_id: string
+  subscription_id: string
+  schedule_slot_id: string | null
+  slot_2_schedule_slot_id?: string | null
+  slot_3_schedule_slot_id?: string | null
+  slot_4_schedule_slot_id?: string | null
+  date: string
+  attended: boolean | null
+  status?: 'pending' | 'confirmed' | 'cancelled'
+  confirmed_by?: string | null
+  confirmed_at?: string | null
+  created_at: string
+}
+
+export interface PromoCode {
+  id: string
+  branch_id: string
+  code: string
+  discount_type: 'fixed' | 'percent'
+  discount_value: number
+  max_uses: number | null
+  max_uses_per_client?: number | null
+  uses_count: number
+  expires_at?: string | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface PromoCodeUsage {
+  id: string
+  promo_code_id: string
+  client_id: string
+  branch_id: string
+  used_at: string
+}
+
+export interface BranchSettings {
+  work_time_start: string | null
+  work_time_end: string | null
+  timezone: string | null
+  currency: string | null
+  contact_phone: string | null
+  contact_email: string | null
+  website: string | null
+  address: string | null
+  booking_interval_min: number | null
+  max_bookings_per_day: number | null
+  allow_cancel_within_24h?: boolean
+}
+
+export interface ApiKey {
+  id: string
+  branch_id: string
+  name: string
+  key_prefix: string
+  raw_key?: string
+  permissions: string[]
+  is_active: boolean
+  last_used_at: string | null
+  created_by: string
+  created_at: string
+}
+
+export interface WebhookEndpoint {
+  id: string
+  branch_id: string
+  url: string
+  events: string[]
+  is_active: boolean
+  secret?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookLog {
+  id: string
+  webhook_endpoint_id: string
+  event: string
+  payload: Record<string, unknown>
+  response_status: number | null
+  response_body: string | null
+  attempt: number
+  created_at: string
+}
+
+export interface Notification {
+  id: string
+  profile_id: string
+  branch_id: string
+  type: string
+  title: string
+  message: string
+  is_read: boolean
+  data?: Record<string, unknown>
   created_at: string
 }

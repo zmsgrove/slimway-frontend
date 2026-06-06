@@ -58,7 +58,9 @@ export function GlobalSearch() {
   }, [open, openSearch, closeSearch])
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 50)
+    if (!open) return
+    const id = setTimeout(() => inputRef.current?.focus(), 50)
+    return () => clearTimeout(id)
   }, [open])
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export function GlobalSearch() {
       } catch { /* ignore */ }
       finally { setLoading(false) }
     }, 300)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [query])
 
   const handleSelect = (r: SearchResult) => {
