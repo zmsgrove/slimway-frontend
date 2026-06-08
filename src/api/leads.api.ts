@@ -4,7 +4,7 @@ import type { Lead, LeadComment, LeadStatus } from '../types'
 export const leadsApi = {
   getAll: async (params?: { status?: LeadStatus; archived?: boolean; from?: string; to?: string }): Promise<Lead[]> => {
     const { data } = await api.get('/leads', { params })
-    return data
+    return (data as { data: Lead[] }).data ?? data
   },
 
   getById: async (id: string): Promise<Lead> => {

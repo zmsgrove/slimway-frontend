@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import ReactGridLayout from 'react-grid-layout'
+import ReactGridLayout, { WidthProvider } from 'react-grid-layout/legacy'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import {
@@ -27,7 +27,7 @@ interface LayoutItem {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const RGL = (ReactGridLayout as any).WidthProvider(ReactGridLayout) as React.ComponentType<any>
+const RGL = WidthProvider(ReactGridLayout) as React.ComponentType<any>
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

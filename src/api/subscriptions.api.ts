@@ -25,7 +25,7 @@ export interface CreateSubscriptionPayload {
 export const subscriptionsApi = {
   getAll: async (params?: { client_id?: string; status?: string }): Promise<Subscription[]> => {
     const { data } = await api.get('/subscriptions', { params })
-    return data
+    return (data as { data: Subscription[] }).data ?? data
   },
 
   getById: async (id: string): Promise<Subscription> => {

@@ -14,7 +14,7 @@ export interface CreateTaskPayload {
 export const tasksApi = {
   getAll: async (params?: { from?: string; to?: string; date_field?: 'created_at' | 'deadline' }): Promise<Task[]> => {
     const { data } = await api.get('/tasks', { params })
-    return data
+    return (data as { data: Task[] }).data ?? data
   },
 
   getById: async (id: string): Promise<Task> => {
