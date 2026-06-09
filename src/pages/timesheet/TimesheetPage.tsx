@@ -24,16 +24,16 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   present: 'var(--accent)',
-  absent:  '#ef4444',
-  late:    '#f59e0b',
+  absent:  'var(--color-danger)',
+  late:    'var(--color-warning)',
   partial: '#a78bfa',
   pending: 'var(--text-muted)',
 }
 
 const STATUS_BG: Record<string, string> = {
   present: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-  absent:  'rgba(239,68,68,0.15)',
-  late:    'rgba(245,158,11,0.15)',
+  absent:  'var(--color-danger-muted)',
+  late:    'var(--color-warning-muted)',
   partial: 'rgba(167,139,250,0.15)',
   pending: 'var(--bg-card)',
 }
@@ -135,7 +135,7 @@ export default function TimesheetPage() {
       </div>
 
       {error && (
-        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, fontSize: 13, color: '#ef4444', marginBottom: 16 }}>
+        <div style={{ padding: '10px 14px', background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', borderRadius: 8, fontSize: 13, color: 'var(--color-danger)', marginBottom: 16 }}>
           {error}
         </div>
       )}

@@ -27,7 +27,7 @@ const TYPE_LABELS = {
 
 const TYPE_COLORS = {
   client:       'var(--accent)',
-  lead:         '#f59e0b',
+  lead:         'var(--color-warning)',
   task:         '#8b5cf6',
   subscription: '#263CD9',
 }

@@ -19,10 +19,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 const COLUMNS: { id: LeadStatus; label: string; color: string }[] = [
   { id: 'new',     label: 'Новый',          color: '#3b82f6' },
-  { id: 'in_work', label: 'В работе',       color: '#f59e0b' },
+  { id: 'in_work', label: 'В работе',       color: 'var(--color-warning)' },
   { id: 'waiting', label: 'Ждём на филиал', color: '#f97316' },
-  { id: 'success', label: 'Успешно',        color: '#10b981' },
-  { id: 'fail',    label: 'Не успешно',     color: '#ef4444' },
+  { id: 'success', label: 'Успешно',        color: 'var(--color-success)' },
+  { id: 'fail',    label: 'Не успешно',     color: 'var(--color-danger)' },
 ]
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -137,7 +137,7 @@ function CreateLeadModal({ initialStatus = 'new', employees, onClose, onCreate }
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--color-danger)' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
@@ -319,13 +319,13 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
           </div>
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 12 }}>
             {editing ? (
-              <button onClick={() => void handleSave()} disabled={saving} className="icon-btn" style={{ background: 'color-mix(in srgb, #10b981 12%, transparent)', color: '#10b981' }}>
+              <button onClick={() => void handleSave()} disabled={saving} className="icon-btn" style={{ background: 'color-mix(in srgb, var(--color-success) 12%, transparent)', color: 'var(--color-success)' }}>
                 <Check size={14} />
               </button>
             ) : (
               <button onClick={() => setEditing(true)} className="icon-btn"><Edit2 size={14} /></button>
             )}
-            <button onClick={() => { if (confirm('Удалить лид?')) { onDelete(detail.id) } }} className="icon-btn" style={{ color: '#ef4444' }}>
+            <button onClick={() => { if (confirm('Удалить лид?')) { onDelete(detail.id) } }} className="icon-btn" style={{ color: 'var(--color-danger)' }}>
               <Trash2 size={14} />
             </button>
             <button onClick={onClose} className="icon-btn"><X size={14} /></button>
@@ -405,8 +405,8 @@ function LeadModal({ lead, employees, onClose, onUpdate, onDelete }: LeadModalPr
 
             {/* Success action */}
             {detail.status === 'success' && detail.client_id && (
-              <div style={{ padding: 12, background: 'color-mix(in srgb, #10b981 8%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', borderRadius: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#10b981', marginBottom: 4 }}>Клиент создан!</div>
+              <div style={{ padding: 12, background: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-success)', marginBottom: 4 }}>Клиент создан!</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>Клиент добавлен в базу и ожидает активации.</div>
               </div>
             )}
@@ -515,7 +515,7 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
     ?? employees.find(e => e.id === lead.assigned_to)
   const commentCount = lead.lead_comments?.length ?? 0
   const days = daysInStage(lead.status_changed_at, lead.created_at)
-  const stageColor = days >= 7 ? '#ef4444' : days >= 3 ? '#f59e0b' : 'var(--text-muted)'
+  const stageColor = days >= 7 ? 'var(--color-danger)' : days >= 3 ? 'var(--color-warning)' : 'var(--text-muted)'
 
   return (
     <div
@@ -634,15 +634,15 @@ function ClientAddedModal({ clientId, clientName, onGoToClient, onClose }: Clien
         background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', textAlign: 'center',
       }}>
-        <div style={{ width: 48, height: 48, borderRadius: 14, background: 'color-mix(in srgb, #10b981 12%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-          <UserPlus size={22} color="#10b981" />
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: 'color-mix(in srgb, var(--color-success) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <UserPlus size={22} color="var(--color-success)" />
         </div>
         <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 12, letterSpacing: '-0.01em' }}>Лид успешно закрыт!</div>
         {clientName ? (
           <>
-            <div style={{ marginBottom: 16, padding: '10px 12px', background: 'color-mix(in srgb, #10b981 8%, transparent)', border: '1px solid color-mix(in srgb, #10b981 20%, transparent)', borderRadius: 8 }}>
+            <div style={{ marginBottom: 16, padding: '10px 12px', background: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 20%, transparent)', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 3 }}>Создана карточка клиента</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#10b981' }}>{clientName}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-success)' }}>{clientName}</div>
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
               Статус «Черновик». Перейдите в карточку для заполнения данных.
@@ -655,7 +655,7 @@ function ClientAddedModal({ clientId, clientName, onGoToClient, onClose }: Clien
         )}
         <div style={{ display: 'flex', gap: 8 }}>
           {clientId && (
-            <button onClick={onGoToClient} className="btn btn-primary" style={{ flex: 1, background: '#10b981' }}>
+            <button onClick={onGoToClient} className="btn btn-primary" style={{ flex: 1, background: 'var(--color-success)' }}>
               Перейти к клиенту
             </button>
           )}
@@ -857,7 +857,7 @@ export default function LeadsPage() {
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: '#ef4444', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: 'var(--color-danger)', flexShrink: 0 }}>
           <AlertCircle size={13} />{error}
         </div>
       )}

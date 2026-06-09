@@ -17,12 +17,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 const POSITIONS = [
   { value: 'manager',   label: 'Управляющий', role: 'franchisee', color: 'var(--accent)' },
   { value: 'staff',     label: 'Менеджер',    role: 'admin',       color: '#263CD9' },
-  { value: 'technical', label: 'Тех.персонал', role: 'technical',  color: '#f59e0b' },
+  { value: 'technical', label: 'Тех.персонал', role: 'technical',  color: 'var(--color-warning)' },
 ]
 const DEPARTMENTS = ['Управление', 'Менеджмент', 'Технический отдел', 'IT']
 
 const STATUS_COLOR: Record<string, string> = {
-  scheduled: '#71717A', active: '#10b981', completed: 'var(--accent)',
+  scheduled: '#71717A', active: 'var(--color-success)', completed: 'var(--accent)',
 }
 const STATUS_LABEL: Record<string, string> = {
   scheduled: 'По графику', active: 'На смене', completed: 'Завершена',
@@ -31,7 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function avatarColor(name: string): string {
-  const colors = ['var(--accent)', '#263CD9', '#8b5cf6', '#f59e0b', '#10b981', '#f97316', '#ec4899']
+  const colors = ['var(--accent)', '#263CD9', '#8b5cf6', 'var(--color-warning)', 'var(--color-success)', '#f97316', '#ec4899']
   return colors[name.charCodeAt(0) % colors.length]
 }
 
@@ -100,8 +100,8 @@ function SuccessModal({ email, password, name, onClose }: SuccessModalProps) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} />
       <div className="modal-animate" style={{ position: 'relative', width: '100%', maxWidth: 400, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', border: '2px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 13px' }}>
-          <CheckCircle size={24} color="#10b981" />
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--color-success-muted)', border: '2px solid color-mix(in srgb, var(--color-success) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 13px' }}>
+          <CheckCircle size={24} color="var(--color-success)" />
         </div>
         <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 5 }}>Сотрудник создан!</div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 21 }}>{name}</div>
@@ -121,7 +121,7 @@ function SuccessModal({ email, password, name, onClose }: SuccessModalProps) {
         </div>
 
         <div style={{ display: 'flex', gap: 13 }}>
-          <button onClick={handleCopy} style={{ flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copied ? 'rgba(16,185,129,0.12)' : 'color-mix(in srgb, var(--accent) 12%, transparent)', border: `1px solid ${copied ? 'rgba(16,185,129,0.3)' : 'color-mix(in srgb, var(--accent) 30%, transparent)'}`, borderRadius: 8, color: copied ? '#10b981' : 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+          <button onClick={handleCopy} style={{ flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copied ? 'var(--color-success-muted)' : 'color-mix(in srgb, var(--accent) 12%, transparent)', border: `1px solid ${copied ? 'color-mix(in srgb, var(--color-success) 30%, transparent)' : 'color-mix(in srgb, var(--accent) 30%, transparent)'}`, borderRadius: 8, color: copied ? 'var(--color-success)' : 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? 'Скопировано' : 'Скопировать'}
           </button>
@@ -194,7 +194,7 @@ function AddEmployeeModal({ onClose, onSaved }: AddModalProps) {
 
         <div style={{ padding: '21px 28px 28px', display: 'flex', flexDirection: 'column', gap: 21 }}>
           {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, fontSize: 12, color: 'var(--color-danger)' }}>
               <AlertCircle size={13} />{error}
             </div>
           )}
@@ -437,7 +437,7 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
             {initials}
           </div>
           {isOnDuty && (
-            <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
+            <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: 'var(--color-success)', border: '2px solid var(--bg-card)' }} />
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -449,7 +449,7 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
               </span>
             )}
             {isOnDuty && (
-              <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: 'var(--color-success-muted)', color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }}>
                 На смене
               </span>
             )}
@@ -467,7 +467,7 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
               <Pencil size={11} />
             </button>
             <button onClick={() => void handleDelete()} disabled={deleting}
-              style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 7, color: '#ef4444', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}>
+              style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 7, color: 'var(--color-danger)', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}>
               <Trash2 size={11} />
             </button>
           </div>
@@ -507,7 +507,7 @@ function EmployeeCard({ emp, canEdit, isOnDuty, onUpdated, onDeleted, onContextM
       {/* Profile tab — edit */}
       {tab === 'profile' && editing && (
         <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {error && <div style={{ fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 5 }}><AlertCircle size={11} />{error}</div>}
+          {error && <div style={{ fontSize: 11, color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 5 }}><AlertCircle size={11} />{error}</div>}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             <input style={{ ...inputStyle, height: 30, fontSize: 12 }} placeholder="Имя *" value={form.first_name} onChange={e => setF('first_name', e.target.value)} />
             <input style={{ ...inputStyle, height: 30, fontSize: 12 }} placeholder="Фамилия *" value={form.last_name} onChange={e => setF('last_name', e.target.value)} />
@@ -625,7 +625,7 @@ export default function EmployeesPage() {
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}

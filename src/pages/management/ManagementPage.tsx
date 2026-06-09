@@ -69,11 +69,11 @@ const DEVICE_TYPES: { value: DeviceType; label: string }[] = [
 ]
 
 const DEVICE_TYPE_COLORS: Record<DeviceType, string> = {
-  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
+  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: 'var(--color-warning)',
 }
 
 const STATUS_COLORS: Record<DeviceStatus, string> = {
-  active: 'var(--accent)', maintenance: '#f59e0b', disabled: '#71717A',
+  active: 'var(--accent)', maintenance: 'var(--color-warning)', disabled: '#71717A',
 }
 const STATUS_LABELS: Record<DeviceStatus, string> = {
   active: 'Активен', maintenance: 'Обслуживание', disabled: 'Отключён',
@@ -133,7 +133,7 @@ function DevicesSection() {
   return (
     <Section title="Оборудование" icon={<Cpu size={15} strokeWidth={1.75} color="var(--accent)" />}>
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}
@@ -229,7 +229,7 @@ function BranchesSection() {
 
   return (
     <Section title="Филиалы" icon={<Building2 size={15} strokeWidth={1.75} color="var(--accent)" />}>
-      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}><AlertCircle size={13} />{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '13px 0' }}>Загрузка...</div> : (
         <>
           {branches.map(b => (
@@ -292,7 +292,7 @@ function DepartmentsSection() {
 
   return (
     <Section title="Отделы" icon={<Briefcase size={15} strokeWidth={1.75} color="var(--accent)" />}>
-      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {items.map(dep => (
@@ -346,7 +346,7 @@ function PositionsSection() {
 
   return (
     <Section title="Должности" icon={<LayoutGrid size={15} strokeWidth={1.75} color="var(--accent)" />}>
-      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {items.map(pos => (
@@ -606,7 +606,7 @@ function SubscriptionTemplatesSection() {
 
   return (
     <Section title="Абонементы" icon={<CreditCard size={15} strokeWidth={1.75} color="var(--accent)" />}>
-      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {templates.map(tpl => (
@@ -621,7 +621,7 @@ function SubscriptionTemplatesSection() {
                   {' · '}{tpl.validity_days} дней
                   {tpl.price != null && ` · ${new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸`}
                   {tpl.finish_slot != null && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', color: 'var(--accent)', fontSize: 10, fontWeight: 600, border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' }}>Финиш: С{tpl.finish_slot}</span>}
-                  {tpl.is_trial && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontSize: 10, fontWeight: 600, border: '1px solid rgba(245,158,11,0.3)' }}>ТЕСТ</span>}
+                  {tpl.is_trial && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', fontSize: 10, fontWeight: 600, border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)' }}>ТЕСТ</span>}
                 </div>
               </div>
               <button
@@ -642,7 +642,7 @@ function SubscriptionTemplatesSection() {
           {showCreate && (
             <div style={{ marginTop: 13, padding: 13, background: 'var(--bg-card)', borderRadius: 13, border: '1px solid var(--border)' }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Новый шаблон</div>
-              {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{formError}</div>}
+              {formError && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 8 }}>{formError}</div>}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div><label style={labelStyle}>Название *</label><input style={inputStyle} placeholder="Базовый 8 сеансов" value={name} onChange={e => setName(e.target.value)} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -675,24 +675,24 @@ function SubscriptionTemplatesSection() {
                     finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
                 {!isTrial && (
-                  <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${hasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, color: hasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                  <button onClick={() => setHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: hasSlot4 ? 'color-mix(in srgb, var(--color-warning) 8%, transparent)' : 'transparent', border: `1px solid ${hasSlot4 ? 'color-mix(in srgb, var(--color-warning) 30%, transparent)' : 'var(--border)'}`, borderRadius: 8, color: hasSlot4 ? 'var(--color-warning)' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                     <ChevronDown size={13} style={{ transform: hasSlot4 ? 'rotate(180deg)' : 'none' }} />
                     {hasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
                   </button>
                 )}
                 {(hasSlot4 || isTrial) && (
-                  <SlotForm slotNum={4} slotColor="#f59e0b" slotBorder="rgba(245,158,11,0.2)"
+                  <SlotForm slotNum={4} slotColor="var(--color-warning)" slotBorder="color-mix(in srgb, var(--color-warning) 20%, transparent)"
                     type={slot4Type} setType={setSlot4Type} dur={slot4Dur} setDur={setSlot4Dur} ses={slot4Ses} setSes={setSlot4Ses}
                     finishSlot={finishSlot} setFinishSlot={setFinishSlot} isTrial={isTrial} />
                 )}
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: isTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${isTrial ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: isTrial ? 'color-mix(in srgb, var(--color-warning) 6%, transparent)' : 'transparent', border: `1px solid ${isTrial ? 'color-mix(in srgb, var(--color-warning) 30%, transparent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
                   <input type="checkbox" checked={isTrial} onChange={e => {
                     const checked = e.target.checked
                     setIsTrial(checked)
                     if (checked) { setHasSlot2(true); setHasSlot3(true); setHasSlot4(true); setFinishSlot(null) }
-                  }} style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }} />
+                  }} style={{ accentColor: 'var(--color-warning)', width: 14, height: 14, marginTop: 1 }} />
                   <div>
-                    <span style={{ fontSize: 12, color: isTrial ? '#f59e0b' : 'var(--text-secondary)', fontWeight: isTrial ? 600 : 400 }}>Тестовый абонемент</span>
+                    <span style={{ fontSize: 12, color: isTrial ? 'var(--color-warning)' : 'var(--text-secondary)', fontWeight: isTrial ? 600 : 400 }}>Тестовый абонемент</span>
                     {isTrial && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>Каждый клиент может приобрести только один раз. Все 4 слота бронируются одновременно, по 1 сеансу.</div>}
                   </div>
                 </label>
@@ -724,7 +724,7 @@ function SubscriptionTemplatesSection() {
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Редактировать шаблон</div>
               <button onClick={() => setEditTpl(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
             </div>
-            {eFormError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{eFormError}</div>}
+            {eFormError && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 10 }}>{eFormError}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div><label style={labelStyle}>Название *</label><input style={inputStyle} value={eName} onChange={e => setEName(e.target.value)} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -757,24 +757,24 @@ function SubscriptionTemplatesSection() {
                   finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
               )}
               {!eIsTrial && (
-                <button onClick={() => setEHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot4 ? 'rgba(245,158,11,0.08)' : 'transparent', border: `1px solid ${eHasSlot4 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, color: eHasSlot4 ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
+                <button onClick={() => setEHasSlot4(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: eHasSlot4 ? 'color-mix(in srgb, var(--color-warning) 8%, transparent)' : 'transparent', border: `1px solid ${eHasSlot4 ? 'color-mix(in srgb, var(--color-warning) 30%, transparent)' : 'var(--border)'}`, borderRadius: 8, color: eHasSlot4 ? 'var(--color-warning)' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
                   <ChevronDown size={13} style={{ transform: eHasSlot4 ? 'rotate(180deg)' : 'none' }} />
                   {eHasSlot4 ? 'Убрать Слот 4' : '+ Слот 4'}
                 </button>
               )}
               {(eHasSlot4 || eIsTrial) && (
-                <SlotForm slotNum={4} slotColor="#f59e0b" slotBorder="rgba(245,158,11,0.2)"
+                <SlotForm slotNum={4} slotColor="var(--color-warning)" slotBorder="color-mix(in srgb, var(--color-warning) 20%, transparent)"
                   type={eSlot4Type} setType={setESlot4Type} dur={eSlot4Dur} setDur={setESlot4Dur} ses={eSlot4Ses} setSes={setESlot4Ses}
                   finishSlot={eFinishSlot} setFinishSlot={setEFinishSlot} isTrial={eIsTrial} />
               )}
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: eIsTrial ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${eIsTrial ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', background: eIsTrial ? 'color-mix(in srgb, var(--color-warning) 6%, transparent)' : 'transparent', border: `1px solid ${eIsTrial ? 'color-mix(in srgb, var(--color-warning) 30%, transparent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
                 <input type="checkbox" checked={eIsTrial} onChange={e => {
                   const checked = e.target.checked
                   setEIsTrial(checked)
                   if (checked) { setEHasSlot2(true); setEHasSlot3(true); setEHasSlot4(true); setEFinishSlot(null) }
-                }} style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }} />
+                }} style={{ accentColor: 'var(--color-warning)', width: 14, height: 14, marginTop: 1 }} />
                 <div>
-                  <span style={{ fontSize: 12, color: eIsTrial ? '#f59e0b' : 'var(--text-secondary)', fontWeight: eIsTrial ? 600 : 400 }}>Тестовый абонемент</span>
+                  <span style={{ fontSize: 12, color: eIsTrial ? 'var(--color-warning)' : 'var(--text-secondary)', fontWeight: eIsTrial ? 600 : 400 }}>Тестовый абонемент</span>
                 </div>
               </label>
             </div>
@@ -848,11 +848,11 @@ function CatalogSection() {
     try { await catalogApi.delete(id); setItems(prev => prev.filter(i => i.id !== id)) } catch { /* ignore */ }
   }
 
-  const CATEGORY_COLORS: Record<string, string> = { merch: '#8b5cf6', nutrition: '#10b981', equipment: '#3b82f6', other: '#71717A' }
+  const CATEGORY_COLORS: Record<string, string> = { merch: '#8b5cf6', nutrition: 'var(--color-success)', equipment: '#3b82f6', other: '#71717A' }
 
   return (
     <Section title="Каталог товаров" icon={<Package size={15} strokeWidth={1.75} color="var(--accent)" />}>
-      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {items.map(item => (
@@ -878,7 +878,7 @@ function CatalogSection() {
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{editItem ? 'Редактировать позицию' : 'Новая позиция'}</div>
                 <button onClick={() => { setShowForm(false); setEditItem(null); resetForm() }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={14} /></button>
               </div>
-              {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{formError}</div>}
+              {formError && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 8 }}>{formError}</div>}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div><label style={labelStyle}>Название *</label><input style={inputStyle} placeholder="Название товара" value={name} onChange={e => setName(e.target.value)} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -996,7 +996,7 @@ function PromoCodesSection() {
 
   return (
     <Section title="Промокоды" icon={<Tag size={15} strokeWidth={1.75} color="var(--accent)" />}>
-      {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div> : (
         <>
           {codes.map(promo => (
@@ -1030,7 +1030,7 @@ function PromoCodesSection() {
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>Новый промокод</div>
                 <button onClick={() => { setShowForm(false); resetForm() }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={14} /></button>
               </div>
-              {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{formError}</div>}
+              {formError && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 8 }}>{formError}</div>}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div><label style={labelStyle}>Код *</label><input style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase' }} placeholder="SUMMER25" value={code} onChange={e => setCode(e.target.value.toUpperCase())} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -1259,9 +1259,9 @@ function PermissionsTab() {
                               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                               cursor: clickable && !isSaving ? 'pointer' : 'not-allowed',
                               background: state === 'allow'  ? 'color-mix(in srgb, var(--accent) 12%, transparent)' :
-                                          state === 'locked' ? 'rgba(239,68,68,0.10)' : 'transparent',
+                                          state === 'locked' ? 'var(--color-danger-muted)' : 'transparent',
                               color:      state === 'allow'  ? 'var(--accent)' :
-                                          state === 'locked' ? '#ef4444' : 'var(--text-muted)',
+                                          state === 'locked' ? 'var(--color-danger)' : 'var(--text-muted)',
                               opacity: isSaving ? 0.4 : (!clickable ? 0.5 : 1),
                               outline: isOpen ? '2px solid var(--accent)' : 'none',
                               outlineOffset: 2,
@@ -1352,12 +1352,12 @@ function UsersTab() {
   }
 
   if (loading) return <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '21px 0', textAlign: 'center' }}>Загрузка...</div>
-  if (error)   return <div style={{ fontSize: 13, color: '#ef4444', padding: '13px 0' }}>{error}</div>
+  if (error)   return <div style={{ fontSize: 13, color: 'var(--color-danger)', padding: '13px 0' }}>{error}</div>
 
   return (
     <div>
       {toast && (
-        <div style={{ marginBottom: 10, padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: toast.ok ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : '#ef444418', color: toast.ok ? 'var(--accent)' : '#ef4444', border: `1px solid ${toast.ok ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : '#ef444440'}` }}>
+        <div style={{ marginBottom: 10, padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: toast.ok ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--color-danger)18', color: toast.ok ? 'var(--accent)' : 'var(--color-danger)', border: `1px solid ${toast.ok ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--color-danger)40'}` }}>
           {toast.msg}
         </div>
       )}
@@ -1610,15 +1610,15 @@ function BranchSettingsSection() {
           <input type="text" style={inputStyle} {...field('address')} placeholder="г. Алматы, ул. Примерная, 1" />
         </div>
         <div style={{ gridColumn: 'span 2' }}>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 13px', background: settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.06)' : 'transparent', border: `1px solid ${settings.allow_cancel_within_24h ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 13px', background: settings.allow_cancel_within_24h ? 'color-mix(in srgb, var(--color-warning) 6%, transparent)' : 'transparent', border: `1px solid ${settings.allow_cancel_within_24h ? 'color-mix(in srgb, var(--color-warning) 30%, transparent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={settings.allow_cancel_within_24h}
               onChange={e => setSettings(s => ({ ...s, allow_cancel_within_24h: e.target.checked }))}
-              style={{ accentColor: '#f59e0b', width: 14, height: 14, marginTop: 1 }}
+              style={{ accentColor: 'var(--color-warning)', width: 14, height: 14, marginTop: 1 }}
             />
             <div>
-              <div style={{ fontSize: 13, fontWeight: settings.allow_cancel_within_24h ? 600 : 400, color: settings.allow_cancel_within_24h ? '#f59e0b' : 'var(--text)' }}>Разрешить отмену брони менее чем за 24 часа</div>
+              <div style={{ fontSize: 13, fontWeight: settings.allow_cancel_within_24h ? 600 : 400, color: settings.allow_cancel_within_24h ? 'var(--color-warning)' : 'var(--text)' }}>Разрешить отмену брони менее чем за 24 часа</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>Если включено — все роли смогут отменять записи менее чем за 24 часа до сеанса</div>
             </div>
           </label>
@@ -1646,8 +1646,8 @@ interface AuditEntry {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  create: 'var(--accent)', update: '#8b5cf6', delete: '#ef4444',
-  status_change: '#f59e0b', follow_up_reminder: '#3b82f6', deadline_reminder: '#f97316',
+  create: 'var(--accent)', update: '#8b5cf6', delete: 'var(--color-danger)',
+  status_change: 'var(--color-warning)', follow_up_reminder: '#3b82f6', deadline_reminder: '#f97316',
 }
 
 function AuditLogSection() {
@@ -1826,7 +1826,7 @@ function OnlineBookingTab() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Создайте ссылку для онлайн-записи клиентов</div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444' }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: 'var(--color-danger)' }}>{error}</div>}
         <div>
           <label style={labelStyle}>Адрес страницы (slug)</label>
           {slugInputRow(() => void handleCreate(), 'Создать', !slug.trim())}
@@ -1876,7 +1876,7 @@ function OnlineBookingTab() {
       {/* Edit slug */}
       <div>
         <label style={labelStyle}>Изменить адрес страницы</label>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 6 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 6 }}>{error}</div>}
         {slugInputRow(() => void handleSaveSlug(), 'Сохранить', slug === link.slug || !slug.trim())}
       </div>
     </div>
@@ -1905,14 +1905,14 @@ const TRIGGER_LABELS: Record<string, string> = {
 }
 const TRIGGER_ICONS: Record<string, React.ReactNode> = {
   lead_created:          <Zap size={15} color="var(--accent)" />,
-  lead_no_activity:      <Clock size={15} color="#f59e0b" />,
+  lead_no_activity:      <Clock size={15} color="var(--color-warning)" />,
   subscription_expiring: <AlertCircle size={15} color="#f97316" />,
 }
 const AUTO_PRIORITY_LABELS: Record<string, string> = {
   low: 'Низкий', medium: 'Средний', high: 'Высокий', critical: 'Критический',
 }
 const AUTO_PRIORITY_COLORS: Record<string, string> = {
-  low: '#71717A', medium: '#f59e0b', high: '#f97316', critical: '#ef4444',
+  low: '#71717A', medium: 'var(--color-warning)', high: '#f97316', critical: 'var(--color-danger)',
 }
 
 function AutomationTab() {
@@ -2048,7 +2048,7 @@ function AutomationTab() {
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{editRule ? 'Редактировать правило' : 'Новое правило'}</div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
             </div>
-            {formError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{formError}</div>}
+            {formError && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 12 }}>{formError}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label style={labelStyle}>Триггер</label>

@@ -123,12 +123,12 @@ function PromoModal({ onClose, onApply }: PromoModalProps) {
 
         {/* Status */}
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#ef4444', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, fontSize: 13, color: 'var(--color-danger)', marginBottom: 16 }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
         {result && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, fontSize: 13, color: '#10b981', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 20%, transparent)', borderRadius: 8, fontSize: 13, color: 'var(--color-success)', marginBottom: 16 }}>
             <Check size={13} />{result.description}
           </div>
         )}
@@ -143,7 +143,7 @@ function PromoModal({ onClose, onApply }: PromoModalProps) {
           <button
             onClick={handleConfirm}
             disabled={!result}
-            style={{ height: 38, padding: '0 18px', background: result ? '#10b981' : 'var(--bg-card)', border: `1px solid ${result ? '#10b981' : 'var(--border)'}`, borderRadius: 8, color: result ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: result ? 'pointer' : 'not-allowed', opacity: result ? 1 : 0.5 }}>
+            style={{ height: 38, padding: '0 18px', background: result ? 'var(--color-success)' : 'var(--bg-card)', border: `1px solid ${result ? 'var(--color-success)' : 'var(--border)'}`, borderRadius: 8, color: result ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: result ? 'pointer' : 'not-allowed', opacity: result ? 1 : 0.5 }}>
             Подтвердить
           </button>
         </div>
@@ -253,7 +253,7 @@ function CreateClientInline({ defaultName, onCreated, onCancel }: CreateClientIn
   return (
     <div style={{ padding: 13, background: 'var(--bg-card)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', borderRadius: 13, marginTop: 8 }}>
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 13 }}>Новый клиент</div>
-      {error && <div style={{ fontSize: 11, color: '#ef4444', marginBottom: 8 }}>{error}</div>}
+      {error && <div style={{ fontSize: 11, color: 'var(--color-danger)', marginBottom: 8 }}>{error}</div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
         <div>
           <label style={labelSt}>Имя *</label>
@@ -430,7 +430,7 @@ export default function SalePage() {
               <div key={i} style={{ fontSize: 13, color: 'var(--text-secondary)', padding: '3px 0' }}>• {item.name}</div>
             ))}
             {receipt.discount > 0 && (
-              <div style={{ fontSize: 12, color: '#10b981', marginTop: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--color-success)', marginTop: 8 }}>
                 Скидка: −{fmt(receipt.discount)} ₸
               </div>
             )}
@@ -469,7 +469,7 @@ export default function SalePage() {
         </div>
 
         {payError && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 13, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 13, color: 'var(--color-danger)' }}>
             <AlertCircle size={14} />{payError}
           </div>
         )}
@@ -498,7 +498,7 @@ export default function SalePage() {
                 <span>Без скидки:</span>
                 <span>{fmt(subtotal)} ₸</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#10b981', marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--color-success)', marginBottom: 4 }}>
                 <span>Скидка ({appliedPromo?.code}):</span>
                 <span>−{fmt(discount)} ₸</span>
               </div>
@@ -538,7 +538,7 @@ export default function SalePage() {
         </div>
 
         {cartError && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 13, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 13, color: 'var(--color-danger)' }}>
             <AlertCircle size={14} />{cartError}
           </div>
         )}
@@ -589,8 +589,8 @@ export default function SalePage() {
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={3} style={{ padding: '2px 8px', fontSize: 12, color: '#10b981', textAlign: 'right' }}>Скидка ({appliedPromo.code}):</td>
-                      <td style={{ padding: '2px 8px', fontSize: 13, fontWeight: 600, color: '#10b981', textAlign: 'center' }}>−{fmt(discount)} ₸</td>
+                      <td colSpan={3} style={{ padding: '2px 8px', fontSize: 12, color: 'var(--color-success)', textAlign: 'right' }}>Скидка ({appliedPromo.code}):</td>
+                      <td style={{ padding: '2px 8px', fontSize: 13, fontWeight: 600, color: 'var(--color-success)', textAlign: 'center' }}>−{fmt(discount)} ₸</td>
                       <td />
                     </tr>
                     <tr>
@@ -624,13 +624,13 @@ export default function SalePage() {
         <div style={cardSt}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Промокод</div>
           {appliedPromo ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 40, padding: '0 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 40, padding: '0 13px', background: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)', borderRadius: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Check size={14} color="#10b981" />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#10b981', letterSpacing: 0.5 }}>{appliedPromo.code}</span>
-                <span style={{ fontSize: 12, color: '#10b981' }}>· {appliedPromo.description}</span>
+                <Check size={14} color="var(--color-success)" />
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-success)', letterSpacing: 0.5 }}>{appliedPromo.code}</span>
+                <span style={{ fontSize: 12, color: 'var(--color-success)' }}>· {appliedPromo.description}</span>
               </div>
-              <button onClick={() => setAppliedPromo(null)} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', padding: 0 }}><X size={13} /></button>
+              <button onClick={() => setAppliedPromo(null)} style={{ background: 'none', border: 'none', color: 'var(--color-success)', cursor: 'pointer', display: 'flex', padding: 0 }}><X size={13} /></button>
             </div>
           ) : (
             <button
@@ -710,12 +710,12 @@ export default function SalePage() {
                             </span>
                           )}
                           {tpl.slot_4_type && tpl.slot_4_sessions_total && (
-                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(245,158,11,0.10)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}>
+                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 20%, transparent)' }}>
                               {DEVICE_LABELS[tpl.slot_4_type]} · {tpl.slot_4_sessions_total} сеансов
                             </span>
                           )}
                           {tpl.is_trial && (
-                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontWeight: 600 }}>ТЕСТ</span>
+                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)', fontWeight: 600 }}>ТЕСТ</span>
                           )}
                         </div>
                       </div>
@@ -770,7 +770,7 @@ export default function SalePage() {
                 {nutrition.map(item => {
                   const qty = inCart(item.id, 'warehouse')
                   return (
-                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'rgba(16,185,129,0.06)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'color-mix(in srgb, var(--color-success) 30%, transparent)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>На складе: {item.quantity} {item.unit ?? 'шт.'}</div>
@@ -779,7 +779,7 @@ export default function SalePage() {
                         {item.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{fmt(item.price)} ₸</span>}
                         <button
                           onClick={() => addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? '#10b981' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? '#10b981' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? 'var(--color-success)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'var(--color-success)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
                           <Plus size={12} />{qty > 0 ? `В корзине (${qty})` : 'В корзину'}
                         </button>
                       </div>

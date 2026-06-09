@@ -66,7 +66,7 @@ async function getLocation(): Promise<string> {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  scheduled: '#10b981',
+  scheduled: 'var(--color-success)',
   active:    'var(--accent)',
   completed: '#71717A',
 }
@@ -151,7 +151,7 @@ function ShiftModal({ employee, date, existing, onClose, onSaved, onDeleted }: S
 
   const dateLabel   = new Date(date + 'T00:00:00').toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
   const initials    = employee.full_name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-  const colors      = ['var(--accent)', '#263CD9', '#8b5cf6', '#f59e0b', '#10b981']
+  const colors      = ['var(--accent)', '#263CD9', '#8b5cf6', 'var(--color-warning)', 'var(--color-success)']
   const avatarColor = colors[employee.full_name.charCodeAt(0) % colors.length]
 
   return (
@@ -174,7 +174,7 @@ function ShiftModal({ employee, date, existing, onClose, onSaved, onDeleted }: S
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: 'var(--color-danger)' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
@@ -199,7 +199,7 @@ function ShiftModal({ employee, date, existing, onClose, onSaved, onDeleted }: S
         <div style={{ display: 'flex', gap: 8, paddingTop: 21, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
           {existing && onDeleted && (
             <button onClick={() => void handleDelete()} disabled={deleting}
-              style={{ height: 36, padding: '0 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.6 : 1 }}>
+              style={{ height: 36, padding: '0 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 12, cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.6 : 1 }}>
               {deleting ? '...' : 'Очистить'}
             </button>
           )}
@@ -382,20 +382,20 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
 
         {/* Диалог подтверждения очистки */}
         {confirmClear && selectedEmp && (
-          <div style={{ padding: 13, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, marginBottom: 13 }}>
+          <div style={{ padding: 13, background: 'color-mix(in srgb, var(--color-danger) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 10, marginBottom: 13 }}>
             <div style={{ fontSize: 13, color: 'var(--text)', marginBottom: 10 }}>
               Удалить все смены <strong>{selectedEmp.full_name}</strong> с <strong>{dateFrom}</strong> по <strong>{dateTo}</strong>?
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => void handleClearShifts()} disabled={clearing}
-                style={{ height: 32, padding: '0 13px', background: '#ef4444', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: clearing ? 'not-allowed' : 'pointer', opacity: clearing ? 0.6 : 1 }}>
+                style={{ height: 32, padding: '0 13px', background: 'var(--color-danger)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: clearing ? 'not-allowed' : 'pointer', opacity: clearing ? 0.6 : 1 }}>
                 {clearing ? 'Удаление...' : 'Удалить'}
               </button>
               <button onClick={() => setConfirmClear(false)} style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>Отмена</button>
@@ -415,7 +415,7 @@ function BulkAssignModal({ employees, onClose, onDone }: BulkAssignModalProps) {
             </select>
             {empSelected && dateFrom && dateTo && (
               <button onClick={() => setConfirmClear(true)}
-                style={{ height: 36, padding: '0 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                style={{ height: 36, padding: '0 10px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 12, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 Очистить смены
               </button>
             )}
@@ -687,12 +687,12 @@ export default function ScheduleWorkPage() {
       </div>
 
       {notification && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#10b981' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-success)' }}>
           <CheckCircle size={13} />{notification}
         </div>
       )}
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}
@@ -738,12 +738,12 @@ export default function ScheduleWorkPage() {
                       </div>
                     ) : isActive ? (
                       <button onClick={() => void handleCheckout(shift)} disabled={isCoLoad}
-                        style={{ height: 28, padding: '0 11px', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 11, fontWeight: 600, cursor: isCoLoad ? 'not-allowed' : 'pointer', opacity: isCoLoad ? 0.6 : 1 }}>
+                        style={{ height: 28, padding: '0 11px', background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 11, fontWeight: 600, cursor: isCoLoad ? 'not-allowed' : 'pointer', opacity: isCoLoad ? 0.6 : 1 }}>
                         {isCoLoad ? '...' : 'Завершить'}
                       </button>
                     ) : (
                       <button onClick={() => void handleCheckin(shift)} disabled={isLocLoad}
-                        style={{ height: 28, padding: '0 11px', background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, color: '#10b981', fontSize: 11, fontWeight: 600, cursor: isLocLoad ? 'not-allowed' : 'pointer', opacity: isLocLoad ? 0.6 : 1 }}>
+                        style={{ height: 28, padding: '0 11px', background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, color: 'var(--color-success)', fontSize: 11, fontWeight: 600, cursor: isLocLoad ? 'not-allowed' : 'pointer', opacity: isLocLoad ? 0.6 : 1 }}>
                         {isLocLoad ? 'Геолок...' : 'Отметиться'}
                       </button>
                     )}
@@ -846,18 +846,18 @@ export default function ScheduleWorkPage() {
                           onMouseLeave={e => { (e.currentTarget as HTMLTableCellElement).style.background = isToday ? 'color-mix(in srgb, var(--accent) 5%, transparent)' : wknd ? 'rgba(255,255,255,0.01)' : 'transparent' }}
                         >
                           {dayOff ? (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, width: 42, height: 36, fontSize: 9, fontWeight: 700, color: '#EF4444', letterSpacing: 0.4 }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 6, width: 42, height: 36, fontSize: 9, fontWeight: 700, color: 'var(--color-danger)', letterSpacing: 0.4 }}>
                               ВЫХ
                             </div>
                           ) : shift ? (
                             <div className={isActive ? 'shift-active-pulse' : undefined} style={{
                               display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                              background: isActive ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'rgba(16,185,129,0.12)',
-                              border: `1px solid ${isActive ? 'color-mix(in srgb, var(--accent) 45%, transparent)' : 'rgba(16,185,129,0.3)'}`,
+                              background: isActive ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--color-success-muted)',
+                              border: `1px solid ${isActive ? 'color-mix(in srgb, var(--accent) 45%, transparent)' : 'color-mix(in srgb, var(--color-success) 30%, transparent)'}`,
                               borderRadius: 6, width: 42, height: 36,
                             }}>
-                              <div style={{ fontSize: 9, fontWeight: 700, color: isActive ? 'var(--accent)' : '#10b981', lineHeight: 1.3 }}>{ft(shift.time_start)}</div>
-                              <div style={{ fontSize: 9, color: isActive ? 'color-mix(in srgb, var(--accent) 65%, transparent)' : 'rgba(16,185,129,0.65)', lineHeight: 1.3 }}>{ft(shift.time_end)}</div>
+                              <div style={{ fontSize: 9, fontWeight: 700, color: isActive ? 'var(--accent)' : 'var(--color-success)', lineHeight: 1.3 }}>{ft(shift.time_start)}</div>
+                              <div style={{ fontSize: 9, color: isActive ? 'color-mix(in srgb, var(--accent) 65%, transparent)' : 'color-mix(in srgb, var(--color-success) 65%, transparent)', lineHeight: 1.3 }}>{ft(shift.time_end)}</div>
                             </div>
                           ) : canManage ? (
                             <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 42, height: 36 }}>
@@ -878,7 +878,7 @@ export default function ScheduleWorkPage() {
       {/* Legend */}
       <div style={{ display: 'flex', gap: 13, marginTop: 13, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 26, height: 14, borderRadius: 4, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)' }} />
+          <div style={{ width: 26, height: 14, borderRadius: 4, background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }} />
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Смена</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -886,7 +886,7 @@ export default function ScheduleWorkPage() {
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>На смене</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 26, height: 14, borderRadius: 4, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }} />
+          <div style={{ width: 26, height: 14, borderRadius: 4, background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)' }} />
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Выходной</span>
         </div>
       </div>

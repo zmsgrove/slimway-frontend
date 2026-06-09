@@ -210,7 +210,7 @@ export default function LoginPage() {
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#FFFFFF', marginBottom: 21 }}>Войти в систему</div>
 
                 {error && (
-                  <div style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 13, padding: '10px 13px', marginBottom: 13 }}>
+                  <div style={{ background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 13, padding: '10px 13px', marginBottom: 13 }}>
                     {error}
                   </div>
                 )}
@@ -246,7 +246,7 @@ export default function LoginPage() {
                 </div>
 
                 {mfaError && (
-                  <div style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 13, padding: '10px 13px', marginBottom: 13 }}>
+                  <div style={{ background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 13, padding: '10px 13px', marginBottom: 13 }}>
                     {mfaError}
                   </div>
                 )}

@@ -77,7 +77,7 @@ async function fetchWeather(city: string): Promise<WeatherCache | null> {
 type ServerStatus = 'ok' | 'slow' | 'error' | 'unknown'
 
 function ServerStatusDot({ status, latency }: { status: ServerStatus; latency: number | null }) {
-  const color = status === 'ok' ? '#10b981' : status === 'slow' ? '#f59e0b' : status === 'error' ? '#ef4444' : 'var(--text-muted)'
+  const color = status === 'ok' ? 'var(--color-success)' : status === 'slow' ? 'var(--color-warning)' : status === 'error' ? 'var(--color-danger)' : 'var(--text-muted)'
   const label = status === 'ok'
     ? `Сервер работает${latency !== null ? ` (${latency}ms)` : ''}`
     : status === 'slow'
@@ -341,7 +341,7 @@ function NavButton({
           {badge !== undefined && badge > 0 && (
             <span style={{
               minWidth: 17, height: 17, borderRadius: 9,
-              background: '#ef4444', color: '#fff',
+              background: 'var(--color-danger)', color: '#fff',
               fontSize: 10, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '0 4px', flexShrink: 0, lineHeight: 1,
@@ -355,7 +355,7 @@ function NavButton({
         <span style={{
           position: 'absolute', top: 4, right: 8,
           width: 6, height: 6, borderRadius: '50%',
-          background: '#ef4444', flexShrink: 0,
+          background: 'var(--color-danger)', flexShrink: 0,
         }} />
       )}
     </NavLink>
@@ -907,7 +907,7 @@ function AppLayoutInner() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
-                  style={{ gap: 8, color: '#ef4444' }}
+                  style={{ gap: 8, color: 'var(--color-danger)' }}
                 >
                   <LogOut size={13} strokeWidth={1.75} />
                   Выйти
@@ -921,12 +921,12 @@ function AppLayoutInner() {
         {showMfaBanner && (
           <div style={{
             position: 'fixed', top: 56, left: sidebarWidth, right: 0, zIndex: 9,
-            background: 'color-mix(in srgb, #f59e0b 8%, var(--bg-sidebar) 92%)',
-            borderBottom: '1px solid rgba(245,158,11,0.25)',
+            background: 'color-mix(in srgb, var(--color-warning) 8%, var(--bg-sidebar) 92%)',
+            borderBottom: '1px solid color-mix(in srgb, var(--color-warning) 25%, transparent)',
             padding: '9px 20px', display: 'flex', alignItems: 'center', gap: 10,
             transition: 'left 200ms var(--ease-out)',
           }}>
-            <Shield size={15} color="#f59e0b" strokeWidth={1.75} style={{ flexShrink: 0 }} />
+            <Shield size={15} style={{ color: 'var(--color-warning)', flexShrink: 0 }} strokeWidth={1.75} />
             <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>
               Рекомендуем включить двухфакторную аутентификацию для защиты аккаунта.
             </span>
@@ -934,8 +934,8 @@ function AppLayoutInner() {
               onClick={() => { navigate('/settings#security') }}
               style={{
                 padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.35)',
-                color: '#f59e0b', cursor: 'pointer', flexShrink: 0,
+                background: 'var(--color-warning-muted)', border: '1px solid color-mix(in srgb, var(--color-warning) 35%, transparent)',
+                color: 'var(--color-warning)', cursor: 'pointer', flexShrink: 0,
                 transition: 'background 150ms ease-out',
               }}
             >
@@ -959,7 +959,7 @@ function AppLayoutInner() {
             style={{
               position: 'fixed', bottom: 20, right: 20, zIndex: 9999,
               background: 'var(--bg-card)',
-              border: '1px solid rgba(239,68,68,0.3)',
+              border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)',
               borderRadius: 10, padding: '10px 14px', fontSize: 12,
               color: 'var(--text)',
               display: 'flex', alignItems: 'center', gap: 8,

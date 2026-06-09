@@ -88,7 +88,7 @@ function SalaryEditModal({ employee, onSave, onClose }: SalaryEditModalProps) {
             </div>
           )}
 
-          {error && <div style={{ fontSize: 12, color: '#ef4444' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: 'var(--color-danger)' }}>{error}</div>}
         </div>
 
         <div style={{ display: 'flex', gap: 13, marginTop: 21 }}>
@@ -214,7 +214,7 @@ export default function PayrollPage() {
                       {emp.kpi?.tasks_done ?? '—'}
                     </div>
                   </td>
-                  <td style={{ padding: '13px 14px', fontSize: 13, fontWeight: 700, color: total > 0 ? '#10b981' : 'var(--text-muted)' }}>
+                  <td style={{ padding: '13px 14px', fontSize: 13, fontWeight: 700, color: total > 0 ? 'var(--color-success)' : 'var(--text-muted)' }}>
                     {total > 0 ? `${total.toLocaleString('ru-RU')} ₸` : '—'}
                   </td>
                   <td style={{ padding: '13px 14px' }}>

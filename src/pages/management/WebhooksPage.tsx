@@ -85,7 +85,7 @@ function WebhookFormModal({
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--color-danger)' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
@@ -166,9 +166,9 @@ function LogsModal({ endpoint, onClose }: { endpoint: WebhookEndpoint; onClose: 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {logs.map(log => (
                 <div key={log.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 13px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: log.delivered ? '#10b981' : '#ef4444', flexShrink: 0 }} />
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: log.delivered ? 'var(--color-success)' : 'var(--color-danger)', flexShrink: 0 }} />
                   <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>{log.event_type}</span>
-                  <span style={{ fontSize: 11, color: log.response_status && log.response_status < 300 ? '#10b981' : '#ef4444' }}>
+                  <span style={{ fontSize: 11, color: log.response_status && log.response_status < 300 ? 'var(--color-success)' : 'var(--color-danger)' }}>
                     {log.response_status ?? '—'}
                   </span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>попытка {log.attempt}</span>
@@ -229,7 +229,7 @@ function WebhookCard({
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>{webhook.name}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <code style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280 }}>{webhook.url}</code>
-              <button onClick={handleCopyUrl} title="Скопировать URL" style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
+              <button onClick={handleCopyUrl} title="Скопировать URL" style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--color-success)' : 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
                 {copied ? <CheckCircle2 size={12} /> : <Copy size={12} />}
               </button>
             </div>
@@ -237,7 +237,7 @@ function WebhookCard({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: webhook.is_active ? 'rgba(16,185,129,0.12)' : 'rgba(113,113,122,0.12)', color: webhook.is_active ? '#10b981' : '#71717a', border: `1px solid ${webhook.is_active ? 'rgba(16,185,129,0.25)' : 'rgba(113,113,122,0.25)'}` }}>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: webhook.is_active ? 'var(--color-success-muted)' : 'rgba(113,113,122,0.12)', color: webhook.is_active ? 'var(--color-success)' : '#71717a', border: `1px solid ${webhook.is_active ? 'color-mix(in srgb, var(--color-success) 25%, transparent)' : 'rgba(113,113,122,0.25)'}` }}>
             {webhook.is_active ? 'Активен' : 'Отключён'}
           </span>
           {canManage && (
@@ -251,10 +251,10 @@ function WebhookCard({
               <button onClick={onEdit} title="Редактировать" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <Edit2 size={12} />
               </button>
-              <button onClick={onToggle} title={webhook.is_active ? 'Отключить' : 'Включить'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: `1px solid ${webhook.is_active ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}`, background: webhook.is_active ? 'rgba(245,158,11,0.08)' : 'rgba(16,185,129,0.08)', color: webhook.is_active ? '#f59e0b' : '#10b981', cursor: 'pointer' }}>
+              <button onClick={onToggle} title={webhook.is_active ? 'Отключить' : 'Включить'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: `1px solid ${webhook.is_active ? 'color-mix(in srgb, var(--color-warning) 30%, transparent)' : 'color-mix(in srgb, var(--color-success) 30%, transparent)'}`, background: webhook.is_active ? 'color-mix(in srgb, var(--color-warning) 8%, transparent)' : 'color-mix(in srgb, var(--color-success) 8%, transparent)', color: webhook.is_active ? 'var(--color-warning)' : 'var(--color-success)', cursor: 'pointer' }}>
                 <Power size={12} />
               </button>
-              <button onClick={onDelete} title="Удалить" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', cursor: 'pointer' }}>
+              <button onClick={onDelete} title="Удалить" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', color: 'var(--color-danger)', cursor: 'pointer' }}>
                 <Trash2 size={12} />
               </button>
             </>
@@ -359,7 +359,7 @@ export default function WebhooksPage() {
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}

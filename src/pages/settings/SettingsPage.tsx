@@ -375,7 +375,7 @@ function SecuritySection() {
                 </div>
               </div>
               {status?.enabled ? (
-                <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'var(--color-success-muted)', color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }}>
                   Активна ✅
                 </span>
               ) : (
@@ -386,7 +386,7 @@ function SecuritySection() {
             </div>
 
             {enrollError && (
-              <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{enrollError}</div>
+              <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 10 }}>{enrollError}</div>
             )}
 
             {!status?.enabled ? (
@@ -401,7 +401,7 @@ function SecuritySection() {
             ) : (
               <button
                 onClick={() => setShowUnenroll(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 8, color: '#ef4444', fontSize: 13, cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'transparent', border: '1px solid color-mix(in srgb, var(--color-danger) 40%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 13, cursor: 'pointer' }}
               >
                 Отключить 2FA
               </button>
@@ -462,7 +462,7 @@ function SecuritySection() {
                       <code style={{ flex: 1, fontSize: 12, color: 'var(--text)', letterSpacing: '0.1em', wordBreak: 'break-all' }}>
                         {enrollData.secret}
                       </code>
-                      <button onClick={copySecret} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', background: copied ? 'rgba(16,185,129,0.1)' : 'transparent', border: `1px solid ${copied ? 'rgba(16,185,129,0.4)' : 'var(--border)'}`, borderRadius: 6, color: copied ? '#10b981' : 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}>
+                      <button onClick={copySecret} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', background: copied ? 'var(--color-success-muted)' : 'transparent', border: `1px solid ${copied ? 'color-mix(in srgb, var(--color-success) 40%, transparent)' : 'var(--border)'}`, borderRadius: 6, color: copied ? 'var(--color-success)' : 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}>
                         <Copy size={11} />{copied ? 'Скопировано' : 'Копировать'}
                       </button>
                     </div>
@@ -481,7 +481,7 @@ function SecuritySection() {
                 </div>
 
                 {verifyError && (
-                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 12, padding: '8px 13px', marginBottom: 13 }}>
+                  <div style={{ background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 12, padding: '8px 13px', marginBottom: 13 }}>
                     {verifyError}
                   </div>
                 )}
@@ -533,11 +533,11 @@ function SecuritySection() {
               Двухфакторная аутентификация будет отключена. Это снизит безопасность аккаунта.
             </div>
             {unenrollError && (
-              <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{unenrollError}</div>
+              <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{unenrollError}</div>
             )}
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => void handleUnenroll()} disabled={unenrollLoading}
-                style={{ flex: 1, height: 40, background: '#ef4444', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: unenrollLoading ? 'not-allowed' : 'pointer', opacity: unenrollLoading ? 0.6 : 1 }}>
+                style={{ flex: 1, height: 40, background: 'var(--color-danger)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: unenrollLoading ? 'not-allowed' : 'pointer', opacity: unenrollLoading ? 0.6 : 1 }}>
                 {unenrollLoading ? 'Отключение...' : 'Отключить'}
               </button>
               <button onClick={() => setShowUnenroll(false)}

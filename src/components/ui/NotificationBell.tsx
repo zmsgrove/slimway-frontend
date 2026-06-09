@@ -45,13 +45,13 @@ const GROUP_LABEL: Record<string, string> = {
 interface TypeMeta { Icon: React.ElementType; color: string }
 
 function getTypeMeta(type: string): TypeMeta {
-  if (type.startsWith('lead'))         return { Icon: Target,      color: '#f59e0b' }
+  if (type.startsWith('lead'))         return { Icon: Target,      color: 'var(--color-warning)' }
   if (type.startsWith('task'))         return { Icon: CheckSquare,  color: '#8b5cf6' }
-  if (type.startsWith('booking'))      return { Icon: Calendar,     color: '#10b981' }
+  if (type.startsWith('booking'))      return { Icon: Calendar,     color: 'var(--color-success)' }
   if (type.startsWith('subscription')) return { Icon: CreditCard,   color: '#263CD9' }
   if (type === 'client.created')       return { Icon: Users,        color: 'var(--accent)' }
   if (type === 'shift.tomorrow')       return { Icon: Clock,        color: '#f97316' }
-  if (type === 'payment.received')     return { Icon: DollarSign,   color: '#10b981' }
+  if (type === 'payment.received')     return { Icon: DollarSign,   color: 'var(--color-success)' }
   if (type === 'system.update')        return { Icon: Info,         color: '#3b82f6' }
   return { Icon: AlertCircle, color: 'var(--text-muted)' }
 }
@@ -400,7 +400,7 @@ export function NotificationBell({ onCountChange }: { onCountChange?: (n: number
           <span style={{
             position: 'absolute', top: -4, right: -4,
             minWidth: 16, height: 16, borderRadius: 8,
-            background: '#ef4444', color: '#fff',
+            background: 'var(--color-danger)', color: '#fff',
             fontSize: 9, fontWeight: 700, lineHeight: 1,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '0 3px',

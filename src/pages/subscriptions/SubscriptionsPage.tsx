@@ -29,10 +29,10 @@ function getCountdownColor(dateEnd: string): string {
   const diffMs = end.getTime() - now.getTime()
   if (diffMs < 0) return '#71717A'
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  if (days >= 14) return '#10b981'
-  if (days >= 7)  return '#f59e0b'
+  if (days >= 14) return 'var(--color-success)'
+  if (days >= 7)  return 'var(--color-warning)'
   if (days >= 3)  return '#f97316'
-  return '#ef4444'
+  return 'var(--color-danger)'
 }
 
 // ─── constants ─────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ const DEVICE_TYPES: { value: DeviceType; label: string; color: string }[] = [
   { value: 'vacuactiv',  label: 'VacuActiv',  color: 'var(--accent)' },
   { value: 'rollshape',  label: 'RollShape',  color: '#263CD9' },
   { value: 'infrastep',  label: 'InfraStep',  color: '#8b5cf6' },
-  { value: 'infrashape', label: 'InfraShape', color: '#f59e0b' },
+  { value: 'infrashape', label: 'InfraShape', color: 'var(--color-warning)' },
 ]
 
 function typeColor(t: DeviceType) { return DEVICE_TYPES.find(d => d.value === t)?.color ?? '#71717A' }
@@ -279,7 +279,7 @@ export default function SubscriptionsPage() {
       {tab === 'branch' && (
         <>
           {branchError && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
               <AlertCircle size={13} />{branchError}
             </div>
           )}
@@ -318,7 +318,7 @@ export default function SubscriptionsPage() {
                       {tpl.price != null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸</span>}
                       {isDeveloperOrOwner && (
                         <button onClick={e => { e.stopPropagation(); void handleDisconnect(tpl.id) }}
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
                           title="Убрать из филиала">
                           <Unlink size={13} />
                         </button>
@@ -377,7 +377,7 @@ export default function SubscriptionsPage() {
             {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={13} /></button>}
           </div>
           {soldError && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
               <AlertCircle size={13} />{soldError}
             </div>
           )}
@@ -392,7 +392,7 @@ export default function SubscriptionsPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {filteredSold.map(sub => {
-                const statusColors: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A', cancelled: '#ef4444' }
+                const statusColors: Record<string, string> = { active: 'var(--color-success)', frozen: 'var(--color-warning)', expired: '#71717A', cancelled: 'var(--color-danger)' }
                 const statusLabels: Record<string, string> = { active: 'Активен', frozen: 'Заморожен', expired: 'Истёк', cancelled: 'Отменён' }
                 return (
                   <div key={sub.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 21 }}>
@@ -420,7 +420,7 @@ export default function SubscriptionsPage() {
                           {sub.status === 'active' && (() => {
                             const countdown = getTimeUntilEnd(sub.date_end)
                             const cdColor = getCountdownColor(sub.date_end)
-                            const isUrgent = cdColor === '#ef4444' && countdown !== 'Истёк'
+                            const isUrgent = cdColor === 'var(--color-danger)' && countdown !== 'Истёк'
                             return (
                               <span style={{
                                 fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,

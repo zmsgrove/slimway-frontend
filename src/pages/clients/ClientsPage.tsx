@@ -20,9 +20,9 @@ const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
 }
 const DEVICE_TYPE_COLORS: Record<string, string> = {
-  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
+  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: 'var(--color-warning)',
 }
-const SUB_STATUS_COLOR: Record<string, string> = { active: '#10b981', frozen: '#f59e0b', expired: '#71717A', cancelled: '#ef4444' }
+const SUB_STATUS_COLOR: Record<string, string> = { active: 'var(--color-success)', frozen: 'var(--color-warning)', expired: '#71717A', cancelled: 'var(--color-danger)' }
 const SUB_STATUS_LABEL: Record<string, string> = { active: 'Активный', frozen: 'Заморожен', expired: 'Истёк', cancelled: 'Отменён' }
 
 const CLIENT_SOURCES = [
@@ -43,11 +43,11 @@ const SOURCE_LABELS: Record<string, string> = {
 const PRESET_TAGS = ['VIP', 'Пробный', 'Реферал', 'Корпоративный', 'Онлайн']
 
 const TAG_COLORS: Record<string, string> = {
-  'VIP': '#f59e0b', 'Пробный': '#3b82f6', 'Реферал': '#10b981',
+  'VIP': 'var(--color-warning)', 'Пробный': '#3b82f6', 'Реферал': 'var(--color-success)',
   'Корпоративный': '#8b5cf6', 'Онлайн': '#06b6d4',
 }
 
-const AVATAR_COLORS = ['var(--accent)', '#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#f97316', '#ec4899', '#06b6d4']
+const AVATAR_COLORS = ['var(--accent)', 'var(--color-info)', '#8b5cf6', 'var(--color-warning)', 'var(--color-success)', '#f97316', '#ec4899', '#06b6d4']
 function avatarColor(name: string): string {
   return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
 }
@@ -87,10 +87,10 @@ function getCountdownColor(dateEnd: string): string {
   const diffMs = end.getTime() - now.getTime()
   if (diffMs < 0) return '#71717A'
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  if (days >= 14) return '#10b981'
-  if (days >= 7)  return '#f59e0b'
+  if (days >= 14) return 'var(--color-success)'
+  if (days >= 7)  return 'var(--color-warning)'
   if (days >= 3)  return '#f97316'
-  return '#ef4444'
+  return 'var(--color-danger)'
 }
 
 function isTodayBirthday(birthDate: string | null): boolean {
@@ -182,7 +182,7 @@ function ClientModal({ initial, onClose, onSave }: ClientModalProps) {
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--color-danger)' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
@@ -459,11 +459,11 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
             <div style={{
               width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-              background: isFrozen ? 'color-mix(in srgb, #6366f1 12%, transparent)' : 'color-mix(in srgb, var(--accent) 12%, transparent)',
-              border: `2px solid ${isFrozen ? 'color-mix(in srgb, #6366f1 30%, transparent)' : 'color-mix(in srgb, var(--accent) 30%, transparent)'}`,
+              background: isFrozen ? 'color-mix(in srgb, var(--color-info) 12%, transparent)' : 'color-mix(in srgb, var(--accent) 12%, transparent)',
+              border: `2px solid ${isFrozen ? 'color-mix(in srgb, var(--color-info) 30%, transparent)' : 'color-mix(in srgb, var(--accent) 30%, transparent)'}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 18, fontWeight: 700,
-              color: isFrozen ? '#6366f1' : 'var(--accent)',
+              color: isFrozen ? 'var(--color-info)' : 'var(--accent)',
             }}>
               {isFrozen ? <Snowflake size={20} /> : initials}
             </div>
@@ -471,7 +471,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
                 {client.full_name}
                 {isFrozen && (
-                  <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'color-mix(in srgb, #6366f1 10%, transparent)', border: '1px solid color-mix(in srgb, #6366f1 25%, transparent)', color: '#6366f1' }}>
+                  <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'color-mix(in srgb, var(--color-info) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--color-info) 25%, transparent)', color: 'var(--color-info)' }}>
                     Заморожен
                   </span>
                 )}
@@ -520,7 +520,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
               {[
                 { val: totalVisits, label: 'Визитов', color: 'var(--accent)' },
-                { val: activeSubs.length, label: 'Активных', color: '#10b981' },
+                { val: activeSubs.length, label: 'Активных', color: 'var(--color-success)' },
                 { val: lastVisit ? new Date(lastVisit + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : '—', label: 'Посл. визит', color: 'var(--text)' },
                 { val: totalSpent > 0 ? totalSpent.toLocaleString('ru-RU') : '—', label: 'Потрачено ₸', color: 'var(--text)' },
               ].map((s, i) => (
@@ -535,9 +535,9 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               const countdown = getTimeUntilEnd(activeSubEnd)
               const cdColor = getCountdownColor(activeSubEnd)
               const isExpired = countdown === 'Истёк'
-              const isUrgent = !isExpired && cdColor === '#ef4444'
+              const isUrgent = !isExpired && cdColor === 'var(--color-danger)'
               return (
-                <div style={{ padding: '8px 12px', background: 'color-mix(in srgb, #10b981 6%, transparent)', border: '1px solid color-mix(in srgb, #10b981 20%, transparent)', borderRadius: 8, fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ padding: '8px 12px', background: 'color-mix(in srgb, var(--color-success) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 20%, transparent)', borderRadius: 8, fontSize: 12, color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <Clock size={12} />
                   Активный абонемент до {new Date(activeSubEnd + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                   <span style={{
@@ -616,13 +616,13 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               </button>
               {canManage && !isFrozen && (
                 <button onClick={() => setShowFreezeClient(true)}
-                  style={{ height: 34, padding: '0 12px', background: 'color-mix(in srgb, #6366f1 8%, transparent)', border: '1px solid color-mix(in srgb, #6366f1 25%, transparent)', borderRadius: 8, color: '#6366f1', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  style={{ height: 34, padding: '0 12px', background: 'color-mix(in srgb, var(--color-info) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-info) 25%, transparent)', borderRadius: 8, color: 'var(--color-info)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Snowflake size={13} />Заморозить
                 </button>
               )}
               {canManage && isFrozen && (
                 <button onClick={async () => { await clientsApi.unfreeze(client.id); await loadDetail() }}
-                  style={{ height: 34, padding: '0 12px', background: 'color-mix(in srgb, #10b981 8%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', borderRadius: 8, color: '#10b981', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  style={{ height: 34, padding: '0 12px', background: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, color: 'var(--color-success)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <TrendingUp size={13} />Разморозить
                 </button>
               )}
@@ -648,7 +648,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                     const deviceLabel = b.slot?.device ? DEVICE_TYPE_LABELS[b.slot.device.type] ?? b.slot.device.type : null
                     const timeLabel   = b.slot ? `${b.slot.time_start.slice(0, 5)}–${b.slot.time_end.slice(0, 5)}` : null
                     const attended = b.attended
-                    const statusColor = attended ? '#10b981' : attended === false ? '#ef4444' : '#71717A'
+                    const statusColor = attended ? 'var(--color-success)' : attended === false ? 'var(--color-danger)' : '#71717A'
                     return (
                       <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
                         <div style={{ width: 28, height: 28, borderRadius: '50%', background: `color-mix(in srgb, ${statusColor} 10%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -775,7 +775,7 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
               {clientToken && (
                 <>
                   <button onClick={handleCopy}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 7, color: copied ? '#10b981' : 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 7, color: copied ? 'var(--color-success)' : 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>
                     <Copy size={11} />{copied ? 'Скопировано!' : 'Копировать'}
                   </button>
                   <button onClick={() => setShowQR(v => !v)}
@@ -895,7 +895,7 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
             </button>
           )}
           {onDelete && sub.status !== 'cancelled' && (
-            <button onClick={onDelete} title="Отменить абонемент" className="icon-btn" style={{ width: 22, height: 22, color: '#ef4444' }}>
+            <button onClick={onDelete} title="Отменить абонемент" className="icon-btn" style={{ width: 22, height: 22, color: 'var(--color-danger)' }}>
               <Trash2 size={11} />
             </button>
           )}
@@ -927,7 +927,7 @@ function SubCard({ sub, onDelete, onFreeze, onUnfreeze, onShowRenewals }: SubCar
             {sub.status === 'active' && (() => {
               const countdown = getTimeUntilEnd(sub.date_end)
               const cdColor = getCountdownColor(sub.date_end)
-              const isUrgent = cdColor === '#ef4444' && countdown !== 'Истёк'
+              const isUrgent = cdColor === 'var(--color-danger)' && countdown !== 'Истёк'
               return (
                 <span style={{
                   fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
@@ -976,7 +976,7 @@ function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: (
           <button onClick={onClose} className="icon-btn"><X size={15} /></button>
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>{sub.name}</div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', borderRadius: 8 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', borderRadius: 8 }}>{error}</div>}
         <div style={{ marginBottom: 20 }}>
           <label style={labelStyle}>Заморозить до (макс. 30 дней)</label>
           <input type="date" style={inputStyle}
@@ -988,7 +988,7 @@ function FreezeModal({ sub, onClose, onFrozen }: { sub: Subscription; onClose: (
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => void handle()} disabled={saving}
-            style={{ flex: 1, height: 36, background: '#f59e0b', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, transition: 'opacity 150ms' }}>
+            style={{ flex: 1, height: 36, background: 'var(--color-warning)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, transition: 'opacity 150ms' }}>
             {saving ? 'Заморозка...' : 'Заморозить'}
           </button>
           <button onClick={onClose} className="btn btn-secondary">Отмена</button>
@@ -1025,9 +1025,9 @@ function CancelSubModal({ subId, onClose, onCancelled }: { subId: string; onClos
           {CANCELLATION_REASONS.map(r => (
             <button key={r.value} onClick={() => setReason(r.value)} style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
-              background: reason === r.value ? 'color-mix(in srgb, #ef4444 8%, transparent)' : 'transparent',
-              border: `1px solid ${reason === r.value ? 'color-mix(in srgb, #ef4444 35%, transparent)' : 'var(--border)'}`,
-              borderRadius: 8, color: reason === r.value ? '#ef4444' : 'var(--text-secondary)',
+              background: reason === r.value ? 'color-mix(in srgb, var(--color-danger) 8%, transparent)' : 'transparent',
+              border: `1px solid ${reason === r.value ? 'color-mix(in srgb, var(--color-danger) 35%, transparent)' : 'var(--border)'}`,
+              borderRadius: 8, color: reason === r.value ? 'var(--color-danger)' : 'var(--text-secondary)',
               fontSize: 13, cursor: 'pointer', textAlign: 'left',
               transition: 'background 150ms ease-out, border-color 150ms ease-out',
             }}>
@@ -1038,7 +1038,7 @@ function CancelSubModal({ subId, onClose, onCancelled }: { subId: string; onClos
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => void handle()} disabled={saving}
-            style={{ flex: 1, height: 36, background: 'color-mix(in srgb, #ef4444 12%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 30%, transparent)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            style={{ flex: 1, height: 36, background: 'color-mix(in srgb, var(--color-danger) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
             {saving ? 'Отмена...' : 'Отменить абонемент'}
           </button>
           <button onClick={onClose} className="btn btn-secondary">Закрыть</button>
@@ -1120,7 +1120,7 @@ function FreezeClientModal({ client, onClose, onFrozen }: { client: Client; onCl
           <button onClick={onClose} className="icon-btn"><X size={15} /></button>
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>{client.full_name}</div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', borderRadius: 8 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', borderRadius: 8 }}>{error}</div>}
         <div style={{ marginBottom: 20 }}>
           <label style={labelStyle}>Заморозить до (макс. 90 дней)</label>
           <input type="date" style={inputStyle}
@@ -1132,7 +1132,7 @@ function FreezeClientModal({ client, onClose, onFrozen }: { client: Client; onCl
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => void handle()} disabled={saving}
-            style={{ flex: 1, height: 36, background: 'color-mix(in srgb, #6366f1 12%, transparent)', border: '1px solid color-mix(in srgb, #6366f1 30%, transparent)', borderRadius: 8, color: '#6366f1', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            style={{ flex: 1, height: 36, background: 'color-mix(in srgb, var(--color-info) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--color-info) 30%, transparent)', borderRadius: 8, color: 'var(--color-info)', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <Snowflake size={13} />{saving ? 'Заморозка...' : 'Заморозить'}
           </button>
           <button onClick={onClose} className="btn btn-secondary">Отмена</button>
@@ -1412,14 +1412,14 @@ export default function ClientsPage() {
         ))}
         {hasFilters && (
           <button onClick={() => { setFilterSource(''); setFilterTags([]) }}
-            style={{ height: 30, padding: '0 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: '1px solid color-mix(in srgb, #ef4444 30%, transparent)', background: 'color-mix(in srgb, #ef4444 8%, transparent)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
+            style={{ height: 30, padding: '0 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <X size={10} />Сбросить
           </button>
         )}
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}

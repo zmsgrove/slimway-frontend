@@ -46,9 +46,9 @@ function RawKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={18} /></button>
         </div>
 
-        <div style={{ padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-          <AlertCircle size={15} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
-          <div style={{ fontSize: 12, color: '#ef4444', lineHeight: 1.5 }}>
+        <div style={{ padding: '10px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <AlertCircle size={15} color="var(--color-danger)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <div style={{ fontSize: 12, color: 'var(--color-danger)', lineHeight: 1.5 }}>
             Ключ показывается <strong>один раз</strong> и больше не будет доступен. Сохраните его сейчас.
           </div>
         </div>
@@ -58,7 +58,7 @@ function RawKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleCopy} style={{ flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copied ? 'rgba(16,185,129,0.12)' : 'var(--accent)', border: copied ? '1px solid rgba(16,185,129,0.3)' : 'none', borderRadius: 8, color: copied ? '#10b981' : 'var(--accent-fg)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={handleCopy} style={{ flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: copied ? 'var(--color-success-muted)' : 'var(--accent)', border: copied ? '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' : 'none', borderRadius: 8, color: copied ? 'var(--color-success)' : 'var(--accent-fg)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             {copied ? <><CheckCircle2 size={15} />Скопировано!</> : <><Copy size={15} />Скопировать ключ</>}
           </button>
           <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
@@ -112,7 +112,7 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </div>
 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: '#ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--color-danger)' }}>
             <AlertCircle size={13} />{error}
           </div>
         )}
@@ -175,7 +175,7 @@ function RawKeyInline({ raw }: { raw: string }) {
       <button onClick={() => setVisible(v => !v)} title={visible ? 'Скрыть' : 'Показать'} style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
         {visible ? <EyeOff size={13} /> : <Eye size={13} />}
       </button>
-      <button onClick={handleCopy} title="Скопировать" style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
+      <button onClick={handleCopy} title="Скопировать" style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--color-success)' : 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
         {copied ? <CheckCircle2 size={13} /> : <Copy size={13} />}
       </button>
     </div>
@@ -258,7 +258,7 @@ export default function ApiKeysPage() {
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}
@@ -279,7 +279,7 @@ export default function ApiKeysPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {keys.map(key => {
             const isExpired = key.expires_at ? new Date(key.expires_at) < new Date() : false
-            const statusColor = !key.is_active ? '#71717A' : isExpired ? '#f59e0b' : '#10b981'
+            const statusColor = !key.is_active ? '#71717A' : isExpired ? 'var(--color-warning)' : 'var(--color-success)'
             const statusLabel = !key.is_active ? 'Отозван' : isExpired ? 'Истёк' : 'Активен'
 
             return (
@@ -299,7 +299,7 @@ export default function ApiKeysPage() {
                       {statusLabel}
                     </span>
                     {canManage && key.is_active && (
-                      <button onClick={() => void handleRevoke(key)} title="Отозвать ключ" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', cursor: 'pointer' }}>
+                      <button onClick={() => void handleRevoke(key)} title="Отозвать ключ" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', color: 'var(--color-danger)', cursor: 'pointer' }}>
                         <Trash2 size={13} />
                       </button>
                     )}
@@ -324,7 +324,7 @@ export default function ApiKeysPage() {
                     </span>
                   )}
                   {key.expires_at && (
-                    <span style={{ color: isExpired ? '#f59e0b' : 'var(--text-muted)' }}>
+                    <span style={{ color: isExpired ? 'var(--color-warning)' : 'var(--text-muted)' }}>
                       Истекает: {new Date(key.expires_at).toLocaleDateString('ru-RU')}
                     </span>
                   )}

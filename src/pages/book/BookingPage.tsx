@@ -140,7 +140,7 @@ export default function BookingPage() {
             <label style={s.label}>Номер телефона</label>
             <input style={s.input} type="tel" placeholder="+7 777 000 00 00" value={phone} onChange={e => setPhone(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void handlePhone() }} />
           </div>
-          {error && <div style={{ fontSize: 13, color: '#f87171', padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#f87171', padding: '8px 12px', background: 'var(--color-danger-muted)', borderRadius: 8 }}>{error}</div>}
           <button onClick={() => void handlePhone()} style={s.btn(!!phone.trim())}>
             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Phone size={16} />Продолжить</span>
           </button>
@@ -221,7 +221,7 @@ export default function BookingPage() {
             {!!selSlot.devices && <div><span style={{ ...s.muted }}>Тренажёр:</span> <strong>{DEVICE_LABELS[(selSlot.devices as Record<string, unknown>).type as string]}</strong></div>}
             <div><span style={{ ...s.muted }}>Абонемент:</span> <strong>{subs.find(s => s.id === selSub)?.name as string ?? selSub}</strong></div>
           </div>
-          {error && <div style={{ fontSize: 13, color: '#f87171', padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#f87171', padding: '8px 12px', background: 'var(--color-danger-muted)', borderRadius: 8 }}>{error}</div>}
           <button onClick={() => void handleBook()} disabled={submitting} style={s.btn(!submitting)}>
             {submitting ? 'Запись...' : 'Записаться'}
           </button>
@@ -231,7 +231,7 @@ export default function BookingPage() {
       {/* Success */}
       {step === 'success' && (
         <div style={{ textAlign: 'center', paddingTop: 40 }}>
-          <CheckCircle size={56} color="#10b981" style={{ margin: '0 auto 16px' }} />
+          <CheckCircle size={56} color="var(--color-success)" style={{ margin: '0 auto 16px' }} />
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Записано!</div>
           <div style={{ color: '#888', marginBottom: 24 }}>
             {new Date(selDate + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} в {selSlot?.time_start as string ?? ''}

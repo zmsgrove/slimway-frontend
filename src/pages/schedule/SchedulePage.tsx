@@ -28,14 +28,14 @@ const DEVICE_TYPE_LABELS: Record<string, string> = {
   vacuactiv: 'VacuActiv', rollshape: 'RollShape', infrastep: 'InfraStep', infrashape: 'InfraShape',
 }
 const DEVICE_TYPE_COLORS: Record<string, string> = {
-  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: '#f59e0b',
+  vacuactiv: 'var(--accent)', rollshape: '#263CD9', infrastep: '#8b5cf6', infrashape: 'var(--color-warning)',
 }
 const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  free:              { bg: 'rgba(16,185,129,0.15)',  border: 'rgba(16,185,129,0.4)',  text: '#10b981' },
+  free:              { bg: 'var(--color-success-muted)',  border: 'color-mix(in srgb, var(--color-success) 40%, transparent)',  text: 'var(--color-success)' },
   booked:            { bg: 'color-mix(in srgb, var(--accent) 18%, transparent)', border: 'color-mix(in srgb, var(--accent) 45%, transparent)', text: 'var(--accent)' },
-  booked_attended:   { bg: 'rgba(16,185,129,0.18)',  border: 'rgba(16,185,129,0.5)',  text: '#10b981' },
-  booked_missed:     { bg: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.4)',   text: '#ef4444' },
-  blocked:           { bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)',  text: '#f59e0b' },
+  booked_attended:   { bg: 'color-mix(in srgb, var(--color-success) 18%, transparent)',  border: 'color-mix(in srgb, var(--color-success) 50%, transparent)',  text: 'var(--color-success)' },
+  booked_missed:     { bg: 'var(--color-danger-muted)',   border: 'color-mix(in srgb, var(--color-danger) 40%, transparent)',   text: 'var(--color-danger)' },
+  blocked:           { bg: 'var(--color-warning-muted)',  border: 'color-mix(in srgb, var(--color-warning) 30%, transparent)',  text: 'var(--color-warning)' },
   maintenance:       { bg: 'rgba(113,113,122,0.12)', border: 'rgba(113,113,122,0.3)', text: '#71717A' },
 }
 
@@ -206,7 +206,7 @@ function CreateSlotModal({ target, onClose, onCreate }: CreateSlotModalProps) {
           {new Date(target.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} · {target.timeStart}
         </div>
       </div>
-      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: 'var(--color-danger)' }}><AlertCircle size={13} />{error}</div>}
       <div style={{ marginBottom: 21 }}>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Длительность</div>
         <select style={selectStyle} value={duration} onChange={e => setDuration(Number(e.target.value))}>
@@ -309,7 +309,7 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
         </select>
       </div>
 
-      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}><AlertCircle size={13} />{error}</div>}
 
       <div style={{ display: 'flex', gap: 13 }}>
         <button onClick={() => void handleCreate()} disabled={saving}
@@ -416,7 +416,7 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
       </div>
 
-      {error && <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: '#ef4444', lineHeight: 1.5 }}><AlertCircle size={13} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
+      {error && <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: 'var(--color-danger)', lineHeight: 1.5 }}><AlertCircle size={13} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 21 }}>
         <div>
@@ -429,14 +429,14 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
             {loading ? (
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
             ) : subs.length === 0 ? (
-              <div style={{ fontSize: 13, color: '#f59e0b' }}>Нет активных абонементов</div>
+              <div style={{ fontSize: 13, color: 'var(--color-warning)' }}>Нет активных абонементов</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {subs.map(s => (
                   <button key={s.id} onClick={() => setSelSub(s)} style={{ padding: '10px 13px', background: selSub?.id === s.id ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--bg-surface)', border: `1px solid ${selSub?.id === s.id ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'background 150ms ease-out, border-color 150ms ease-out' }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>
                       {s.name}
-                      {s.is_trial && <span style={{ marginLeft: 6, fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontWeight: 600 }}>ТЕСТ</span>}
+                      {s.is_trial && <span style={{ marginLeft: 6, fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)', fontWeight: 600 }}>ТЕСТ</span>}
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 11, color: DEVICE_TYPE_COLORS[s.slot_1_type] }}>{DEVICE_TYPE_LABELS[s.slot_1_type]}: {s.slot_1_sessions_left}/{s.slot_1_sessions_total}</span>
@@ -464,8 +464,8 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
         )}
 
         {selSub && isTrial && (
-          <div style={{ padding: 13, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', marginBottom: 13 }}>Тестовое занятие — выберите дату и время</div>
+          <div style={{ padding: 13, background: 'color-mix(in srgb, var(--color-warning) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--color-warning) 25%, transparent)', borderRadius: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-warning)', marginBottom: 13 }}>Тестовое занятие — выберите дату и время</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 13 }}>
               <div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Дата</div>
@@ -476,19 +476,19 @@ function BookingModal({ slot, device, onClose, onBooked }: BookingModalProps) {
                 <input type="time" step="1800" style={inputStyle} value={trialTime} onChange={e => setTrialTime(e.target.value)} />
               </div>
             </div>
-            <button onClick={() => void checkTrialAvail()} disabled={checkingAvail} style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 8, color: '#f59e0b', fontSize: 12, cursor: checkingAvail ? 'not-allowed' : 'pointer', opacity: checkingAvail ? 0.5 : 1, marginBottom: trialAvail !== null ? 13 : 0 }}>
+            <button onClick={() => void checkTrialAvail()} disabled={checkingAvail} style={{ height: 32, padding: '0 13px', background: 'transparent', border: '1px solid color-mix(in srgb, var(--color-warning) 40%, transparent)', borderRadius: 8, color: 'var(--color-warning)', fontSize: 12, cursor: checkingAvail ? 'not-allowed' : 'pointer', opacity: checkingAvail ? 0.5 : 1, marginBottom: trialAvail !== null ? 13 : 0 }}>
               {checkingAvail ? 'Проверка...' : 'Проверить доступность'}
             </button>
             {trialAvail !== null && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
                 {Object.entries(trialAvail).map(([type, free]) => (
                   <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: free ? '#10b981' : '#ef4444', flexShrink: 0 }} />
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: free ? 'var(--color-success)' : 'var(--color-danger)', flexShrink: 0 }} />
                     <span style={{ color: DEVICE_TYPE_COLORS[type] ?? 'var(--text)', fontWeight: 500 }}>{DEVICE_TYPE_LABELS[type] ?? type}</span>
-                    <span style={{ color: free ? '#10b981' : '#ef4444' }}>{free ? 'Свободен' : 'Занят'}</span>
+                    <span style={{ color: free ? 'var(--color-success)' : 'var(--color-danger)' }}>{free ? 'Свободен' : 'Занят'}</span>
                   </div>
                 ))}
-                {!allTrialFree && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>Не все тренажёры свободны в это время</div>}
+                {!allTrialFree && <div style={{ fontSize: 11, color: 'var(--color-danger)', marginTop: 4 }}>Не все тренажёры свободны в это время</div>}
               </div>
             )}
           </div>
@@ -582,7 +582,7 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
       {loading ? (
         <div style={{ padding: '34px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Загрузка...</div>
       ) : !info ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error ?? 'Данные о брони не найдены'}
         </div>
       ) : (
@@ -615,11 +615,11 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, padding: '10px 13px', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
             <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>Посещение:</span>
             <button onClick={() => void handleMarkAttended(true)} disabled={marking}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === true ? 'rgba(16,185,129,0.15)' : 'transparent', border: `1px solid ${attended === true ? '#10b981' : 'var(--border)'}`, color: attended === true ? '#10b981' : 'var(--text-muted)' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === true ? 'var(--color-success-muted)' : 'transparent', border: `1px solid ${attended === true ? 'var(--color-success)' : 'var(--border)'}`, color: attended === true ? 'var(--color-success)' : 'var(--text-muted)' }}>
               ✓ Был
             </button>
             <button onClick={() => void handleMarkAttended(false)} disabled={marking}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === false ? 'rgba(239,68,68,0.12)' : 'transparent', border: `1px solid ${attended === false ? '#ef4444' : 'var(--border)'}`, color: attended === false ? '#ef4444' : 'var(--text-muted)' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: attended === false ? 'var(--color-danger-muted)' : 'transparent', border: `1px solid ${attended === false ? 'var(--color-danger)' : 'var(--border)'}`, color: attended === false ? 'var(--color-danger)' : 'var(--text-muted)' }}>
               ✗ Не был
             </button>
             {attended !== null && (
@@ -630,8 +630,8 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
             )}
           </div>
 
-          {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
-          {cancelHint && <div style={{ padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>{cancelHint}</div>}
+          {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}><AlertCircle size={13} />{error}</div>}
+          {cancelHint && <div style={{ padding: '8px 13px', background: 'color-mix(in srgb, var(--color-warning) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-warning) 25%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-warning)' }}>{cancelHint}</div>}
 
           <div style={{ display: 'flex', gap: 8, paddingTop: 21, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
             {onReschedule && info && (
@@ -640,7 +640,7 @@ function BookingInfoModal({ slot, device, userRole, onClose, onCancelled, onResc
                 <RefreshCw size={13} />Перенести
               </button>
             )}
-            <button onClick={() => void handleCancel()} disabled={!canCancel || cancelling} style={{ flex: 1, minWidth: 120, height: 40, background: canCancel ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface)', border: `1px solid ${canCancel ? 'rgba(239,68,68,0.35)' : 'var(--border)'}`, borderRadius: 8, color: canCancel ? '#ef4444' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canCancel || cancelling) ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.6 : 1 }}>
+            <button onClick={() => void handleCancel()} disabled={!canCancel || cancelling} style={{ flex: 1, minWidth: 120, height: 40, background: canCancel ? 'var(--color-danger-muted)' : 'var(--bg-surface)', border: `1px solid ${canCancel ? 'color-mix(in srgb, var(--color-danger) 35%, transparent)' : 'var(--border)'}`, borderRadius: 8, color: canCancel ? 'var(--color-danger)' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: (!canCancel || cancelling) ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.6 : 1 }}>
               {cancelling ? 'Снятие...' : 'Снять бронь'}
             </button>
             <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Закрыть</button>
@@ -665,7 +665,7 @@ function DeleteConfirmModal({ slot, device, loading, onClose, onConfirm }: Delet
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{ft(slot.time_start)} — {ft(slot.time_end)}</div>
       </div>
       <div style={{ display: 'flex', gap: 13 }}>
-        <button onClick={onConfirm} disabled={loading} style={{ flex: 1, height: 40, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
+        <button onClick={onConfirm} disabled={loading} style={{ flex: 1, height: 40, background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 35%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
           {loading ? 'Удаление...' : 'Удалить'}
         </button>
         <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
@@ -781,7 +781,7 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
         <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
       </div>
 
-      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}><AlertCircle size={13} />{error}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -881,11 +881,11 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Тип ячеек</div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setSlotStatus('free')}
-              style={{ flex: 1, height: 32, background: slotStatus === 'free' ? 'rgba(16,185,129,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'free' ? '#10b981' : 'var(--border)'}`, borderRadius: 8, color: slotStatus === 'free' ? '#10b981' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'free' ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+              style={{ flex: 1, height: 32, background: slotStatus === 'free' ? 'var(--color-success-muted)' : 'transparent', border: `1px solid ${slotStatus === 'free' ? 'var(--color-success)' : 'var(--border)'}`, borderRadius: 8, color: slotStatus === 'free' ? 'var(--color-success)' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'free' ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
               Свободные
             </button>
             <button onClick={() => setSlotStatus('blocked')}
-              style={{ flex: 1, height: 32, background: slotStatus === 'blocked' ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${slotStatus === 'blocked' ? '#f59e0b' : 'var(--border)'}`, borderRadius: 8, color: slotStatus === 'blocked' ? '#f59e0b' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'blocked' ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+              style={{ flex: 1, height: 32, background: slotStatus === 'blocked' ? 'var(--color-warning-muted)' : 'transparent', border: `1px solid ${slotStatus === 'blocked' ? 'var(--color-warning)' : 'var(--border)'}`, borderRadius: 8, color: slotStatus === 'blocked' ? 'var(--color-warning)' : 'var(--text-secondary)', fontSize: 12, fontWeight: slotStatus === 'blocked' ? 600 : 400, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
               Заблокированные
             </button>
           </div>
@@ -902,7 +902,7 @@ function QuickCreateModal({ devices, onClose, onCreated }: QuickCreateModalProps
 
       <div style={{ display: 'flex', gap: 13, marginTop: 21, paddingTop: 21, borderTop: '1px solid var(--border)' }}>
         <button onClick={() => void handleCreate()} disabled={saving || totalCells === 0 || selectedIds.size === 0}
-          style={{ flex: 1, height: 40, background: slotStatus === 'blocked' ? '#f59e0b' : 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || totalCells === 0) ? 'not-allowed' : 'pointer', opacity: (saving || totalCells === 0) ? 0.5 : 1 }}>
+          style={{ flex: 1, height: 40, background: slotStatus === 'blocked' ? 'var(--color-warning)' : 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || totalCells === 0) ? 'not-allowed' : 'pointer', opacity: (saving || totalCells === 0) ? 0.5 : 1 }}>
           {saving ? 'Создание...' : `Создать ${totalCells} ячеек`}
         </button>
         <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
@@ -979,12 +979,12 @@ function RescheduleModal({ bookingInfo, userRole, onClose, onRescheduled }: Resc
       </div>
 
       {isWithin24h && (
-        <div style={{ padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>
+        <div style={{ padding: '8px 13px', background: 'color-mix(in srgb, var(--color-warning) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-warning) 25%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-warning)' }}>
           ⚠ До сеанса менее 24 ч. {canReschedule ? 'Перенос разрешён для вашей роли.' : 'Перенос запрещён для вашей роли.'}
         </div>
       )}
 
-      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}><AlertCircle size={13} />{error}</div>}
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}><AlertCircle size={13} />{error}</div>}
 
       <div style={{ marginBottom: 13 }}>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Новая дата</div>
@@ -1281,11 +1281,11 @@ export default function SchedulePage() {
           </button>
           <button
             onClick={() => { setActiveTab('pending'); void loadPending() }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'pending' ? '#f59e0b' : 'var(--border)'}`, background: activeTab === 'pending' ? 'rgba(245,158,11,0.12)' : 'transparent', color: activeTab === 'pending' ? '#f59e0b' : 'var(--text-secondary)', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeTab === 'pending' ? 'var(--color-warning)' : 'var(--border)'}`, background: activeTab === 'pending' ? 'var(--color-warning-muted)' : 'transparent', color: activeTab === 'pending' ? 'var(--color-warning)' : 'var(--text-secondary)', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}
           >
             <Clock size={14} />Ожидают подтверждения
             {pendingBookings.length > 0 && (
-              <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
+              <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: 'var(--color-warning)', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
                 {pendingBookings.length}
               </span>
             )}
@@ -1313,12 +1313,12 @@ export default function SchedulePage() {
 
       {/* Notifications */}
       {notification && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#f59e0b' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-warning) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-warning) 25%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-warning)' }}>
           <AlertCircle size={13} />{notification}
         </div>
       )}
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: '#ef4444' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 13, fontSize: 12, color: 'var(--color-danger)' }}>
           <AlertCircle size={13} />{error}
         </div>
       )}
@@ -1363,14 +1363,14 @@ export default function SchedulePage() {
                       <button
                         onClick={() => void handleConfirm(b.id)}
                         disabled={isActing}
-                        style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 13px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: isActing ? 'not-allowed' : 'pointer', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.35)', color: '#10b981', opacity: isActing ? 0.6 : 1 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 13px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: isActing ? 'not-allowed' : 'pointer', background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 35%, transparent)', color: 'var(--color-success)', opacity: isActing ? 0.6 : 1 }}
                       >
                         <CheckCircle size={13} />Подтвердить
                       </button>
                       <button
                         onClick={() => void handleReject(b.id)}
                         disabled={isActing}
-                        style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 13px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: isActing ? 'not-allowed' : 'pointer', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', opacity: isActing ? 0.6 : 1 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 5, height: 34, padding: '0 13px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: isActing ? 'not-allowed' : 'pointer', background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', color: 'var(--color-danger)', opacity: isActing ? 0.6 : 1 }}
                       >
                         <XCircle size={13} />Отклонить
                       </button>
@@ -1482,9 +1482,9 @@ export default function SchedulePage() {
                               {isHov && canManageSlots && (
                                 <button
                                   onClick={e => { e.stopPropagation(); handleTrashClick(slot, device) }}
-                                  style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, zIndex: 2 }}
+                                  style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, zIndex: 2 }}
                                 >
-                                  <Trash2 size={9} color="#ef4444" />
+                                  <Trash2 size={9} color="var(--color-danger)" />
                                 </button>
                               )}
                             </>

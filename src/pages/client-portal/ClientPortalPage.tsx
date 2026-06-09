@@ -74,7 +74,7 @@ function LoginScreen({ portalToken, onLogin }: { portalToken: string; onLogin: (
             <input style={s.input} type="tel" placeholder="+7 777 000 00 00" value={phone} onChange={e => setPhone(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') void handleSubmit() }} />
           </div>
-          {error && <div style={{ fontSize: 13, color: '#f87171', padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#f87171', padding: '8px 12px', background: 'var(--color-danger-muted)', borderRadius: 8 }}>{error}</div>}
           <button onClick={() => void handleSubmit()} disabled={loading} style={{ ...s.btn(true), width: '100%', opacity: loading ? 0.6 : 1 }}>
             {loading ? 'Вход...' : 'Войти'}
           </button>
@@ -102,7 +102,7 @@ function TabBar({ tab, onChange, unread }: { tab: Tab; onChange: (t: Tab) => voi
           <span style={{ color: tab === t.id ? 'var(--accent)' : '#555' }}>{t.icon}</span>
           <span style={{ fontSize: 10, color: tab === t.id ? 'var(--accent)' : '#555' }}>{t.label}</span>
           {t.id === 'chat' && unread > 0 && (
-            <span style={{ position: 'absolute', top: 8, right: '50%', marginRight: -18, width: 16, height: 16, background: '#ef4444', borderRadius: '50%', fontSize: 10, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ position: 'absolute', top: 8, right: '50%', marginRight: -18, width: 16, height: 16, background: 'var(--color-danger)', borderRadius: '50%', fontSize: 10, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {unread > 9 ? '9+' : unread}
             </span>
           )}
@@ -157,7 +157,7 @@ function HomeTab({ me, subs, bookings }: { me: Record<string, unknown>; subs: Re
 
       {nextBooking && slot ? (
         <div style={{ ...s.card }}>
-          <div style={{ fontSize: 11, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Ближайшая запись</div>
+          <div style={{ fontSize: 11, color: 'var(--color-warning)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Ближайшая запись</div>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{fmtDate(slot.date as string)}</div>
           <div style={{ ...s.muted, marginTop: 4 }}>
             {slot.time_start as string} — {slot.time_end as string}
@@ -309,11 +309,11 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
 
       {/* Модал подтверждения отмены */}
       {confirmCancel && (
-        <div style={{ ...s.card, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+        <div style={{ ...s.card, background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)' }}>
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Отменить запись?</div>
           <div style={{ ...s.muted, marginBottom: 12 }}>Это действие нельзя отменить.</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => void doCancel()} style={{ ...s.btn(), background: 'rgba(239,68,68,0.8)', color: '#fff', border: 'none', flex: 1 }}>Отменить запись</button>
+            <button onClick={() => void doCancel()} style={{ ...s.btn(), background: 'var(--color-danger)', color: '#fff', border: 'none', flex: 1 }}>Отменить запись</button>
             <button onClick={() => setConfirmCancel(null)} style={{ ...s.btn(), flex: 1 }}>Назад</button>
           </div>
         </div>
@@ -321,7 +321,7 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
 
       {/* Ошибка отмены */}
       {cancelError && (
-        <div style={{ ...s.card, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+        <div style={{ ...s.card, background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)' }}>
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6, color: '#f87171' }}>Отмена невозможна</div>
           <div style={{ fontSize: 13, color: '#f87171', marginBottom: 10 }}>{cancelError}</div>
           <button onClick={() => setCancelError(null)} style={{ ...s.btn(), width: '100%' }}>Понятно</button>
@@ -343,7 +343,7 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
           : status === 'confirmed' ? '✅ Подтверждено'
           : status === 'cancelled' ? '❌ Отменено'
           : undefined
-        const statusColor = status === 'pending' ? '#f59e0b' : status === 'confirmed' ? '#10b981' : '#ef4444'
+        const statusColor = status === 'pending' ? 'var(--color-warning)' : status === 'confirmed' ? 'var(--color-success)' : 'var(--color-danger)'
         return (
           <div key={b.id as string} style={{ ...s.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -356,7 +356,7 @@ function BookingsTab({ token, bookings, subs, onRefresh }: {
             </div>
             {status !== 'cancelled' && (
               <button onClick={() => handleCancel(b.id as string)} disabled={cancelling === b.id}
-                style={{ height: 34, padding: '0 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontSize: 12, cursor: 'pointer' }}>
+                style={{ height: 34, padding: '0 12px', background: 'var(--color-danger-muted)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', borderRadius: 8, color: '#f87171', fontSize: 12, cursor: 'pointer' }}>
                 {cancelling === b.id ? '...' : 'Отменить'}
               </button>
             )}
@@ -383,7 +383,7 @@ function SubsTab({ subs }: { subs: Record<string, unknown>[] }) {
       <div style={{ ...s.card, opacity: isActive ? 1 : 0.6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
           <div style={{ fontWeight: 700, fontSize: 15 }}>{sub.name as string}</div>
-          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: isActive ? 'rgba(16,185,129,0.15)' : 'rgba(113,113,122,0.15)', color: isActive ? '#10b981' : '#888' }}>
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: isActive ? 'var(--color-success-muted)' : 'rgba(113,113,122,0.15)', color: isActive ? 'var(--color-success)' : '#888' }}>
             {isActive ? 'Активный' : sub.status === 'frozen' ? 'Заморожен' : sub.status === 'expired' ? 'Истёк' : 'Отменён'}
           </span>
         </div>
@@ -430,7 +430,7 @@ function ActivityTab({ activity }: { activity: Record<string, unknown>[] }) {
       {activity.map((item: Record<string, unknown>) => {
         const isBooking = item.type === 'booking'
         const icon = isBooking
-          ? (item.attended ? <CheckCircle size={18} color="#10b981" /> : <Clock size={18} color="#f59e0b" />)
+          ? (item.attended ? <CheckCircle size={18} color="var(--color-success)" /> : <Clock size={18} color="var(--color-warning)" />)
           : <ShoppingBag size={18} color="var(--accent)" />
 
         return (

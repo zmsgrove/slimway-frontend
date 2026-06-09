@@ -24,7 +24,7 @@ const CATEGORY_LABELS: Record<WarehouseCategory, string> = {
 
 const CATEGORY_COLORS: Record<WarehouseCategory, string> = {
   merch:     '#8b5cf6',
-  nutrition: '#10b981',
+  nutrition: 'var(--color-success)',
   equipment: '#3b82f6',
   other:     '#71717A',
 }
@@ -118,13 +118,13 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13, marginBottom: 21 }}>
             <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 13, padding: 13 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Остаток</div>
-              <div style={{ fontSize: 21, fontWeight: 700, color: item.low_stock ? '#ef4444' : 'var(--text)' }}>
+              <div style={{ fontSize: 21, fontWeight: 700, color: item.low_stock ? 'var(--color-danger)' : 'var(--text)' }}>
                 {item.quantity} <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-muted)' }}>{item.unit || 'шт.'}</span>
               </div>
               {stockPct !== null && (
                 <div style={{ marginTop: 8 }}>
                   <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, marginBottom: 4 }}>
-                    <div style={{ height: '100%', width: `${stockPct}%`, background: stockPct < 50 ? '#ef4444' : '#10b981', borderRadius: 2, transition: 'width 0.3s' }} />
+                    <div style={{ height: '100%', width: `${stockPct}%`, background: stockPct < 50 ? 'var(--color-danger)' : 'var(--color-success)', borderRadius: 2, transition: 'width 0.3s' }} />
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Мин: {item.min_quantity} {item.unit || 'шт.'}</div>
                 </div>
@@ -145,26 +145,26 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
 
           {/* Action forms */}
           {showIn ? (
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 13, padding: 13, marginBottom: 21 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#10b981', marginBottom: 10 }}>Приход</div>
-              {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{error}</div>}
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 13, padding: 13, marginBottom: 21 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-success)', marginBottom: 10 }}>Приход</div>
+              {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 8 }}>{error}</div>}
               <div style={{ display: 'flex', gap: 8 }}>
                 <input type="number" min={1} style={{ ...inputStyle, width: 100 }} value={qty} onChange={e => setQty(e.target.value)} placeholder="Кол-во" />
                 <input style={inputStyle} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Примечание" />
-                <button onClick={() => void handleIn()} disabled={saving} style={{ height: 36, padding: '0 13px', background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+                <button onClick={() => void handleIn()} disabled={saving} style={{ height: 36, padding: '0 13px', background: 'var(--color-success)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
                   {saving ? '...' : 'OK'}
                 </button>
                 <button onClick={() => { setShowIn(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
               </div>
             </div>
           ) : showSell ? (
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 13, padding: 13, marginBottom: 21 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', marginBottom: 10 }}>Продажа</div>
-              {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{error}</div>}
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 13, padding: 13, marginBottom: 21 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-danger)', marginBottom: 10 }}>Продажа</div>
+              {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 8 }}>{error}</div>}
               <div style={{ display: 'flex', gap: 8 }}>
                 <input type="number" min={1} max={item.quantity} style={{ ...inputStyle, width: 100 }} value={qty} onChange={e => setQty(e.target.value)} placeholder="Кол-во" />
                 <input style={inputStyle} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Примечание" />
-                <button onClick={() => void handleSell()} disabled={saving} style={{ height: 36, padding: '0 13px', background: '#ef4444', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+                <button onClick={() => void handleSell()} disabled={saving} style={{ height: 36, padding: '0 13px', background: 'var(--color-danger)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
                   {saving ? '...' : 'OK'}
                 </button>
                 <button onClick={() => { setShowSell(false); setError(null); setQty(''); setNotes('') }} style={{ height: 36, padding: '0 10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>✕</button>
@@ -172,11 +172,11 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
             </div>
           ) : (
             <div style={{ display: 'flex', gap: 8, marginBottom: 21 }}>
-              <button onClick={() => setShowIn(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, color: '#10b981', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+              <button onClick={() => setShowIn(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, color: 'var(--color-success)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
                 <ArrowDown size={14} />Приход
               </button>
               {item.quantity > 0 && (
-                <button onClick={() => setShowSell(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+                <button onClick={() => setShowSell(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
                   <ShoppingCart size={14} />Продажа
                 </button>
               )}
@@ -185,7 +185,7 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
                   <button onClick={() => { onEdit(); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
                     <Edit2 size={13} />Редактировать
                   </button>
-                  <button onClick={() => { onDelete(); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 13, cursor: 'pointer' }}>
+                  <button onClick={() => { onDelete(); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 13, cursor: 'pointer' }}>
                     <Trash2 size={13} />Удалить
                   </button>
                 </>
@@ -199,11 +199,11 @@ function ItemCardModal({ item: initialItem, canEdit, onClose, onMovement, onEdit
           {!loading && movements.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '13px 0' }}>Нет движений</div>}
           {movements.map(m => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: m.type === 'in' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', flexShrink: 0 }}>
-                {m.type === 'in' ? <ArrowDown size={13} color="#10b981" /> : <ArrowUp size={13} color="#ef4444" />}
+              <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: m.type === 'in' ? 'var(--color-success-muted)' : 'var(--color-danger-muted)', flexShrink: 0 }}>
+                {m.type === 'in' ? <ArrowDown size={13} color="var(--color-success)" /> : <ArrowUp size={13} color="var(--color-danger)" />}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: m.type === 'in' ? '#10b981' : '#ef4444' }}>{m.type === 'in' ? '+' : '−'}{m.quantity} {item.unit || 'шт.'}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: m.type === 'in' ? 'var(--color-success)' : 'var(--color-danger)' }}>{m.type === 'in' ? '+' : '−'}{m.quantity} {item.unit || 'шт.'}</div>
                 {m.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.notes}</div>}
               </div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -266,7 +266,7 @@ function BulkIntakeModal({ onClose, onDone }: { onClose: () => void; onDone: () 
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 21 }}>
-          {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
 
           {loading ? (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '21px 0' }}>Загрузка каталога...</div>
@@ -309,7 +309,7 @@ function BulkIntakeModal({ onClose, onDone }: { onClose: () => void; onDone: () 
           </div>
 
           {toProcess.length > 0 && (
-            <div style={{ marginTop: 13, padding: '8px 13px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, fontSize: 12, color: '#10b981' }}>
+            <div style={{ marginTop: 13, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-success) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 20%, transparent)', borderRadius: 8, fontSize: 12, color: 'var(--color-success)' }}>
               {toProcess.length} позиций будет принято
             </div>
           )}
@@ -317,7 +317,7 @@ function BulkIntakeModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 
         <div style={{ padding: '13px 21px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, height: 40, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>
-          <button onClick={() => void handleSubmit()} disabled={saving || loading} style={{ flex: 2, height: 40, background: '#10b981', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || loading) ? 'not-allowed' : 'pointer', opacity: (saving || loading) ? 0.7 : 1 }}>
+          <button onClick={() => void handleSubmit()} disabled={saving || loading} style={{ flex: 2, height: 40, background: 'var(--color-success)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (saving || loading) ? 'not-allowed' : 'pointer', opacity: (saving || loading) ? 0.7 : 1 }}>
             {saving ? 'Оформляем...' : 'Оформить приход'}
           </button>
         </div>
@@ -367,7 +367,7 @@ function EditItemModal({ item, onClose, onSave }: { item: WarehouseItem; onClose
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Редактировать</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Название *</label>
@@ -450,7 +450,7 @@ function CreateItemModal({ onClose, onCreate }: { onClose: () => void; onCreate:
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Новая позиция</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13 }}>{error}</div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Название *</label>
@@ -524,7 +524,7 @@ function SupplierModal({ initial, onClose, onSave }: { initial?: Supplier | null
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{initial ? 'Редактировать поставщика' : 'Новый поставщик'}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
         </div>
-        {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 13, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', borderRadius: 8 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 13, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', borderRadius: 8 }}>{error}</div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Название *</label>
@@ -565,9 +565,9 @@ const ORDER_STATUS_LABELS: Record<SupplierOrderStatus, string> = {
   cancelled: 'Отменён',
 }
 const ORDER_STATUS_COLORS: Record<SupplierOrderStatus, string> = {
-  pending:   '#f59e0b',
+  pending:   'var(--color-warning)',
   confirmed: '#263CD9',
-  delivered: '#10b981',
+  delivered: 'var(--color-success)',
   cancelled: '#71717A',
 }
 
@@ -691,12 +691,12 @@ function SupplierOrdersTab({ orders, suppliers, canEdit, onReload }: {
                           </button>
                         )}
                         {o.status === 'confirmed' && (
-                          <button onClick={() => void handleStatus(o.id, 'delivered')} style={{ height: 28, padding: '0 10px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 6, color: '#10b981', fontSize: 11, cursor: 'pointer' }}>
+                          <button onClick={() => void handleStatus(o.id, 'delivered')} style={{ height: 28, padding: '0 10px', background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 6, color: 'var(--color-success)', fontSize: 11, cursor: 'pointer' }}>
                             Доставлен
                           </button>
                         )}
                         {(o.status === 'pending' || o.status === 'confirmed') && (
-                          <button onClick={() => void handleStatus(o.id, 'cancelled')} style={{ height: 28, padding: '0 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, color: '#ef4444', fontSize: 11, cursor: 'pointer' }}>
+                          <button onClick={() => void handleStatus(o.id, 'cancelled')} style={{ height: 28, padding: '0 10px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 6, color: 'var(--color-danger)', fontSize: 11, cursor: 'pointer' }}>
                             Отмена
                           </button>
                         )}
@@ -846,9 +846,9 @@ export default function WarehousePage() {
             onRememberChange={setRemember}
           />
           {lowStockCount > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8 }}>
-              <AlertTriangle size={13} color="#ef4444" />
-              <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{lowStockCount} мало</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8 }}>
+              <AlertTriangle size={13} color="var(--color-danger)" />
+              <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600 }}>{lowStockCount} мало</span>
             </div>
           )}
           <button
@@ -860,7 +860,7 @@ export default function WarehousePage() {
           {canIntake && (
             <button
               onClick={() => setShowBulk(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, color: '#10b981', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, color: 'var(--color-success)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               <ArrowDown size={15} />Приход на склад
             </button>
@@ -940,7 +940,7 @@ export default function WarehousePage() {
                         <td style={{ padding: '8px 16px' }}>
                           <div style={{ display: 'flex', gap: 6 }}>
                             <button onClick={() => setSuppModal(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer' }}><Edit2 size={12} /></button>
-                            <button onClick={async () => { if (!confirm('Удалить?')) return; await suppliersApi.delete(s.id); setSuppliers(prev => prev.filter(x => x.id !== s.id)) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                            <button onClick={async () => { if (!confirm('Удалить?')) return; await suppliersApi.delete(s.id); setSuppliers(prev => prev.filter(x => x.id !== s.id)) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', color: 'var(--color-danger)', cursor: 'pointer' }}><Trash2 size={12} /></button>
                           </div>
                         </td>
                       )}
@@ -992,7 +992,7 @@ export default function WarehousePage() {
                   onContextMenu={e => { e.preventDefault(); setCtxMenu({ item, x: e.clientX, y: e.clientY }) }}
                   style={{
                     borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
-                    background: item.low_stock ? 'rgba(239,68,68,0.04)' : 'transparent',
+                    background: item.low_stock ? 'color-mix(in srgb, var(--color-danger) 4%, transparent)' : 'transparent',
                     cursor: 'pointer', transition: 'background 0.15s',
                   }}
                 >
@@ -1003,7 +1003,7 @@ export default function WarehousePage() {
                   )}
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {item.low_stock && <AlertTriangle size={13} color="#ef4444" />}
+                      {item.low_stock && <AlertTriangle size={13} color="var(--color-danger)" />}
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
                         {item.sku && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.sku}</div>}
@@ -1016,7 +1016,7 @@ export default function WarehousePage() {
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: item.low_stock ? '#ef4444' : 'var(--text)' }}>{item.quantity}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: item.low_stock ? 'var(--color-danger)' : 'var(--text)' }}>{item.quantity}</span>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 4 }}>{item.unit || 'шт.'}</span>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-muted)' }}>

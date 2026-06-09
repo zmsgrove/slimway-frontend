@@ -25,18 +25,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 const COLUMNS: { id: TaskStatus; label: string; color: string }[] = [
   { id: 'new',           label: 'Новые',           color: '#3b82f6' },
-  { id: 'today',         label: 'Сегодня',         color: '#f59e0b' },
+  { id: 'today',         label: 'Сегодня',         color: 'var(--color-warning)' },
   { id: 'week',          label: 'На неделе',        color: '#8b5cf6' },
   { id: 'long',          label: 'Длительный срок',  color: '#06b6d4' },
   { id: 'pending_close', label: 'На закрытии',      color: '#f97316' },
-  { id: 'closed',        label: 'Закрытые',         color: '#10b981' },
+  { id: 'closed',        label: 'Закрытые',         color: 'var(--color-success)' },
 ]
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
   low:      '#71717A',
   medium:   'var(--accent)',
   high:     '#F59E0B',
-  critical: '#EF4444',
+  critical: 'var(--color-danger)',
 }
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
@@ -73,7 +73,7 @@ function fmtDeadline(iso: string): { text: string; color: string; bg: string } {
   const now = new Date()
   const diff = d.getTime() - now.getTime()
   const dayMs = 86400000
-  if (diff < 0)           return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: '#EF4444', bg: 'color-mix(in srgb, #EF4444 10%, transparent)' }
+  if (diff < 0)           return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: 'var(--color-danger)', bg: 'color-mix(in srgb, var(--color-danger) 10%, transparent)' }
   if (diff < dayMs)       return { text: d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), color: '#F59E0B', bg: 'color-mix(in srgb, #F59E0B 10%, transparent)' }
   if (diff < 2 * dayMs)   return { text: 'Завтра', color: '#EAB308', bg: 'color-mix(in srgb, #EAB308 10%, transparent)' }
   return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: 'var(--text-muted)', bg: 'transparent' }
@@ -148,7 +148,7 @@ function TaskCardContent({ task, onClick, onContextMenu, isDragging }: TaskCardP
         <div style={{ marginTop: 6, height: 3, background: 'var(--border)', borderRadius: 2 }}>
           <div style={{
             height: '100%', width: `${Math.round((done / total) * 100)}%`,
-            background: '#10b981', borderRadius: 2, transition: 'width 300ms ease-out',
+            background: 'var(--color-success)', borderRadius: 2, transition: 'width 300ms ease-out',
           }} />
         </div>
       )}
@@ -302,7 +302,7 @@ function CreateTaskModal({ employees, defaultStatus, onClose, onCreate }: {
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)', borderRadius: 8 }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginBottom: 12, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8 }}>{error}</div>}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
@@ -423,7 +423,7 @@ function CreateTaskModal({ employees, defaultStatus, onClose, onCreate }: {
                     placeholder="Новый пункт..."
                   />
                   <button onClick={addCheckItem}
-                    style={{ height: 32, padding: '0 12px', background: 'color-mix(in srgb, #10b981 12%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', borderRadius: 8, color: '#10b981', fontSize: 13, cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>
+                    style={{ height: 32, padding: '0 12px', background: 'color-mix(in srgb, var(--color-success) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, color: 'var(--color-success)', fontSize: 13, cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>
                     +
                   </button>
                 </div>
@@ -578,13 +578,13 @@ function TaskModal({ task: initialTask, employees, onClose, onUpdate, onDelete }
                 <>
                   <button
                     onClick={() => void handleConfirmClose()}
-                    style={{ padding: '5px 12px', background: 'color-mix(in srgb, #10b981 12%, transparent)', border: '1px solid color-mix(in srgb, #10b981 30%, transparent)', borderRadius: 7, color: '#10b981', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                    style={{ padding: '5px 12px', background: 'color-mix(in srgb, var(--color-success) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)', borderRadius: 7, color: 'var(--color-success)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                   >
                     Подтвердить
                   </button>
                   <button
                     onClick={() => void handleStatusChange('long')}
-                    style={{ padding: '5px 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)', borderRadius: 7, color: '#ef4444', fontSize: 12, cursor: 'pointer' }}
+                    style={{ padding: '5px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)', borderRadius: 7, color: 'var(--color-danger)', fontSize: 12, cursor: 'pointer' }}
                   >
                     Вернуть
                   </button>
@@ -713,7 +713,7 @@ function TaskModal({ task: initialTask, employees, onClose, onUpdate, onDelete }
               {canEdit && (
                 <button
                   onClick={() => { if (confirm('Удалить задачу?')) onDelete(task.id) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer', marginTop: 4, width: 'fit-content', transition: 'background 150ms ease-out' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, color: 'var(--color-danger)', fontSize: 12, cursor: 'pointer', marginTop: 4, width: 'fit-content', transition: 'background 150ms ease-out' }}
                 >
                   <Trash2 size={13} />Удалить задачу
                 </button>
@@ -727,15 +727,15 @@ function TaskModal({ task: initialTask, employees, onClose, onUpdate, onDelete }
               {totalCount > 0 && (
                 <div style={{ marginBottom: 6 }}>
                   <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, marginBottom: 4 }}>
-                    <div style={{ height: '100%', width: `${Math.round((doneCount / totalCount) * 100)}%`, background: '#10b981', borderRadius: 2, transition: 'width 300ms ease-out' }} />
+                    <div style={{ height: '100%', width: `${Math.round((doneCount / totalCount) * 100)}%`, background: 'var(--color-success)', borderRadius: 2, transition: 'width 300ms ease-out' }} />
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{totalCount} выполнено</div>
                 </div>
               )}
 
               {ungroupedItems.map(item => (
-                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: item.is_done ? 'color-mix(in srgb, #10b981 5%, transparent)' : 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                  <input type="checkbox" checked={item.is_done} onChange={() => void handleToggleCheck(item)} style={{ accentColor: '#10b981', width: 14, height: 14, cursor: 'pointer' }} />
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: item.is_done ? 'color-mix(in srgb, var(--color-success) 5%, transparent)' : 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <input type="checkbox" checked={item.is_done} onChange={() => void handleToggleCheck(item)} style={{ accentColor: 'var(--color-success)', width: 14, height: 14, cursor: 'pointer' }} />
                   <span style={{ fontSize: 13, color: item.is_done ? 'var(--text-muted)' : 'var(--text)', textDecoration: item.is_done ? 'line-through' : 'none', flex: 1 }}>{item.text}</span>
                 </div>
               ))}
@@ -754,8 +754,8 @@ function TaskModal({ task: initialTask, employees, onClose, onUpdate, onDelete }
                     </div>
                     <div style={{ padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {groupItems.map(item => (
-                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', background: item.is_done ? 'color-mix(in srgb, #10b981 5%, transparent)' : 'transparent', borderRadius: 6 }}>
-                          <input type="checkbox" checked={item.is_done} onChange={() => void handleToggleCheck(item)} style={{ accentColor: '#10b981', width: 13, height: 13, cursor: 'pointer' }} />
+                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', background: item.is_done ? 'color-mix(in srgb, var(--color-success) 5%, transparent)' : 'transparent', borderRadius: 6 }}>
+                          <input type="checkbox" checked={item.is_done} onChange={() => void handleToggleCheck(item)} style={{ accentColor: 'var(--color-success)', width: 13, height: 13, cursor: 'pointer' }} />
                           <span style={{ fontSize: 12, color: item.is_done ? 'var(--text-muted)' : 'var(--text)', textDecoration: item.is_done ? 'line-through' : 'none', flex: 1 }}>{item.text}</span>
                         </div>
                       ))}
@@ -774,7 +774,7 @@ function TaskModal({ task: initialTask, employees, onClose, onUpdate, onDelete }
                     placeholder="Новый пункт чеклиста..."
                   />
                   <button onClick={() => void handleAddCheckItem()}
-                    style={{ height: 36, padding: '0 12px', background: 'color-mix(in srgb, #10b981 12%, transparent)', border: '1px solid color-mix(in srgb, #10b981 25%, transparent)', borderRadius: 8, color: '#10b981', fontSize: 13, cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>
+                    style={{ height: 36, padding: '0 12px', background: 'color-mix(in srgb, var(--color-success) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, color: 'var(--color-success)', fontSize: 13, cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>
                     +
                   </button>
                 </div>

@@ -65,19 +65,19 @@ export function ContextMenu({ x, y, items, onClose }: Props) {
             style={{
               display: 'flex', alignItems: 'center', gap: 9, width: '100%',
               padding: '8px 10px', background: 'transparent', border: 'none',
-              borderRadius: 8, color: mi.danger ? '#ef4444' : 'var(--text)',
+              borderRadius: 8, color: mi.danger ? 'var(--color-danger)' : 'var(--text)',
               fontSize: 13, cursor: 'pointer', textAlign: 'left',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.background = mi.danger
-                ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.06)'
+                ? 'var(--color-danger-muted)' : 'color-mix(in srgb, var(--border) 50%, transparent)'
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLElement).style.background = 'transparent'
             }}
           >
             {mi.icon && (
-              <span style={{ color: mi.danger ? '#ef4444' : 'var(--text-secondary)', display: 'flex', flexShrink: 0 }}>
+              <span style={{ color: mi.danger ? 'var(--color-danger)' : 'var(--text-secondary)', display: 'flex', flexShrink: 0 }}>
                 {mi.icon}
               </span>
             )}
