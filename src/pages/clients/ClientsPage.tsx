@@ -801,12 +801,12 @@ function ClientDetailModal({ client, onClose, onEdit, onSellSub }: ClientDetailM
                     maxWidth: '75%', padding: '8px 12px', fontSize: 13, lineHeight: 1.4,
                     borderRadius: m.sender === 'manager' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
                     background: m.sender === 'manager' ? 'var(--accent)' : 'var(--bg-surface)',
-                    color: m.sender === 'manager' ? '#fff' : 'var(--text)',
+                    color: m.sender === 'manager' ? 'var(--accent-fg)' : 'var(--text)',
                     border: m.sender === 'manager' ? 'none' : '1px solid var(--border)',
                   }}>
                     {m.sender === 'client' && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Клиент</div>}
                     {m.text}
-                    <div style={{ fontSize: 10, color: m.sender === 'manager' ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)', marginTop: 3, textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, color: m.sender === 'manager' ? 'color-mix(in srgb, var(--accent-fg) 60%, transparent)' : 'var(--text-muted)', marginTop: 3, textAlign: 'right' }}>
                       {new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>

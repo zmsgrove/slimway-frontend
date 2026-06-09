@@ -313,7 +313,7 @@ function BulkCreateModal({ selection, devices, date, onClose, onCreated }: BulkC
 
       <div style={{ display: 'flex', gap: 13 }}>
         <button onClick={() => void handleCreate()} disabled={saving}
-          style={{ flex: 1, height: 40, background: '#263CD9', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+          style={{ flex: 1, height: 40, background: 'var(--color-secondary)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Создание...' : `Создать ${selection.size} ячеек`}
         </button>
         <button onClick={onClose} style={{ height: 40, padding: '0 21px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>Отмена</button>

@@ -115,7 +115,7 @@ function AddFromCatalogModal({ allTemplates, connected, onConnect, onClose }: Ad
                   <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' }}>✓ Подключён</span>
                 ) : (
                   <button onClick={() => void handleConnect(tpl)} disabled={loading === tpl.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: loading === tpl.id ? 'wait' : 'pointer', opacity: loading === tpl.id ? 0.6 : 1 }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: 'var(--accent-fg)', fontSize: 12, fontWeight: 600, cursor: loading === tpl.id ? 'wait' : 'pointer', opacity: loading === tpl.id ? 0.6 : 1 }}>
                     <Link size={12} />{loading === tpl.id ? '...' : 'Добавить'}
                   </button>
                 )}

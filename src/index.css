@@ -142,9 +142,9 @@
 
 /* ─── Shadcn variable mapping → our theme tokens ───────────────────────────
    Applied per theme so shadcn components pick up our design system.
-   --accent in each theme block = muted hover surface (shadcn semantic meaning).
-   The [data-accent="..."] block below overrides --accent back to primary for
-   our own badge/button usage (accent selectors come later in the cascade).
+   NOTE: data-accent blocks (above) set --accent to the primary color.
+   This mapping block comes AFTER them in the document, so we must NOT
+   reassign --accent here — doing so would override the primary accent color.
 ────────────────────────────────────────────────────────────────────────── */
 
 :root[data-theme="black"],
@@ -171,8 +171,7 @@
   --primary-foreground:  var(--accent-fg);
   --muted:               var(--bg-card);
   --muted-foreground:    var(--text-muted);
-  --accent:              var(--accent-muted);
-  --accent-foreground:   var(--text);
+  --accent-foreground:   var(--accent-fg);
   --input:               var(--border);
   --ring:                var(--accent);
   --radius:              8px;

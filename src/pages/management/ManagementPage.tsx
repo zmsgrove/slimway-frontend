@@ -3,9 +3,10 @@ import ReactDOM from 'react-dom'
 import {
   Cpu, Plus, Trash2, AlertCircle, Building2, Briefcase, LayoutGrid,
   CreditCard, Package, Edit2, X, ChevronDown, Shield, Users, Tag, ClipboardList,
-  Globe, Zap, Clock, Copy, QrCode, Key,
+  Globe, Zap, Clock, Copy, QrCode, Key, Webhook,
 } from 'lucide-react'
 import ApiKeysPage from './ApiKeysPage'
+import WebhooksPage from './WebhooksPage'
 import { QRCodeSVG } from 'qrcode.react'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
@@ -2109,7 +2110,7 @@ function AutomationTab() {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users' | 'audit' | 'branch_settings' | 'booking' | 'automation' | 'api_keys'
+type ManagementTab = 'general' | 'subscriptions' | 'catalog' | 'permissions' | 'users' | 'audit' | 'branch_settings' | 'booking' | 'automation' | 'api_keys' | 'webhooks'
 
 export default function ManagementPage() {
   const { user } = useAuth()
@@ -2129,6 +2130,7 @@ export default function ManagementPage() {
     ...(isFranchiseeOrAbove ? [{ id: 'booking' as ManagementTab, label: 'Онлайн-запись', icon: <Globe size={14} strokeWidth={1.75} /> }] : []),
     ...(isFranchiseeOrAbove ? [{ id: 'automation' as ManagementTab, label: 'Автоворонка', icon: <Zap size={14} strokeWidth={1.75} /> }] : []),
     ...(isFranchiseeOrAbove ? [{ id: 'api_keys' as ManagementTab, label: 'API-ключи', icon: <Key size={14} strokeWidth={1.75} /> }] : []),
+    ...(isFranchiseeOrAbove ? [{ id: 'webhooks' as ManagementTab, label: 'Webhooks', icon: <Webhook size={14} strokeWidth={1.75} /> }] : []),
   ]
 
   return (
@@ -2197,6 +2199,9 @@ export default function ManagementPage() {
       )}
       {tab === 'api_keys' && isFranchiseeOrAbove && (
         <ApiKeysPage />
+      )}
+      {tab === 'webhooks' && isFranchiseeOrAbove && (
+        <WebhooksPage />
       )}
     </div>
   )

@@ -798,8 +798,8 @@ export default function ScheduleWorkPage() {
                     const wknd    = isWeekend(d)
                     const wIdx    = weekdayIndex(d)
                     return (
-                      <th key={iso} style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', background: isToday ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : wknd ? 'rgba(255,255,255,0.015)' : 'transparent', overflow: 'hidden' }}>
-                        <div style={{ fontSize: 10, fontWeight: 500, color: isToday ? 'var(--accent)' : wknd ? 'rgba(255,255,255,0.2)' : 'var(--text-muted)', lineHeight: 1.3, whiteSpace: 'nowrap' }}>
+                      <th key={iso} style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', background: isToday ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : wknd ? 'color-mix(in srgb, var(--border) 25%, transparent)' : 'transparent', overflow: 'hidden' }}>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: isToday ? 'var(--accent)' : wknd ? 'color-mix(in srgb, var(--text-muted) 60%, transparent)' : 'var(--text-muted)', lineHeight: 1.3, whiteSpace: 'nowrap' }}>
                           {WEEKDAYS_SHORT[wIdx]}
                         </div>
                         <div style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : wknd ? 'var(--text-muted)' : 'var(--text)', lineHeight: 1.3 }}>
