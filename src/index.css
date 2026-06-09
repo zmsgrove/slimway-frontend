@@ -140,6 +140,42 @@
 :root[data-accent="pink"]   { --accent: #db2777; --accent-hover: #be185d; --accent-muted: #fce7f3; --accent-fg: #fff; }
 :root[data-accent="gray"]   { --accent: #6b7280; --accent-hover: #4b5563; --accent-muted: #f3f4f6; --accent-fg: #fff; }
 
+/* ─── Semantic Status Tokens ─── */
+/* Dark themes: brighter values readable on dark backgrounds */
+:root,
+:root[data-theme="black"],
+:root[data-theme="dark"],
+:root[data-theme="dark-blue"],
+:root[data-theme="dark-green"],
+:root[data-theme="dark-purple"],
+:root[data-theme="coffee"] {
+  --color-success:       #10b981;
+  --color-success-muted: rgba(16,185,129,0.15);
+  --color-warning:       #f59e0b;
+  --color-warning-muted: rgba(245,158,11,0.15);
+  --color-danger:        #ef4444;
+  --color-danger-muted:  rgba(239,68,68,0.15);
+  --color-info:          #6366f1;
+  --color-info-muted:    rgba(99,102,241,0.15);
+}
+/* Light themes: deeper saturated values for sufficient contrast */
+:root[data-theme="white"],
+:root[data-theme="cream"],
+:root[data-theme="light-blue"],
+:root[data-theme="light-green"],
+:root[data-theme="lavender"],
+:root[data-theme="light-gray"],
+:root[data-theme="light"] {
+  --color-success:       #059669;
+  --color-success-muted: rgba(5,150,105,0.1);
+  --color-warning:       #d97706;
+  --color-warning-muted: rgba(217,119,6,0.1);
+  --color-danger:        #dc2626;
+  --color-danger-muted:  rgba(220,38,38,0.1);
+  --color-info:          #4f46e5;
+  --color-info-muted:    rgba(79,70,229,0.1);
+}
+
 /* ─── Shadcn variable mapping → our theme tokens ───────────────────────────
    Applied per theme so shadcn components pick up our design system.
    NOTE: data-accent blocks (above) set --accent to the primary color.
@@ -326,7 +362,7 @@ input, textarea, select { font-family: inherit; }
   border: 1px solid var(--border);
 }
 @media (hover: hover) and (pointer: fine) {
-  .btn-danger:not(:disabled):hover { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.4); color: #ef4444; }
+  .btn-danger:not(:disabled):hover { background: var(--color-danger-muted); border-color: color-mix(in srgb, var(--color-danger) 40%, transparent); color: var(--color-danger); }
 }
 .btn-danger:active { transform: scale(0.97); }
 
@@ -354,11 +390,11 @@ input, textarea, select { font-family: inherit; }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 .input-base.error {
-  border-color: rgba(239,68,68,0.6);
+  border-color: color-mix(in srgb, var(--color-danger) 60%, transparent);
 }
 .input-base.error:focus {
-  border-color: rgba(239,68,68,0.8);
-  box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+  border-color: color-mix(in srgb, var(--color-danger) 80%, transparent);
+  box-shadow: 0 0 0 3px var(--color-danger-muted);
 }
 
 /* ─── Badge Base ─── */
@@ -374,10 +410,10 @@ input, textarea, select { font-family: inherit; }
 }
 .badge-default  { background: color-mix(in srgb, var(--border) 80%, transparent); color: var(--text-secondary); }
 .badge-accent   { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); }
-.badge-success  { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
-.badge-warning  { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
-.badge-danger   { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
-.badge-info     { background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); }
+.badge-success  { background: var(--color-success-muted); color: var(--color-success); border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent); }
+.badge-warning  { background: var(--color-warning-muted); color: var(--color-warning); border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent); }
+.badge-danger   { background: var(--color-danger-muted);  color: var(--color-danger);  border: 1px solid color-mix(in srgb, var(--color-danger)  25%, transparent); }
+.badge-info     { background: var(--color-info-muted);    color: var(--color-info);    border: 1px solid color-mix(in srgb, var(--color-info)    25%, transparent); }
 
 /* ─── Sidebar Nav Item ─── */
 .nav-item {
@@ -568,9 +604,9 @@ input, textarea, select { font-family: inherit; }
   border-radius: 50%;
   flex-shrink: 0;
 }
-.status-dot-success { background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
-.status-dot-warning { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
-.status-dot-danger  { background: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.2); animation: pulse 1.5s ease-in-out infinite; }
+.status-dot-success { background: var(--color-success); box-shadow: 0 0 0 2px var(--color-success-muted); }
+.status-dot-warning { background: var(--color-warning); box-shadow: 0 0 0 2px var(--color-warning-muted); }
+.status-dot-danger  { background: var(--color-danger);  box-shadow: 0 0 0 2px var(--color-danger-muted); animation: pulse 1.5s ease-in-out infinite; }
 .status-dot-muted   { background: var(--text-muted); }
 
 /* ─── Reduced motion ─── */

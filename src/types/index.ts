@@ -417,6 +417,56 @@ export interface AnalyticsOverview {
   leads_funnel?: { status: string; count: number }[]
   leads_conversion?: number
   avg_ltv?: number
+  visits_by_day?: number[]
+  clients_by_day?: number[]
+  revenue_by_day?: number[]
+}
+
+export interface Badges {
+  leads_new: number
+  tasks_overdue: number
+  low_stock_items: number
+  notifications_unread: number
+  // dashboard metrics
+  clients_total?: number
+  clients_new_month?: number
+  clients_new_prev_month?: number
+  subscriptions_active?: number
+  subscriptions_expiring_7d?: number
+  subscriptions_sold_month?: number
+  subscriptions_sold_prev_month?: number
+  revenue_month?: number
+  revenue_prev_month?: number
+  visits_today?: number
+  visits_yesterday?: number
+  leads_total_month?: number
+  leads_converted_month?: number
+  tasks_my_today?: number
+  employees_on_shift?: number
+  schedule_slots_today?: number
+  schedule_slots_booked_today?: number
+  pending_bookings?: number
+  visits_by_day?: number[]
+  clients_by_day?: number[]
+  revenue_by_day?: number[]
+}
+
+export type WidgetId =
+  | 'clients_total' | 'subscriptions_active' | 'revenue_month' | 'visits_today'
+  | 'leads_new' | 'subscriptions_expiring' | 'tasks_overdue' | 'low_stock'
+  | 'leads_conversion' | 'employees_on_shift' | 'schedule_occupancy'
+  | 'chart_clients' | 'chart_revenue' | 'chart_visits'
+  | 'leads_funnel' | 'leads_sources'
+  | 'birthdays' | 'schedule_today' | 'my_tasks' | 'recent_leads' | 'recent_clients'
+
+export interface DashboardLayoutItem {
+  i: string; x: number; y: number; w: number; h: number
+  minW?: number; maxW?: number; minH?: number; maxH?: number
+}
+
+export interface DashboardLayoutData {
+  layout: DashboardLayoutItem[]
+  widgets: string[]
 }
 
 // ── v1.5.4 ───────────────────────────────────────────────────
@@ -467,13 +517,6 @@ export interface SupplierOrder {
   created_at: string
   suppliers?: { id: string; name: string } | null
   supplier_order_items?: SupplierOrderItem[]
-}
-
-export interface Badges {
-  leads_new: number
-  tasks_overdue: number
-  low_stock_items: number
-  notifications_unread: number
 }
 
 export interface BranchSubscriptionTemplate {
