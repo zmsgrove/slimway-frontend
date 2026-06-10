@@ -78,7 +78,7 @@ export function usePeriodFilter(pageName: string) {
         if (raw) return JSON.parse(raw) as SavedState
       } catch { /* ignore */ }
     }
-    return { type: 'month' }
+    return { type: 'today' }
   })
 
   const setPeriod = useCallback(

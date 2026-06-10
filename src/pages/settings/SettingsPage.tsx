@@ -43,12 +43,19 @@ const roleLabel: Record<string, string> = {
 const SOUND_FILES = ['OK.mp3', '2toon.mp3', 'classic.mp3', 'crash.mp3', 'disck.mp3', 'error.mp3', 'hw.mp3', 'old.mp3', 'old2.mp3', 'rim.mp3', 'steam.mp3', 'toon.mp3']
 
 const SOUND_EVENTS = [
-  { key: 'new_lead',          label: 'Новый лид' },
-  { key: 'new_task',          label: 'Новая задача' },
-  { key: 'task_assigned',     label: 'Назначена задача' },
-  { key: 'booking_created',   label: 'Бронь создана' },
-  { key: 'subscription_sold', label: 'Абонемент продан' },
-  { key: 'low_stock',         label: 'Низкий остаток' },
+  { key: 'new_lead',              label: 'Новый лид',                     desc: 'При добавлении нового лида' },
+  { key: 'new_task',              label: 'Новая задача',                   desc: 'При создании задачи' },
+  { key: 'task_assigned',         label: 'Назначена задача',               desc: 'Когда назначают задачу вам' },
+  { key: 'booking_created',       label: 'Бронь создана',                  desc: 'При создании записи на сеанс' },
+  { key: 'booking_confirmed',     label: 'Бронь подтверждена',             desc: 'Когда бронь подтверждена' },
+  { key: 'booking_pending',       label: 'Бронь ожидает подтверждения',    desc: 'Клиент записался через портал' },
+  { key: 'booking_cancelled',     label: 'Бронь отменена',                 desc: 'При отмене бронирования' },
+  { key: 'subscription_sold',     label: 'Абонемент продан',               desc: 'При продаже абонемента' },
+  { key: 'subscription_expiring', label: 'Абонемент истекает',             desc: 'За 7 дней до окончания' },
+  { key: 'shift_replacement',     label: 'Замена на смене',                desc: 'При назначении замены' },
+  { key: 'new_client',            label: 'Новый клиент',                   desc: 'При добавлении нового клиента' },
+  { key: 'payment_received',      label: 'Оплата получена',                desc: 'При подтверждении оплаты' },
+  { key: 'low_stock',             label: 'Низкий остаток',                 desc: 'Количество товара ниже минимума' },
 ]
 
 interface NotifSettings { muted: boolean; volume: number; events: Record<string, string> }
@@ -107,16 +114,19 @@ function NotificationsSection() {
       </div>
 
       <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Событие → Звук</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {SOUND_EVENTS.map(ev => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {SOUND_EVENTS.map((ev, i) => {
           const cur = s.events[ev.key] || 'OK.mp3'
           return (
-            <div key={ev.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{ev.label}</span>
+            <div key={ev.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: i < SOUND_EVENTS.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{ev.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{ev.desc}</div>
+              </div>
               <select value={cur} onChange={e => save({ events: { ...s.events, [ev.key]: e.target.value } })} style={selectStyle}>
                 {SOUND_FILES.map(f => <option key={f} value={f}>{f.replace('.mp3', '')}</option>)}
               </select>
-              <button onClick={() => preview(cur)} disabled={s.muted} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--accent)', cursor: s.muted ? 'not-allowed' : 'pointer', opacity: s.muted ? 0.4 : 1 }}>
+              <button onClick={() => preview(cur)} disabled={s.muted} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--accent)', cursor: s.muted ? 'not-allowed' : 'pointer', opacity: s.muted ? 0.4 : 1, flexShrink: 0 }}>
                 <Play size={12} />
               </button>
             </div>
@@ -555,11 +565,17 @@ function SecuritySection() {
 // ─── Notification Center settings ────────────────────────────────────────────
 
 const NOTIF_TYPES = [
-  { type: 'lead.assigned',      label: 'Назначен лид',               desc: 'Когда вам назначают нового лида' },
-  { type: 'task.assigned',      label: 'Назначена задача',            desc: 'Когда вам назначают задачу' },
-  { type: 'booking.pending',    label: 'Новая бронь от клиента',      desc: 'Онлайн-запись через клиентский портал' },
-  { type: 'subscription.sold',  label: 'Продан абонемент',            desc: 'Оформление нового абонемента' },
-  { type: 'system.update',      label: 'Системные уведомления',       desc: 'Обновления CRM и важные сообщения' },
+  { type: 'lead.assigned',          label: 'Назначен лид',                   desc: 'Когда вам назначают нового лида',             locked: false },
+  { type: 'task.assigned',          label: 'Назначена задача',                desc: 'Когда вам назначают задачу',                  locked: false },
+  { type: 'booking.pending',        label: 'Бронь ожидает подтверждения',     desc: 'Клиент записался через клиентский портал',    locked: false },
+  { type: 'booking.confirmed',      label: 'Бронь подтверждена/отклонена',    desc: 'Статус вашей брони изменён',                  locked: false },
+  { type: 'subscription.sold',      label: 'Продан абонемент',                desc: 'Оформление нового абонемента',                locked: false },
+  { type: 'subscription.expiring',  label: 'Абонемент истекает (7 дней)',     desc: 'За 7 дней до окончания абонемента клиента',   locked: false },
+  { type: 'subscription.expired',   label: 'Абонемент истёк',                 desc: 'Когда абонемент клиента истёк',               locked: false },
+  { type: 'shift.replacement',      label: 'Замена на смене',                 desc: 'Вас назначили как замену сотрудника',         locked: false },
+  { type: 'shift.tomorrow',         label: 'Напоминание о смене завтра',      desc: 'За день до начала вашей смены',               locked: false },
+  { type: 'payment.received',       label: 'Оплата получена',                 desc: 'При подтверждении оплаты',                   locked: false },
+  { type: 'system.update',          label: 'Системные уведомления',           desc: 'Обновления CRM и важные сообщения',           locked: true  },
 ]
 
 function loadNotifV2(): { disabledTypes: string[] } {
@@ -591,18 +607,21 @@ function NotificationCenterSection() {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         {NOTIF_TYPES.map((item, i) => {
-          const enabled  = isEnabled(item.type)
-          const isSystem = item.type === 'system.update'
+          const enabled = isEnabled(item.type)
+          const locked  = item.locked
           return (
             <div key={item.type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: i < NOTIF_TYPES.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{item.label}</div>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {item.label}
+                  {locked && <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: 'var(--color-info-muted)', color: 'var(--color-info)', border: '1px solid color-mix(in srgb, var(--color-info) 25%, transparent)' }}>SYSTEM</span>}
+                </div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.desc}</div>
               </div>
               <button
-                disabled={isSystem}
+                disabled={locked}
                 onClick={() => void toggle(item.type)}
-                style={{ flexShrink: 0, width: 44, height: 24, borderRadius: 12, border: 'none', cursor: isSystem ? 'not-allowed' : 'pointer', position: 'relative', background: enabled ? 'var(--accent)' : 'var(--border)', transition: 'background 0.2s', opacity: isSystem ? 0.5 : 1 }}
+                style={{ flexShrink: 0, width: 44, height: 24, borderRadius: 12, border: 'none', cursor: locked ? 'not-allowed' : 'pointer', position: 'relative', background: enabled ? 'var(--accent)' : 'var(--border)', transition: 'background 0.2s', opacity: locked ? 0.5 : 1 }}
               >
                 <span style={{ position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', left: enabled ? 22 : 2 }} />
               </button>

@@ -756,3 +756,32 @@ input, textarea, select { font-family: inherit; }
     @apply font-sans;
   }
 }
+
+/* ─── Dashboard resize handles ─── */
+.dashboard-edit-mode .react-resizable-handle {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+.dashboard-edit-mode .react-grid-item:hover .react-resizable-handle,
+.dashboard-edit-mode .react-grid-item.react-draggable-dragging .react-resizable-handle {
+  opacity: 1;
+}
+.react-resizable-handle-se {
+  width: 16px;
+  height: 16px;
+  bottom: 4px;
+  right: 4px;
+  background-image: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.react-resizable-handle-se::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 1px;
+  opacity: 0.7;
+}

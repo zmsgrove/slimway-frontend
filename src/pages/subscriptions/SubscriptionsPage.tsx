@@ -298,69 +298,47 @@ export default function SubscriptionsPage() {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 13 }}>
               {connectedTemplates.map(tpl => (
                 <div
                   key={tpl.id}
                   onClick={() => setViewTpl(tpl)}
                   onContextMenu={e => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, tpl }) }}
-                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 21, cursor: 'pointer', opacity: tpl.is_active ? 1 : 0.55 }}
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 13, padding: 18, cursor: 'pointer', opacity: tpl.is_active ? 1 : 0.55, display: 'flex', flexDirection: 'column', gap: 12, transition: 'border-color 150ms ease-out' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 13 }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{tpl.name}</div>
-                        {!tpl.is_active && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(113,113,122,0.15)', color: 'var(--text-muted)', border: '1px solid rgba(113,113,122,0.25)' }}>Неактивен</span>}
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Срок: {tpl.validity_days} дней</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3, marginBottom: 3 }}>{tpl.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.validity_days} дней</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {tpl.price != null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      {!tpl.is_active && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(113,113,122,0.15)', color: 'var(--text-muted)', border: '1px solid rgba(113,113,122,0.25)' }}>Неактивен</span>}
                       {isDeveloperOrOwner && (
                         <button onClick={e => { e.stopPropagation(); void handleDisconnect(tpl.id) }}
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
                           title="Убрать из филиала">
-                          <Unlink size={13} />
+                          <Unlink size={12} />
                         </button>
                       )}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_1_type)}33` }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_1_type) }}>{typeLabel(tpl.slot_1_type)}</span>
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_1_duration_min} мин</span>
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_1_sessions_total} сеансов</div>
-                    </div>
-                    {tpl.slot_2_type && tpl.slot_2_sessions_total && (
-                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_2_type!)}33` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_2_type!) }}>{typeLabel(tpl.slot_2_type!)}</span>
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_2_duration_min} мин</span>
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_2_sessions_total} сеансов</div>
-                      </div>
-                    )}
-                    {tpl.slot_3_type && tpl.slot_3_sessions_total && (
-                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_3_type!)}33` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_3_type!) }}>{typeLabel(tpl.slot_3_type!)}</span>
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_3_duration_min} мин</span>
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_3_sessions_total} сеансов</div>
-                      </div>
-                    )}
-                    {tpl.slot_4_type && tpl.slot_4_sessions_total && (
-                      <div style={{ flex: '1 1 120px', padding: '8px 13px', background: 'var(--bg-card)', borderRadius: 8, border: `1px solid ${typeColor(tpl.slot_4_type!)}33` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: typeColor(tpl.slot_4_type!) }}>{typeLabel(tpl.slot_4_type!)}</span>
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tpl.slot_4_duration_min} мин</span>
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{tpl.slot_4_sessions_total} сеансов</div>
-                      </div>
-                    )}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {[
+                      { type: tpl.slot_1_type, sessions: tpl.slot_1_sessions_total, duration: tpl.slot_1_duration_min },
+                      tpl.slot_2_type && tpl.slot_2_sessions_total ? { type: tpl.slot_2_type, sessions: tpl.slot_2_sessions_total, duration: tpl.slot_2_duration_min } : null,
+                      tpl.slot_3_type && tpl.slot_3_sessions_total ? { type: tpl.slot_3_type, sessions: tpl.slot_3_sessions_total, duration: tpl.slot_3_duration_min } : null,
+                      tpl.slot_4_type && tpl.slot_4_sessions_total ? { type: tpl.slot_4_type, sessions: tpl.slot_4_sessions_total, duration: tpl.slot_4_duration_min } : null,
+                    ].filter(Boolean).map((slot, i) => slot && (
+                      <span key={i} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: `color-mix(in srgb, ${typeColor(slot.type)} 10%, transparent)`, color: typeColor(slot.type), border: `1px solid color-mix(in srgb, ${typeColor(slot.type)} 20%, transparent)` }}>
+                        {typeLabel(slot.type)} · {slot.sessions} · {slot.duration}мин
+                      </span>
+                    ))}
                   </div>
+                  {tpl.price != null && (
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginTop: 'auto' }}>
+                      {new Intl.NumberFormat('ru-KZ').format(tpl.price)} ₸
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

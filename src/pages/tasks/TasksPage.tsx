@@ -83,17 +83,24 @@ function fmtDeadline(iso: string): { text: string; color: string; bg: string } {
 
 interface TaskCardProps {
   task: Task
+  employees?: Employee[]
   onClick: () => void
   onContextMenu: (e: React.MouseEvent) => void
   isDragging?: boolean
 }
 
-function TaskCardContent({ task, onClick, onContextMenu, isDragging }: TaskCardProps) {
+function TaskCardContent({ task, employees, onClick, onContextMenu, isDragging }: TaskCardProps) {
   const done    = task.task_checklist_items?.filter(c => c.is_done).length ?? 0
   const total   = task.task_checklist_items?.length ?? 0
   const comments = task.task_comments?.length ?? 0
   const deadline = task.deadline ? fmtDeadline(task.deadline) : null
   const pColor = PRIORITY_COLORS[task.priority]
+  const assignee = employees
+    ? (employees.find(e => e.profile_id === task.assigned_to) ?? employees.find(e => e.id === task.assigned_to))
+    : null
+  const assigneeInitials = assignee
+    ? (assignee.full_name.split(' ').slice(0, 2).map(s => s[0] ?? '').join('').toUpperCase())
+    : null
 
   return (
     <div
@@ -143,6 +150,18 @@ function TaskCardContent({ task, onClick, onContextMenu, isDragging }: TaskCardP
             <CheckSquare size={9} />{done}/{total}
           </span>
         )}
+        {assigneeInitials && (
+          <div style={{
+            marginLeft: 'auto',
+            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+            background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+            color: 'var(--accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 9, fontWeight: 700, letterSpacing: 0,
+          }}>
+            {assigneeInitials}
+          </div>
+        )}
       </div>
       {total > 0 && (
         <div style={{ marginTop: 6, height: 3, background: 'var(--border)', borderRadius: 2 }}>
@@ -158,7 +177,7 @@ function TaskCardContent({ task, onClick, onContextMenu, isDragging }: TaskCardP
 
 // ─── Draggable Card ───────────────────────────────────────────────────────────
 
-function DraggableCard({ task, onClick, onContextMenu }: TaskCardProps) {
+function DraggableCard({ task, employees, onClick, onContextMenu }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
@@ -167,16 +186,17 @@ function DraggableCard({ task, onClick, onContextMenu }: TaskCardProps) {
   }
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <TaskCardContent task={task} onClick={onClick} onContextMenu={onContextMenu} />
+      <TaskCardContent task={task} employees={employees} onClick={onClick} onContextMenu={onContextMenu} />
     </div>
   )
 }
 
 // ─── Droppable Column ─────────────────────────────────────────────────────────
 
-function DroppableColumn({ col, tasks, onAddTask, onClick, onContextMenu }: {
+function DroppableColumn({ col, tasks, employees, onAddTask, onClick, onContextMenu }: {
   col: { id: TaskStatus; label: string; color: string }
   tasks: Task[]
+  employees?: Employee[]
   onAddTask: () => void
   onClick: (t: Task) => void
   onContextMenu: (t: Task, e: React.MouseEvent) => void
@@ -210,6 +230,7 @@ function DroppableColumn({ col, tasks, onAddTask, onClick, onContextMenu }: {
           <DraggableCard
             key={task.id}
             task={task}
+            employees={employees}
             onClick={() => onClick(task)}
             onContextMenu={e => onContextMenu(task, e)}
           />
@@ -1095,6 +1116,7 @@ export default function TasksPage() {
               key={col.id}
               col={col}
               tasks={getColTasks(col.id)}
+              employees={employees}
               onAddTask={() => {
                 const targetStatus = (col.id === 'pending_close' || col.id === 'closed') ? 'new' : col.id
                 setCreateStatus(targetStatus)
@@ -1108,7 +1130,7 @@ export default function TasksPage() {
         <DragOverlay>
           {activeTask ? (
             <div style={{ transform: 'rotate(2deg) scale(1.02)', opacity: 0.95 }}>
-              <TaskCardContent task={activeTask} onClick={() => {}} onContextMenu={() => {}} isDragging />
+              <TaskCardContent task={activeTask} employees={employees} onClick={() => {}} onContextMenu={() => {}} isDragging />
             </div>
           ) : null}
         </DragOverlay>

@@ -285,7 +285,7 @@ export function WidgetLeadsSources({ editMode, onRemove, overview, loading }: Wi
       {loading ? <Skeleton className="h-full w-full rounded-lg" /> : data.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius="65%" paddingAngle={3}>
+            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="68%" paddingAngle={0}>
               {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
             </Pie>
             <Tooltip contentStyle={tooltipStyle} />

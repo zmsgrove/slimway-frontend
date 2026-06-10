@@ -284,10 +284,12 @@ export default function SalePage() {
   const navigate = useNavigate()
 
   // catalog data
-  const [templates,   setTemplates]   = useState<SubscriptionTemplate[]>([])
-  const [merch,       setMerch]       = useState<WarehouseItem[]>([])
-  const [nutrition,   setNutrition]   = useState<WarehouseItem[]>([])
-  const [loading,     setLoading]     = useState(true)
+  const [templates,       setTemplates]       = useState<SubscriptionTemplate[]>([])
+  const [merch,           setMerch]           = useState<WarehouseItem[]>([])
+  const [nutrition,       setNutrition]       = useState<WarehouseItem[]>([])
+  const [loading,         setLoading]         = useState(true)
+  const [searchSubs,      setSearchSubs]      = useState('')
+  const [searchWarehouse, setSearchWarehouse] = useState('')
 
   // cart
   const [cart,        setCart]        = useState<CartItem[]>([])
@@ -664,17 +666,25 @@ export default function SalePage() {
 
   const inCart = (id: string, type: CartItem['type']) => cart.find(c => c.id === id && c.type === type)?.qty ?? 0
 
+  const filteredTemplates = templates.filter(t =>
+    !searchSubs || t.name.toLowerCase().includes(searchSubs.toLowerCase())
+  )
+  const allWarehouse = [...merch, ...nutrition]
+  const filteredWarehouse = allWarehouse.filter(item =>
+    !searchWarehouse || item.name.toLowerCase().includes(searchWarehouse.toLowerCase())
+  )
+
   return (
-    <div style={{ maxWidth: 720 }}>
+    <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 21 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Продажа</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Добавьте товары в корзину</p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Добавьте товары в корзину</p>
         </div>
         <button
           onClick={() => { if (cart.length > 0) setStage('cart') }}
-          style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 18px', background: cartCount > 0 ? 'var(--accent)' : 'var(--bg-card)', border: `1px solid ${cartCount > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 13, color: cartCount > 0 ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: cartCount > 0 ? 'pointer' : 'default', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+          style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 18px', background: cartCount > 0 ? 'var(--accent)' : 'var(--bg-card)', border: `1px solid ${cartCount > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 13, color: cartCount > 0 ? 'var(--accent-fg)' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: cartCount > 0 ? 'pointer' : 'default', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
           <ShoppingCart size={18} strokeWidth={2} />
           {cartCount > 0 ? `Корзина · ${cartCount}` : 'Корзина пуста'}
         </button>
@@ -686,106 +696,121 @@ export default function SalePage() {
         <>
           {/* Subscriptions */}
           {templates.length > 0 && (
-            <div style={cardSt}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Абонементы</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {templates.map(tpl => {
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Абонементы</div>
+                <div style={{ position: 'relative' }}>
+                  <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                  <input
+                    placeholder="Поиск..."
+                    value={searchSubs}
+                    onChange={e => setSearchSubs(e.target.value)}
+                    style={{ height: 32, paddingLeft: 30, paddingRight: 10, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 12, outline: 'none', width: 180 }}
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {filteredTemplates.map(tpl => {
                   const qty = inCart(tpl.id, 'subscription')
                   return (
-                    <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>{tpl.name}</div>
-                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}>
-                            {DEVICE_LABELS[tpl.slot_1_type]} · {tpl.slot_1_sessions_total} сеансов
+                    <div key={tpl.id} style={{ background: qty > 0 ? 'color-mix(in srgb, var(--accent) 6%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)'}`, borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 150ms ease-out, background 150ms ease-out' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8, lineHeight: 1.3 }}>{tpl.name}</div>
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}>
+                            {DEVICE_LABELS[tpl.slot_1_type]} · {tpl.slot_1_sessions_total}
                           </span>
                           {tpl.slot_2_type && tpl.slot_2_sessions_total && (
-                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(38,60,217,0.10)', color: '#263CD9', border: '1px solid rgba(38,60,217,0.2)' }}>
-                              {DEVICE_LABELS[tpl.slot_2_type]} · {tpl.slot_2_sessions_total} сеансов
+                            <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'rgba(38,60,217,0.10)', color: '#263CD9', border: '1px solid rgba(38,60,217,0.2)' }}>
+                              {DEVICE_LABELS[tpl.slot_2_type]} · {tpl.slot_2_sessions_total}
                             </span>
                           )}
                           {tpl.slot_3_type && tpl.slot_3_sessions_total && (
-                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(139,92,246,0.10)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)' }}>
-                              {DEVICE_LABELS[tpl.slot_3_type]} · {tpl.slot_3_sessions_total} сеансов
+                            <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.10)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)' }}>
+                              {DEVICE_LABELS[tpl.slot_3_type]} · {tpl.slot_3_sessions_total}
                             </span>
                           )}
                           {tpl.slot_4_type && tpl.slot_4_sessions_total && (
-                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 20%, transparent)' }}>
-                              {DEVICE_LABELS[tpl.slot_4_type]} · {tpl.slot_4_sessions_total} сеансов
+                            <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 20%, transparent)' }}>
+                              {DEVICE_LABELS[tpl.slot_4_type]} · {tpl.slot_4_sessions_total}
                             </span>
                           )}
                           {tpl.is_trial && (
-                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)', fontWeight: 600 }}>ТЕСТ</span>
+                            <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)', fontWeight: 600 }}>ТЕСТ</span>
                           )}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                        {tpl.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{fmt(tpl.price)} ₸</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', gap: 8 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+                          {tpl.price !== null ? `${fmt(tpl.price)} ₸` : '—'}
+                        </span>
                         <button
                           onClick={() => addToCart({ id: tpl.id, type: 'subscription', name: tpl.name, price: tpl.price, qty: 1 })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? 'var(--accent)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
-                          <Plus size={12} />{qty > 0 ? `В корзине (${qty})` : 'В корзину'}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 10px', background: qty > 0 ? 'var(--accent)' : 'var(--bg)', border: `1px solid ${qty > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 7, cursor: 'pointer', color: qty > 0 ? 'var(--accent-fg)' : 'var(--text-muted)', fontSize: 11, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out', whiteSpace: 'nowrap' }}>
+                          <Plus size={11} />{qty > 0 ? `${qty} в корзине` : 'В корзину'}
                         </button>
                       </div>
                     </div>
                   )
                 })}
+                {filteredTemplates.length === 0 && searchSubs && (
+                  <div style={{ gridColumn: '1 / -1', fontSize: 13, color: 'var(--text-muted)', padding: '20px 0' }}>Ничего не найдено</div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Merch */}
-          {merch.length > 0 && (
-            <div style={cardSt}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Мерч</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {merch.map(item => {
-                  const qty = inCart(item.id, 'warehouse')
-                  return (
-                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'rgba(139,92,246,0.06)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'rgba(139,92,246,0.3)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>На складе: {item.quantity} {item.unit ?? 'шт.'}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                        {item.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{fmt(item.price)} ₸</span>}
-                        <button
-                          onClick={() => addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? '#8b5cf6' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? '#8b5cf6' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
-                          <Plus size={12} />{qty > 0 ? `В корзине (${qty})` : 'В корзину'}
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
+          {/* Warehouse (merch + nutrition) */}
+          {allWarehouse.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Товары</div>
+                <div style={{ position: 'relative' }}>
+                  <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                  <input
+                    placeholder="Поиск..."
+                    value={searchWarehouse}
+                    onChange={e => setSearchWarehouse(e.target.value)}
+                    style={{ height: 32, paddingLeft: 30, paddingRight: 10, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 12, outline: 'none', width: 180 }}
+                  />
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Nutrition */}
-          {nutrition.length > 0 && (
-            <div style={cardSt}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 13 }}>Питание</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {nutrition.map(item => {
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+                {filteredWarehouse.map(item => {
                   const qty = inCart(item.id, 'warehouse')
+                  const isMerch = merch.some(m => m.id === item.id)
+                  const accentColor = isMerch ? '#8b5cf6' : 'var(--color-success)'
+                  const outOfStock = item.quantity <= 0
                   return (
-                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', background: qty > 0 ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'color-mix(in srgb, var(--color-success) 30%, transparent)' : 'var(--border)'}`, borderRadius: 10, gap: 10 }}>
+                    <div key={item.id} style={{ background: qty > 0 ? `color-mix(in srgb, ${accentColor} 6%, var(--bg-card))` : 'var(--bg-card)', border: `1px solid ${qty > 0 ? `color-mix(in srgb, ${accentColor} 30%, transparent)` : 'var(--border)'}`, borderRadius: 10, padding: '11px 12px', display: 'flex', flexDirection: 'column', gap: 6, opacity: outOfStock ? 0.55 : 1, transition: 'border-color 150ms ease-out, background 150ms ease-out' }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{item.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>На складе: {item.quantity} {item.unit ?? 'шт.'}</div>
+                        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3, marginBottom: 4 }}>{item.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: `color-mix(in srgb, ${accentColor} 10%, transparent)`, color: accentColor, border: `1px solid color-mix(in srgb, ${accentColor} 20%, transparent)`, fontWeight: 600 }}>
+                            {isMerch ? 'Мерч' : 'Питание'}
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                        {item.price !== null && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{fmt(item.price)} ₸</span>}
+                      <div style={{ fontSize: 10, color: outOfStock ? 'var(--color-danger)' : 'var(--text-muted)' }}>
+                        {outOfStock ? 'Нет на складе' : `Склад: ${item.quantity} ${item.unit ?? 'шт.'}`}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginTop: 'auto' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>
+                          {item.price !== null ? `${fmt(item.price)} ₸` : '—'}
+                        </span>
                         <button
+                          disabled={outOfStock}
                           onClick={() => addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity })}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px', background: qty > 0 ? 'var(--color-success)' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'var(--color-success)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', color: qty > 0 ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
-                          <Plus size={12} />{qty > 0 ? `В корзине (${qty})` : 'В корзину'}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, background: qty > 0 ? accentColor : 'var(--bg)', border: `1px solid ${qty > 0 ? accentColor : 'var(--border)'}`, borderRadius: 6, cursor: outOfStock ? 'not-allowed' : 'pointer', color: qty > 0 ? '#fff' : 'var(--text-muted)', transition: 'background 150ms ease-out, border-color 150ms ease-out' }}>
+                          <Plus size={11} />
                         </button>
                       </div>
                     </div>
                   )
                 })}
+                {filteredWarehouse.length === 0 && searchWarehouse && (
+                  <div style={{ gridColumn: '1 / -1', fontSize: 13, color: 'var(--text-muted)', padding: '20px 0' }}>Ничего не найдено</div>
+                )}
               </div>
             </div>
           )}

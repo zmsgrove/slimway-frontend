@@ -132,7 +132,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     badgesApi.get().then(setBadges).catch(() => {})
-  }, [])
+  }, [selectedBranches])
 
   useEffect(() => {
     if (can('clients', 'read')) {
@@ -399,6 +399,7 @@ export default function DashboardPage() {
             margin={[16, 16]}
             isDraggable={editMode}
             isResizable={editMode}
+            resizeHandles={['se']}
             draggableHandle=".drag-handle"
             onLayoutChange={(newLayout: DashboardLayoutItem[]) => updateLayout(newLayout)}
             useCSSTransforms={true}

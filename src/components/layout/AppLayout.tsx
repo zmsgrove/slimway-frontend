@@ -23,6 +23,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import type { Badges } from '../../types'
 
 // ─── Page title map ───────────────────────────────────────────────────────────
@@ -228,7 +229,7 @@ function BranchSwitcher({ role, collapsed }: { role: string; collapsed: boolean 
 
   if (collapsed) {
     return (
-      <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ padding: '8px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
         <Tooltip>
           <TooltipTrigger asChild>
             <div style={{
@@ -249,7 +250,7 @@ function BranchSwitcher({ role, collapsed }: { role: string; collapsed: boolean 
 
   if (!canSwitch) {
     return (
-      <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ padding: '8px 14px 10px', borderBottom: '2px solid var(--border)' }}>
         <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Филиал</div>
         <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeBranch.name}</div>
       </div>
@@ -257,7 +258,7 @@ function BranchSwitcher({ role, collapsed }: { role: string; collapsed: boolean 
   }
 
   return (
-    <div ref={ref} style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
+    <div ref={ref} style={{ padding: '8px 14px 10px', borderBottom: '2px solid var(--border)', position: 'relative' }}>
       <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Филиал</div>
       <button
         onClick={() => setOpen(o => !o)}
@@ -424,17 +425,20 @@ function SidebarContent({
     <>
       {/* Logo + toggle */}
       <div style={{
-        padding: collapsed ? '16px 0' : '16px 14px 14px',
-        borderBottom: '1px solid var(--border)',
+        height: 56,
+        flexShrink: 0,
+        padding: collapsed ? '0' : '0 14px',
+        borderBottom: '2px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: collapsed ? 'center' : 'space-between',
         gap: 8,
+        position: 'relative',
       }}>
         {!collapsed && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <div style={{
-              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
               background: 'var(--accent)', color: 'var(--accent-fg)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 14, fontWeight: 700, letterSpacing: -0.5,
@@ -452,7 +456,7 @@ function SidebarContent({
 
         {collapsed && (
           <div style={{
-            width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
             background: 'var(--accent)', color: 'var(--accent-fg)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 14, fontWeight: 700, letterSpacing: -0.5,
@@ -461,17 +465,25 @@ function SidebarContent({
           </div>
         )}
 
-        {onToggle && (
+        {onToggle && !collapsed && (
           <button
             onClick={onToggle}
             className="sidebar-toggle"
-            title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+            title="Свернуть меню"
             style={{ flexShrink: 0 }}
           >
-            {collapsed
-              ? <ChevronRight size={13} strokeWidth={2} />
-              : <ChevronLeft size={13} strokeWidth={2} />
-            }
+            <ChevronLeft size={13} strokeWidth={2} />
+          </button>
+        )}
+
+        {onToggle && collapsed && (
+          <button
+            onClick={onToggle}
+            className="sidebar-toggle"
+            title="Развернуть меню"
+            style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)' }}
+          >
+            <ChevronRight size={13} strokeWidth={2} />
           </button>
         )}
       </div>
@@ -522,7 +534,7 @@ function SidebarContent({
       {/* Bottom nav */}
       <div style={{
         padding: collapsed ? '6px 8px' : '6px 8px',
-        borderTop: '1px solid var(--border)',
+        borderTop: '2px solid var(--border)',
         display: 'flex', flexDirection: 'column', gap: 1,
       }}>
         {groups.system.length > 0 && (
@@ -580,6 +592,92 @@ function SidebarContent({
         )}
       </div>
     </>
+  )
+}
+
+// ─── SummaryPopover ───────────────────────────────────────────────────────────
+
+function SummaryPopover({ user, badges }: { user: ReturnType<typeof useAuth>['user']; badges: Badges }) {
+  const getGreeting = (): string => {
+    const h = new Date().getHours()
+    if (h >= 5 && h < 12) return 'Доброе утро'
+    if (h >= 12 && h < 17) return 'Добрый день'
+    if (h >= 17 && h < 22) return 'Добрый вечер'
+    return 'Доброй ночи'
+  }
+
+  const firstName = user?.fullName?.split(' ')[0] ?? user?.email?.split('@')[0] ?? ''
+  const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  const kpi = [
+    { label: 'Новые лиды',       value: badges.leads_new,            color: 'var(--color-info)'    },
+    { label: 'Просроч. задачи',  value: badges.tasks_overdue,        color: 'var(--color-danger)'  },
+    { label: 'Мало товара',      value: badges.low_stock_items,      color: 'var(--color-warning)' },
+    { label: 'Уведомления',      value: badges.notifications_unread, color: 'var(--accent)'        },
+  ]
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className="icon-btn"
+          style={{
+            height: 32, padding: '0 10px',
+            fontSize: 12, fontWeight: 500,
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            color: 'var(--text)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Сводка
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        style={{
+          width: 240,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          padding: 0,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{
+          padding: '12px 14px 10px',
+          borderBottom: '1px solid var(--border)',
+          background: 'color-mix(in srgb, var(--accent) 5%, transparent)',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>
+            {getGreeting()}{firstName ? `, ${firstName}` : ''}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, textTransform: 'capitalize' }}>
+            {today}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+          {kpi.map((item, i) => (
+            <div key={item.label} style={{
+              padding: '12px 14px',
+              borderRight: i % 2 === 0 ? '1px solid var(--border)' : undefined,
+              borderBottom: i < 2 ? '1px solid var(--border)' : undefined,
+            }}>
+              <div style={{
+                fontSize: 24, fontWeight: 700, lineHeight: 1,
+                color: item.value > 0 ? item.color : 'var(--text-muted)',
+              }}>
+                {item.value}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.3 }}>
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -729,7 +827,7 @@ function AppLayoutInner() {
         width: sidebarWidth,
         display: 'flex', flexDirection: 'column',
         background: 'var(--bg-sidebar)',
-        borderRight: '1px solid var(--border)',
+        borderRight: '2px solid var(--border)',
         zIndex: 'var(--z-sidebar)' as unknown as number,
         transition: 'width 200ms var(--ease-out)',
         overflow: 'hidden',
@@ -769,7 +867,7 @@ function AppLayoutInner() {
           padding: '0 20px',
           gap: 12,
           background: 'var(--bg-sidebar)',
-          borderBottom: '1px solid var(--border)',
+          borderBottom: '2px solid var(--border)',
           zIndex: 'var(--z-header)' as unknown as number,
           transition: 'left 200ms var(--ease-out)',
         }}>
@@ -865,6 +963,9 @@ function AppLayoutInner() {
               <TooltipContent>{isDark ? 'Светлая тема' : 'Тёмная тема'}</TooltipContent>
             </Tooltip>
 
+            {/* Summary popover */}
+            <SummaryPopover user={user} badges={badges} />
+
             {/* Notification bell */}
             <NotificationBell />
 
@@ -885,7 +986,7 @@ function AppLayoutInner() {
                   <ChevronDown size={11} color="var(--text-muted)" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" style={{ minWidth: 180 }}>
+              <DropdownMenuContent align="end" style={{ minWidth: 180, background: 'var(--bg-card)', backdropFilter: 'none', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
                 <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
                     {user?.fullName || user?.email || ''}

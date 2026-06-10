@@ -517,6 +517,10 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
   const days = daysInStage(lead.status_changed_at, lead.created_at)
   const stageColor = days >= 7 ? 'var(--color-danger)' : days >= 3 ? 'var(--color-warning)' : 'var(--text-muted)'
 
+  const assigneeInitials = assignedEmp
+    ? assignedEmp.full_name.split(' ').slice(0, 2).map(s => s[0] ?? '').join('').toUpperCase()
+    : null
+
   return (
     <div
       draggable
@@ -531,42 +535,52 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
         borderLeft: `3px solid color-mix(in srgb, ${colColor} 60%, transparent)`,
       }}
     >
-      {/* Color bar */}
-      <div style={{ width: '100%', height: 2, background: `color-mix(in srgb, ${colColor} 40%, transparent)`, borderRadius: 2, marginBottom: 10 }} />
-
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 5, letterSpacing: '-0.01em' }}>
-        {lead.full_name}
+      {/* Top row: name + source badge */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3, letterSpacing: '-0.01em', flex: 1 }}>
+          {lead.full_name}
+        </div>
+        <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 5, flexShrink: 0, whiteSpace: 'nowrap',
+          background: `color-mix(in srgb, ${colColor} 10%, transparent)`,
+          color: colColor,
+          border: `1px solid color-mix(in srgb, ${colColor} 25%, transparent)`,
+        }}>
+          {SOURCE_LABELS[lead.source] ?? lead.source}
+        </span>
       </div>
 
       {lead.phone && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-secondary)', marginBottom: 5 }}>
-          <Phone size={11} color="var(--text-muted)" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+          <Phone size={11} />
           {lead.phone}
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, flexWrap: 'wrap', gap: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 5, background: 'var(--bg-surface)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
-            {SOURCE_LABELS[lead.source] ?? lead.source}
+      {/* Divider */}
+      <div style={{ height: 1, background: 'var(--border)', marginBottom: 7 }} />
+
+      {/* Bottom row: stage age + comments + assignee */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 10, color: stageColor, display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Clock size={9} />{days}д
+        </span>
+        {commentCount > 0 && (
+          <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <MessageCircle size={10} />{commentCount}
           </span>
-          {assignedEmp && (
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
-              <User size={9} />
-              {assignedEmp.full_name.split(' ')[0]}
-            </span>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ fontSize: 10, color: stageColor, display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Clock size={9} />{days}д
-          </span>
-          {commentCount > 0 && (
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
-              <MessageCircle size={10} />{commentCount}
-            </span>
-          )}
-        </div>
+        )}
+        {assigneeInitials && (
+          <div style={{
+            marginLeft: 'auto',
+            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+            background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+            color: 'var(--accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 9, fontWeight: 700,
+          }}>
+            {assigneeInitials}
+          </div>
+        )}
       </div>
     </div>
   )
