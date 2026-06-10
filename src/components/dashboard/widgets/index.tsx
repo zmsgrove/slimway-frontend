@@ -245,7 +245,8 @@ const FUNNEL_LABELS: Record<string, string> = {
   new: 'Новый', in_work: 'В работе', waiting: 'Ждём', success: 'Успешно', fail: 'Отказ',
 }
 const FUNNEL_COLORS: Record<string, string> = {
-  new: 'var(--color-info)', in_work: 'var(--color-warning)', waiting: '#f97316',
+  new: 'var(--color-info)', in_work: 'var(--color-warning)',
+  waiting: 'color-mix(in srgb, var(--color-warning) 55%, var(--color-danger))',
   success: 'var(--color-success)', fail: 'var(--color-danger)',
 }
 const PIE_COLORS = ['var(--accent)', 'var(--color-info)', 'var(--color-warning)', 'var(--color-success)', 'var(--color-danger)', '#8b5cf6', '#ec4899']
