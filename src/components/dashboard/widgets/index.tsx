@@ -166,7 +166,7 @@ export function WidgetChartClients({ editMode, onRemove, overview, loading }: Wi
     <Widget id="chart_clients" title="Новые клиенты" icon={<LineChartIcon size={14} />}
       editMode={editMode} onRemove={onRemove} loading={loading}>
       {loading ? <Skeleton className="h-full w-full rounded-lg" /> : data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
@@ -192,7 +192,7 @@ export function WidgetChartRevenue({ editMode, onRemove, overview, loading }: Wi
     <Widget id="chart_revenue" title="Выручка по месяцам" icon={<BarChart2 size={14} />}
       editMode={editMode} onRemove={onRemove} loading={loading}>
       {loading ? <Skeleton className="h-full w-full rounded-lg" /> : data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
@@ -218,7 +218,7 @@ export function WidgetChartVisits({ editMode, onRemove, badges, loading }: Widge
     <Widget id="chart_visits" title="Посещения (7 дней)" icon={<AreaChart size={14} />}
       editMode={editMode} onRemove={onRemove} loading={loading}>
       {loading ? <Skeleton className="h-full w-full rounded-lg" /> : (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={300}>
           <RAreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
             <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />

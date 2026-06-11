@@ -9,8 +9,6 @@ import { QRCodeSVG } from 'qrcode.react'
 import { clientsApi } from '../../api/clients.api'
 import { api } from '../../lib/api'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PeriodFilter } from '../../components/ui/PeriodFilter'
-import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { useAuth } from '../../hooks/useAuth'
@@ -1249,14 +1247,11 @@ export default function ClientsPage() {
   const [editTarget,   setEditTarget]  = useState<Client | null>(null)
   const [viewTarget,   setViewTarget]  = useState<Client | null>(null)
   const [ctxMenu,      setCtxMenu]     = useState<CtxMenu | null>(null)
-  const { period, customFrom, customTo, dateFromStr, dateToStr, setPeriod, remember, setRemember } = usePeriodFilter('clients')
-
   const load = useCallback(async (q?: string) => {
     setLoading(true); setError(null)
     try {
       setClients(await clientsApi.getAll({
         ...(q ? { search: q } : {}),
-        from: dateFromStr, to: dateToStr,
       }))
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error
@@ -1264,7 +1259,7 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
     }
-  }, [dateFromStr, dateToStr])
+  }, [])
 
   useEffect(() => { void load() }, [load])
 
@@ -1375,14 +1370,6 @@ export default function ClientsPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-        <PeriodFilter
-          period={period}
-          customFrom={customFrom}
-          customTo={customTo}
-          remember={remember}
-          onChange={setPeriod}
-          onRememberChange={setRemember}
-        />
         <select
           value={filterSource}
           onChange={e => setFilterSource(e.target.value)}

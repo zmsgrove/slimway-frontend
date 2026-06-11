@@ -633,6 +633,62 @@ function NotificationCenterSection() {
   )
 }
 
+// ─── SummarySection ──────────────────────────────────────────────────────────
+
+interface SummarySettings {
+  showWeather: boolean
+  showLeads: boolean
+  showBookings: boolean
+  showReminders: boolean
+}
+
+function SummarySection() {
+  const [settings, setSettings] = useState<SummarySettings>(() => {
+    try {
+      const raw = localStorage.getItem('summarySettings')
+      if (raw) return { showWeather: true, showLeads: true, showBookings: true, showReminders: true, ...JSON.parse(raw) }
+    } catch { /* ignore */ }
+    return { showWeather: true, showLeads: true, showBookings: true, showReminders: true }
+  })
+
+  const toggle = (key: keyof SummarySettings) => {
+    const next = { ...settings, [key]: !settings[key] }
+    setSettings(next)
+    try { localStorage.setItem('summarySettings', JSON.stringify(next)) } catch { /* ignore */ }
+  }
+
+  const toggleItems: { key: keyof SummarySettings; label: string; desc: string }[] = [
+    { key: 'showWeather',   label: 'Погода',             desc: 'Показывать текущую погоду' },
+    { key: 'showLeads',     label: 'Лиды',               desc: 'Новые лиды и конверсия' },
+    { key: 'showBookings',  label: 'Брони',              desc: 'Брони на сегодня и ожидающие' },
+    { key: 'showReminders', label: 'Напоминания',         desc: 'Предупреждения о важных событиях' },
+  ]
+
+  return (
+    <Section title="Сводка" icon={<Bell size={15} strokeWidth={1.75} color="var(--accent)" />}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {toggleItems.map((item, i) => {
+          const enabled = settings[item.key]
+          return (
+            <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < toggleItems.length - 1 ? '1px solid var(--border)' : undefined }}>
+              <div>
+                <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{item.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.desc}</div>
+              </div>
+              <button
+                onClick={() => toggle(item.key)}
+                style={{ flexShrink: 0, width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', position: 'relative', background: enabled ? 'var(--accent)' : 'var(--border)', transition: 'background 0.2s' }}
+              >
+                <span style={{ position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', left: enabled ? 22 : 2 }} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </Section>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 type SettingsTab = 'profile' | 'security'
@@ -698,6 +754,7 @@ export default function SettingsPage() {
           <AppearanceSection />
           <NotificationsSection />
           <NotificationCenterSection />
+          <SummarySection />
         </>
       )}
 

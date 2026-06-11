@@ -554,7 +554,7 @@ input, textarea, select { font-family: inherit; }
 }
 @media (hover: hover) and (pointer: fine) {
   .kanban-card:hover {
-    border-color: color-mix(in srgb, var(--border) 40%, var(--text-muted) 60%);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }

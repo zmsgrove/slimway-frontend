@@ -311,6 +311,10 @@ export default function SalePage() {
   // receipt
   const [receipt,     setReceipt]     = useState<CheckoutResult | null>(null)
 
+  // detail modals
+  const [selectedTemplate, setSelectedTemplate] = useState<SubscriptionTemplate | null>(null)
+  const [selectedWHItem,   setSelectedWHItem]   = useState<WarehouseItem | null>(null)
+
   useEffect(() => {
     setLoading(true)
     Promise.all([
@@ -676,6 +680,125 @@ export default function SalePage() {
 
   return (
     <div>
+      {/* Subscription detail modal */}
+      {selectedTemplate && (() => {
+        const tpl = selectedTemplate
+        const qty = inCart(tpl.id, 'subscription')
+        const slots = [
+          tpl.slot_1_type ? { type: tpl.slot_1_type, duration: tpl.slot_1_duration_min, sessions: tpl.slot_1_sessions_total } : null,
+          tpl.slot_2_type ? { type: tpl.slot_2_type, duration: tpl.slot_2_duration_min, sessions: tpl.slot_2_sessions_total } : null,
+          tpl.slot_3_type ? { type: tpl.slot_3_type, duration: tpl.slot_3_duration_min, sessions: tpl.slot_3_sessions_total } : null,
+          tpl.slot_4_type ? { type: tpl.slot_4_type, duration: tpl.slot_4_duration_min, sessions: tpl.slot_4_sessions_total } : null,
+        ].filter(Boolean) as { type: DeviceType; duration: number; sessions: number }[]
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            onClick={() => setSelectedTemplate(null)}
+          >
+            <div
+              className="modal-animate"
+              onClick={e => e.stopPropagation()}
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 28, width: '100%', maxWidth: 440, boxShadow: '0 24px 64px rgba(0,0,0,0.35)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{tpl.name}</span>
+                    {tpl.is_trial && (
+                      <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'var(--color-warning-muted)', color: 'var(--color-warning)', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)', fontWeight: 700 }}>ТЕСТ</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Срок действия: {tpl.validity_days} дней</div>
+                </div>
+                <button onClick={() => setSelectedTemplate(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4, flexShrink: 0 }}><X size={16} /></button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                {slots.map((slot, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'color-mix(in srgb, var(--accent) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)', borderRadius: 10 }}>
+                    <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{DEVICE_LABELS[slot.type]}</span>
+                    <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+                      <span>{slot.duration} мин</span>
+                      <span>·</span>
+                      <span>{slot.sessions} занятий</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', marginBottom: 20 }}>
+                {tpl.price !== null ? `${fmt(tpl.price)} ₸` : '—'}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => { addToCart({ id: tpl.id, type: 'subscription', name: tpl.name, price: tpl.price, qty: 1 }); setSelectedTemplate(null) }}
+                  style={{ flex: 1, height: 44, background: 'var(--accent)', border: 'none', borderRadius: 10, color: 'var(--accent-fg)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  {qty > 0 ? `В корзине: ${qty} — добавить ещё` : 'Добавить в корзину'}
+                </button>
+                <button
+                  onClick={() => setSelectedTemplate(null)}
+                  style={{ height: 44, padding: '0 18px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}
+                >
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Warehouse item detail modal */}
+      {selectedWHItem && (() => {
+        const item = selectedWHItem
+        const qty = inCart(item.id, 'warehouse')
+        const isMerch = merch.some(m => m.id === item.id)
+        const accentColor = isMerch ? '#8b5cf6' : 'var(--color-success)'
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            onClick={() => setSelectedWHItem(null)}
+          >
+            <div
+              className="modal-animate"
+              onClick={e => e.stopPropagation()}
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 28, width: '100%', maxWidth: 380, boxShadow: '0 24px 64px rgba(0,0,0,0.35)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{item.name}</span>
+                    <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: `color-mix(in srgb, ${accentColor} 12%, transparent)`, color: accentColor, border: `1px solid color-mix(in srgb, ${accentColor} 25%, transparent)`, fontWeight: 600 }}>{isMerch ? 'Мерч' : 'Питание'}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>На складе: {item.quantity} {item.unit ?? 'шт.'}</div>
+                </div>
+                <button onClick={() => setSelectedWHItem(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4, flexShrink: 0 }}><X size={16} /></button>
+              </div>
+
+              <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', marginBottom: 20 }}>
+                {item.price !== null ? `${fmt(item.price)} ₸` : '—'}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => { addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity }); setSelectedWHItem(null) }}
+                  style={{ flex: 1, height: 44, background: 'var(--accent)', border: 'none', borderRadius: 10, color: 'var(--accent-fg)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  {qty > 0 ? `В корзине: ${qty} — добавить ещё` : 'Добавить в корзину'}
+                </button>
+                <button
+                  onClick={() => setSelectedWHItem(null)}
+                  style={{ height: 44, padding: '0 18px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}
+                >
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
@@ -713,7 +836,7 @@ export default function SalePage() {
                 {filteredTemplates.map(tpl => {
                   const qty = inCart(tpl.id, 'subscription')
                   return (
-                    <div key={tpl.id} style={{ background: qty > 0 ? 'color-mix(in srgb, var(--accent) 6%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)'}`, borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 150ms ease-out, background 150ms ease-out' }}>
+                    <div key={tpl.id} onClick={() => setSelectedTemplate(tpl)} style={{ background: qty > 0 ? 'color-mix(in srgb, var(--accent) 6%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${qty > 0 ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'var(--border)'}`, borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 150ms ease-out, background 150ms ease-out', cursor: 'pointer' }}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8, lineHeight: 1.3 }}>{tpl.name}</div>
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -745,7 +868,7 @@ export default function SalePage() {
                           {tpl.price !== null ? `${fmt(tpl.price)} ₸` : '—'}
                         </span>
                         <button
-                          onClick={() => addToCart({ id: tpl.id, type: 'subscription', name: tpl.name, price: tpl.price, qty: 1 })}
+                          onClick={e => { e.stopPropagation(); addToCart({ id: tpl.id, type: 'subscription', name: tpl.name, price: tpl.price, qty: 1 }) }}
                           style={{ display: 'flex', alignItems: 'center', gap: 5, height: 30, padding: '0 10px', background: qty > 0 ? 'var(--accent)' : 'var(--bg)', border: `1px solid ${qty > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 7, cursor: 'pointer', color: qty > 0 ? 'var(--accent-fg)' : 'var(--text-muted)', fontSize: 11, fontWeight: 600, transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out', whiteSpace: 'nowrap' }}>
                           <Plus size={11} />{qty > 0 ? `${qty} в корзине` : 'В корзину'}
                         </button>
@@ -782,7 +905,7 @@ export default function SalePage() {
                   const accentColor = isMerch ? '#8b5cf6' : 'var(--color-success)'
                   const outOfStock = item.quantity <= 0
                   return (
-                    <div key={item.id} style={{ background: qty > 0 ? `color-mix(in srgb, ${accentColor} 6%, var(--bg-card))` : 'var(--bg-card)', border: `1px solid ${qty > 0 ? `color-mix(in srgb, ${accentColor} 30%, transparent)` : 'var(--border)'}`, borderRadius: 10, padding: '11px 12px', display: 'flex', flexDirection: 'column', gap: 6, opacity: outOfStock ? 0.55 : 1, transition: 'border-color 150ms ease-out, background 150ms ease-out' }}>
+                    <div key={item.id} onClick={() => !outOfStock && setSelectedWHItem(item)} style={{ background: qty > 0 ? `color-mix(in srgb, ${accentColor} 6%, var(--bg-card))` : 'var(--bg-card)', border: `1px solid ${qty > 0 ? `color-mix(in srgb, ${accentColor} 30%, transparent)` : 'var(--border)'}`, borderRadius: 10, padding: '11px 12px', display: 'flex', flexDirection: 'column', gap: 6, opacity: outOfStock ? 0.55 : 1, transition: 'border-color 150ms ease-out, background 150ms ease-out', cursor: outOfStock ? 'not-allowed' : 'pointer' }}>
                       <div>
                         <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3, marginBottom: 4 }}>{item.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -800,7 +923,7 @@ export default function SalePage() {
                         </span>
                         <button
                           disabled={outOfStock}
-                          onClick={() => addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity })}
+                          onClick={e => { e.stopPropagation(); addToCart({ id: item.id, type: 'warehouse', name: item.name, price: item.price, qty: 1, maxQty: item.quantity }) }}
                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, background: qty > 0 ? accentColor : 'var(--bg)', border: `1px solid ${qty > 0 ? accentColor : 'var(--border)'}`, borderRadius: 6, cursor: outOfStock ? 'not-allowed' : 'pointer', color: qty > 0 ? '#fff' : 'var(--text-muted)', transition: 'background 150ms ease-out, border-color 150ms ease-out' }}>
                           <Plus size={11} />
                         </button>

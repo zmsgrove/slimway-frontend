@@ -4,7 +4,7 @@ import {
   CreditCard, ShoppingCart, CheckSquare, MessageSquare,
   UserCheck, CalendarClock, ChevronDown, Package,
   Wrench, Shield, X, DollarSign, ChevronLeft, ChevronRight,
-  TrendingUp, ClipboardList, Search, User,
+  TrendingUp, ClipboardList, Search, User, Sparkles,
 } from 'lucide-react'
 import { NotificationBell } from '../ui/NotificationBell'
 import { useEffect, useState, useRef, useCallback } from 'react'
@@ -23,7 +23,6 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import type { Badges } from '../../types'
 
 // ─── Page title map ───────────────────────────────────────────────────────────
@@ -595,89 +594,168 @@ function SidebarContent({
   )
 }
 
-// ─── SummaryPopover ───────────────────────────────────────────────────────────
+// ─── SummaryModal ─────────────────────────────────────────────────────────────
 
-function SummaryPopover({ user, badges }: { user: ReturnType<typeof useAuth>['user']; badges: Badges }) {
-  const getGreeting = (): string => {
-    const h = new Date().getHours()
-    if (h >= 5 && h < 12) return 'Доброе утро'
-    if (h >= 12 && h < 17) return 'Добрый день'
-    if (h >= 17 && h < 22) return 'Добрый вечер'
-    return 'Доброй ночи'
-  }
+interface SummarySettings {
+  showWeather: boolean
+  showLeads: boolean
+  showBookings: boolean
+  showReminders: boolean
+}
+
+function loadSummarySettings(): SummarySettings {
+  try {
+    const raw = localStorage.getItem('summarySettings')
+    if (raw) return { showWeather: true, showLeads: true, showBookings: true, showReminders: true, ...JSON.parse(raw) }
+  } catch { /* ignore */ }
+  return { showWeather: true, showLeads: true, showBookings: true, showReminders: true }
+}
+
+function SummaryModal({ user, badges, branchCity }: { user: ReturnType<typeof useAuth>['user']; badges: Badges; branchCity: string | null }) {
+  const [open, setOpen] = useState(false)
+  const settings = loadSummarySettings()
+
+  const h = new Date().getHours()
+  const greeting =
+    h >= 7 && h < 10 ? 'Доброе утро 🌅' :
+    h >= 10 && h < 18 ? 'Добрый день ☀️' :
+    h >= 18 && h < 22 ? 'Добрый вечер 🌆' :
+    'Доброй ночи 🌙'
 
   const firstName = user?.fullName?.split(' ')[0] ?? user?.email?.split('@')[0] ?? ''
   const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  const kpi = [
-    { label: 'Новые лиды',       value: badges.leads_new,            color: 'var(--color-info)'    },
-    { label: 'Просроч. задачи',  value: badges.tasks_overdue,        color: 'var(--color-danger)'  },
-    { label: 'Мало товара',      value: badges.low_stock_items,      color: 'var(--color-warning)' },
-    { label: 'Уведомления',      value: badges.notifications_unread, color: 'var(--accent)'        },
-  ]
+  const weatherCache = (() => {
+    try {
+      if (!branchCity) return null
+      const raw = localStorage.getItem(`slimway_weather_${branchCity}`)
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (Date.now() - parsed.ts > 30 * 60 * 1000) return null
+      return parsed
+    } catch { return null }
+  })()
+
+  const conversionPct = badges.leads_total_month && badges.leads_total_month > 0
+    ? Math.round(((badges.leads_converted_month ?? 0) / badges.leads_total_month) * 100)
+    : null
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          className="icon-btn"
-          style={{
-            height: 32, padding: '0 10px',
-            fontSize: 12, fontWeight: 500,
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            color: 'var(--text)',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Сводка
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
+    <>
+      <button
+        onClick={() => setOpen(true)}
         style={{
-          width: 240,
+          display: 'flex', alignItems: 'center', gap: 6,
+          height: 32, padding: '0 12px',
           background: 'var(--bg-card)',
           border: '1px solid var(--border)',
-          borderRadius: 12,
-          padding: 0,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          overflow: 'hidden',
+          borderRadius: 9999,
+          color: 'var(--text)',
+          fontSize: 12, fontWeight: 500,
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          transition: 'border-color 150ms ease-out, background 150ms ease-out',
+        }}
+        onMouseEnter={e => {
+          const el = e.currentTarget
+          el.style.borderColor = 'color-mix(in srgb, var(--accent) 50%, transparent)'
+          el.style.background = 'color-mix(in srgb, var(--accent) 5%, var(--bg-card))'
+        }}
+        onMouseLeave={e => {
+          const el = e.currentTarget
+          el.style.borderColor = 'var(--border)'
+          el.style.background = 'var(--bg-card)'
         }}
       >
-        <div style={{
-          padding: '12px 14px 10px',
-          borderBottom: '1px solid var(--border)',
-          background: 'color-mix(in srgb, var(--accent) 5%, transparent)',
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>
-            {getGreeting()}{firstName ? `, ${firstName}` : ''}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, textTransform: 'capitalize' }}>
-            {today}
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-          {kpi.map((item, i) => (
-            <div key={item.label} style={{
-              padding: '12px 14px',
-              borderRight: i % 2 === 0 ? '1px solid var(--border)' : undefined,
-              borderBottom: i < 2 ? '1px solid var(--border)' : undefined,
-            }}>
-              <div style={{
-                fontSize: 24, fontWeight: 700, lineHeight: 1,
-                color: item.value > 0 ? item.color : 'var(--text-muted)',
-              }}>
-                {item.value}
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.3 }}>
-                {item.label}
+        <Sparkles size={13} style={{ color: 'var(--accent)' }} />
+        Сводка
+      </button>
+
+      {open && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="modal-animate"
+            onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: 680, minHeight: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.35)', overflow: 'hidden' }}
+          >
+            {/* Header */}
+            <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--accent) 4%, transparent)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+                    {greeting}{firstName ? `, ${firstName}` : ''}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{today}</div>
+                </div>
+                <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}><X size={18} /></button>
               </div>
             </div>
-          ))}
+
+            {/* Grid sections */}
+            <div style={{ padding: '20px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {settings.showWeather && (
+                <div style={{ background: 'color-mix(in srgb, var(--color-info) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--color-info) 20%, transparent)', borderRadius: 'var(--radius-lg)', padding: '16px 18px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Погода</div>
+                  {weatherCache ? (
+                    <div>
+                      <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{Math.round(weatherCache.temp)}°C</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{branchCity} · {weatherCache.description}</div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{branchCity ? 'Загрузка...' : 'Город не задан'}</div>
+                  )}
+                </div>
+              )}
+
+              {settings.showLeads && (
+                <div style={{ background: 'color-mix(in srgb, var(--accent) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)', borderRadius: 'var(--radius-lg)', padding: '16px 18px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Лиды</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{badges.leads_new}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>новых</div>
+                  </div>
+                  {conversionPct !== null && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Конверсия: {conversionPct}%</div>
+                  )}
+                </div>
+              )}
+
+              {settings.showBookings && (
+                <div style={{ background: 'color-mix(in srgb, var(--color-success) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--color-success) 20%, transparent)', borderRadius: 'var(--radius-lg)', padding: '16px 18px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-success)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Брони</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{badges.schedule_slots_booked_today ?? 0}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>сегодня</div>
+                  </div>
+                  {(badges.pending_bookings ?? 0) > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--color-warning)', marginTop: 6 }}>{badges.pending_bookings} ожидают подтверждения</div>
+                  )}
+                </div>
+              )}
+
+              <div style={{ background: 'color-mix(in srgb, var(--border) 40%, transparent)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 18px' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Задачи</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: badges.tasks_overdue > 0 ? 'var(--color-danger)' : 'var(--text)', lineHeight: 1 }}>{badges.tasks_overdue}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>просрочено</div>
+                </div>
+              </div>
+            </div>
+
+            {settings.showReminders && (badges.pending_bookings ?? 0) > 0 && (
+              <div style={{ margin: '0 28px 20px', padding: '12px 16px', background: 'color-mix(in srgb, var(--color-warning) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-warning) 25%, transparent)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ fontSize: 13, color: 'var(--color-warning)', fontWeight: 500 }}>
+                  ⚠️ {badges.pending_bookings} {(badges.pending_bookings ?? 0) === 1 ? 'бронь ожидает' : 'брони ожидают'} подтверждения
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      )}
+    </>
   )
 }
 
@@ -931,20 +1009,12 @@ function AppLayoutInner() {
 
           {/* Right side controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {/* Summary modal */}
+            <SummaryModal user={user} badges={badges} branchCity={branchCity} />
+
             <WeatherTimeBlock city={branchCity} timezone={branchTimezone} />
 
             <ServerStatusDot status={serverStatus} latency={serverLatency} />
-
-            {user?.role === 'developer' && (
-              <span style={{
-                background: 'rgba(38,60,217,0.12)', color: '#263CD9',
-                border: '1px solid rgba(38,60,217,0.3)',
-                fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
-                letterSpacing: '0.05em', flexShrink: 0,
-              }}>
-                DEV
-              </span>
-            )}
 
             {/* Theme toggle */}
             <Tooltip>
@@ -963,8 +1033,16 @@ function AppLayoutInner() {
               <TooltipContent>{isDark ? 'Светлая тема' : 'Тёмная тема'}</TooltipContent>
             </Tooltip>
 
-            {/* Summary popover */}
-            <SummaryPopover user={user} badges={badges} />
+            {user?.role === 'developer' && (
+              <span style={{
+                background: 'rgba(38,60,217,0.12)', color: '#263CD9',
+                border: '1px solid rgba(38,60,217,0.3)',
+                fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
+                letterSpacing: '0.05em', flexShrink: 0,
+              }}>
+                DEV
+              </span>
+            )}
 
             {/* Notification bell */}
             <NotificationBell />

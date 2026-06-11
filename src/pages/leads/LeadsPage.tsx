@@ -531,13 +531,16 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
       className="kanban-card"
       style={{
         opacity: isDragging ? 0.35 : 1,
-        transform: isDragging ? 'rotate(2deg) scale(1.02)' : 'none',
-        borderLeft: `3px solid color-mix(in srgb, ${colColor} 60%, transparent)`,
+        transform: isDragging ? 'rotate(1deg)' : 'none',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '12px 14px',
       }}
     >
       {/* Top row: name + source badge */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 6 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3, letterSpacing: '-0.01em', flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3, letterSpacing: '-0.01em', flex: 1 }}>
           {lead.full_name}
         </div>
         <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 5, flexShrink: 0, whiteSpace: 'nowrap',
@@ -569,16 +572,20 @@ function LeadCard({ lead, colColor, isDragging, employees, onClick, onDragStart,
             <MessageCircle size={10} />{commentCount}
           </span>
         )}
-        {assigneeInitials && (
-          <div style={{
-            marginLeft: 'auto',
-            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-            background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-            color: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 9, fontWeight: 700,
-          }}>
-            {assigneeInitials}
+        {assignedEmp && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%',
+              background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+              color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontWeight: 700, flexShrink: 0,
+            }}>
+              {assigneeInitials}
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {assignedEmp.full_name.split(' ')[0]}
+            </span>
           </div>
         )}
       </div>
