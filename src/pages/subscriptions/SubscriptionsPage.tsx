@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { CreditCard, Plus, X, AlertCircle, Trash2, Eye, ToggleLeft, ToggleRight, Search, Link, Unlink } from 'lucide-react'
 import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { subscriptionTemplatesApi } from '../../api/subscription-templates.api'
 import { branchSubscriptionTemplatesApi } from '../../api/branch-subscription-templates.api'
@@ -226,14 +227,10 @@ export default function SubscriptionsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
-        <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Абонементы</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-            {connected.length} подключено к филиалу · {allTemplates.length} в каталоге
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <PageHeader
+        title="Абонементы"
+        subtitle={`${connected.length} подключено к филиалу · ${allTemplates.length} в каталоге`}
+        actions={<>
           {tab === 'sold' && (
             <PeriodFilter
               period={period}
@@ -245,13 +242,12 @@ export default function SubscriptionsPage() {
             />
           )}
           {tab === 'branch' && (
-            <button onClick={() => setShowCatalog(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 21px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
+            <button onClick={() => setShowCatalog(true)} className="btn btn-primary" style={{ gap: 6 }}>
               <Plus size={15} strokeWidth={2} />Добавить из каталога
             </button>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       {/* Tabs */}
       <div style={{

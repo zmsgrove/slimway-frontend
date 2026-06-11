@@ -18,6 +18,26 @@
   --space-20: 80px;
 }
 
+/* ── Fibonacci spacing ── */
+:root {
+  --fib-1: 8px;
+  --fib-2: 13px;
+  --fib-3: 21px;
+  --fib-4: 34px;
+  --fib-5: 55px;
+  --fib-6: 89px;
+}
+
+/* ── Fibonacci typography ── */
+:root {
+  --text-fib-xs:   8px;
+  --text-fib-sm:   13px;
+  --text-fib-base: 16px;
+  --text-fib-md:   21px;
+  --text-fib-lg:   34px;
+  --text-fib-xl:   55px;
+}
+
 /* ── Shadow system ── */
 :root {
   --shadow-xs:  0 1px 2px rgba(0,0,0,0.06);

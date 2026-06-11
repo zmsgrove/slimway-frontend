@@ -28,7 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 const STANDARD_COLUMNS: { id: TaskStatus; label: string; color: string; icon: React.ReactNode }[] = [
   { id: 'new',         label: 'Новые',        color: 'var(--text-muted)',      icon: <Circle size={12} /> },
   { id: 'in_progress', label: 'В работе',     color: 'var(--accent)',          icon: <ArrowRight size={12} /> },
-  { id: 'waiting',     label: 'Ожидание',     color: '#F59E0B',                icon: <Pause size={12} /> },
+  { id: 'waiting',     label: 'Ожидание',     color: 'var(--color-warning)',   icon: <Pause size={12} /> },
   { id: 'review',      label: 'На проверке',  color: '#8b5cf6',                icon: <Eye size={12} /> },
   { id: 'done',        label: 'Выполнено',    color: 'var(--color-success)',   icon: <CheckSquare size={12} /> },
   { id: 'cancelled',   label: 'Отменено',     color: 'var(--color-danger)',    icon: <Ban size={12} /> },
@@ -47,7 +47,7 @@ function normalizeStatus(status: string): TaskStatus {
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
   low:      'var(--text-muted)',
   medium:   'var(--accent)',
-  high:     '#F59E0B',
+  high:     'var(--color-warning)',
   critical: 'var(--color-danger)',
 }
 
@@ -58,7 +58,7 @@ const PRIORITY_LABELS: Record<TaskPriority, string> = {
 const PRIVILEGED_ROLES = ['developer', 'owner', 'franchisee']
 
 const inputStyle: React.CSSProperties = {
-  height: 36, padding: '0 12px', background: 'transparent',
+  height: 36, padding: '0 12px', background: 'var(--bg-card)',
   border: '1px solid var(--border)', borderRadius: 8,
   color: 'var(--text)', fontSize: 13, outline: 'none',
   width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
@@ -76,8 +76,8 @@ function fmtDeadline(iso: string): { text: string; color: string; urgent: boolea
   const diff = d.getTime() - Date.now()
   const day = 86400000
   if (diff < 0)         return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: 'var(--color-danger)', urgent: true }
-  if (diff < day)       return { text: d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), color: '#F59E0B', urgent: true }
-  if (diff < 2 * day)   return { text: 'Завтра', color: '#EAB308', urgent: false }
+  if (diff < day)       return { text: d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), color: 'var(--color-warning)', urgent: true }
+  if (diff < 2 * day)   return { text: 'Завтра', color: 'var(--color-warning)', urgent: false }
   return { text: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }), color: 'var(--text-muted)', urgent: false }
 }
 
@@ -173,30 +173,27 @@ function TaskCardContent({ task, employees, projects, onClick, onContextMenu, is
         )}
 
         {assignee && (
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+          <div title={assignee.full_name} style={{ marginLeft: 'auto', flexShrink: 0 }}>
             <div style={{
-              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+              width: 24, height: 24, borderRadius: '50%',
               background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
               color: 'var(--accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 9, fontWeight: 700,
+              fontSize: 10, fontWeight: 700,
             }}>
               {getInitials(assignee.full_name)}
             </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {assignee.full_name.split(' ')[0]}
-            </span>
           </div>
         )}
       </div>
 
       {total > 0 && (
-        <div style={{ marginTop: 7, height: 3, background: 'var(--border)', borderRadius: 2 }}>
+        <div style={{ marginTop: 8, height: 5, background: 'var(--border)', borderRadius: 3 }}>
           <div style={{
             height: '100%',
             width: `${Math.round((done / total) * 100)}%`,
             background: done === total ? 'var(--color-success)' : 'var(--accent)',
-            borderRadius: 2, transition: 'width 300ms ease-out',
+            borderRadius: 3, transition: 'width 300ms ease-out',
           }} />
         </div>
       )}
@@ -392,6 +389,15 @@ function TaskDrawer({ task: initialTask, employees, projects, onClose, onUpdate,
   const [newComment,   setNewComment]     = useState('')
   const [showNewGroup, setShowNewGroup]   = useState(false)
   const [newGroupTitle, setNewGroupTitle] = useState('')
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const toggleGroup = useCallback((id: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
 
   const isPrivileged = PRIVILEGED_ROLES.includes(user?.role ?? '')
   const isCreator    = task.created_by === user?.id
@@ -498,16 +504,20 @@ function TaskDrawer({ task: initialTask, employees, projects, onClose, onUpdate,
   ]
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex' }}>
-      <div onClick={onClose} style={{ flex: 1, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }} />
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}
+    >
       <div
         className="modal-animate"
+        onClick={e => e.stopPropagation()}
         style={{
-          width: 580, height: '100%', background: 'var(--bg-card)',
-          borderLeft: '1px solid var(--border)',
-          boxShadow: '-20px 0 60px rgba(0,0,0,0.25)',
+          width: '100%', maxWidth: 720, maxHeight: '90vh',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          flexShrink: 0,
         }}
       >
         {/* Header */}
@@ -706,39 +716,57 @@ function TaskDrawer({ task: initialTask, employees, projects, onClose, onUpdate,
 
               {groups.map(group => {
                 const gItems = checkItems.filter(c => c.group_id === group.id)
+                const isCollapsed = collapsedGroups.has(group.id)
+                const gDone = gItems.filter(i => i.is_done).length
                 return (
                   <div key={group.id} style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                    <div style={{ padding: '8px 12px', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{group.title}</span>
+                    <div
+                      onClick={() => toggleGroup(group.id)}
+                      style={{ padding: '8px 12px', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {isCollapsed
+                          ? <ChevronRight size={12} strokeWidth={2} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                          : <ChevronDown size={12} strokeWidth={2} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                        }
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{group.title}</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{gDone}/{gItems.length}</span>
+                      </div>
                       {canEdit && (
-                        <button onClick={() => void handleDeleteGroup(group.id)} className="icon-btn" style={{ width: 18, height: 18 }}>
+                        <button
+                          onClick={e => { e.stopPropagation(); void handleDeleteGroup(group.id) }}
+                          className="icon-btn"
+                          style={{ width: 18, height: 18 }}
+                        >
                           <X size={11} />
                         </button>
                       )}
                     </div>
-                    <div style={{ padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {gItems.map(item => (
-                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', background: item.is_done ? 'color-mix(in srgb, var(--color-success) 5%, transparent)' : 'transparent', borderRadius: 6 }}>
-                          <input type="checkbox" checked={item.is_done} onChange={() => void handleToggleCheck(item)} style={{ accentColor: 'var(--color-success)', width: 13, height: 13, cursor: 'pointer', flexShrink: 0 }} />
-                          <span style={{ flex: 1, fontSize: 12, color: item.is_done ? 'var(--text-muted)' : 'var(--text)', textDecoration: item.is_done ? 'line-through' : 'none' }}>{item.text}</span>
-                          {canEdit && (
-                            <button onClick={() => void handleDeleteCheck(item.id)} className="icon-btn" style={{ width: 16, height: 16, flexShrink: 0 }}>
-                              <X size={9} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {canEdit && (
-                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                          <input
-                            style={{ ...inputStyle, height: 30, fontSize: 12 }}
-                            placeholder="Новый пункт..."
-                            onKeyDown={e => { if (e.key === 'Enter') { void handleAddCheck(group.id); (e.target as HTMLInputElement).value = '' } }}
-                            onChange={e => setNewCheckText(e.target.value)}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    {!isCollapsed && (
+                      <div style={{ padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {gItems.map(item => (
+                          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', background: item.is_done ? 'color-mix(in srgb, var(--color-success) 5%, transparent)' : 'transparent', borderRadius: 6 }}>
+                            <input type="checkbox" checked={item.is_done} onChange={() => void handleToggleCheck(item)} style={{ accentColor: 'var(--color-success)', width: 13, height: 13, cursor: 'pointer', flexShrink: 0 }} />
+                            <span style={{ flex: 1, fontSize: 12, color: item.is_done ? 'var(--text-muted)' : 'var(--text)', textDecoration: item.is_done ? 'line-through' : 'none' }}>{item.text}</span>
+                            {canEdit && (
+                              <button onClick={() => void handleDeleteCheck(item.id)} className="icon-btn" style={{ width: 16, height: 16, flexShrink: 0 }}>
+                                <X size={9} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {canEdit && (
+                          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                            <input
+                              style={{ ...inputStyle, height: 30, fontSize: 12 }}
+                              placeholder="Новый пункт..."
+                              onKeyDown={e => { if (e.key === 'Enter') { void handleAddCheck(group.id); (e.target as HTMLInputElement).value = '' } }}
+                              onChange={e => setNewCheckText(e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -888,7 +916,7 @@ function TaskDrawer({ task: initialTask, employees, projects, onClose, onUpdate,
   )
 }
 
-// ─── Create Task Modal ─────────────────────────────────────────────────────
+// ─── Create Task Modal ──────────────────────────────────────────────────────
 
 function CreateTaskModal({ employees, projects, defaultStatus, onClose, onCreate }: {
   employees: Employee[]

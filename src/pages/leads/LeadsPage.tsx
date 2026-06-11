@@ -11,6 +11,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { playSound } from '../../lib/notify'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import type { Lead, LeadStatus, LeadComment, Employee } from '../../types'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -833,49 +834,44 @@ export default function LeadsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px - 42px)', minHeight: 0 }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 12, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 3, letterSpacing: '-0.02em' }}>Лиды</h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>
-              {leads.length} лидов · Воронка продаж
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <select
-              value={filterSource}
-              onChange={e => setFilterSource(e.target.value)}
-              style={{
-                height: 34, padding: '0 10px', background: 'transparent',
-                border: `1px solid ${filterSource ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
-                borderRadius: 8,
-                color: filterSource ? 'var(--accent)' : 'var(--text-secondary)',
-                fontSize: 12, cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
-              }}
-            >
-              <option value="">Все источники</option>
-              {LEAD_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-            <button onClick={() => void handleExport()} className="btn btn-secondary" style={{ gap: 6 }}>
-              <Download size={14} />Excel
+      <PageHeader
+        title="Лиды"
+        subtitle={`${leads.length} лидов · Воронка продаж`}
+        filters={
+          <PeriodFilter
+            period={period}
+            customFrom={customFrom}
+            customTo={customTo}
+            remember={remember}
+            onChange={setPeriod}
+            onRememberChange={setRemember}
+          />
+        }
+        actions={<>
+          <select
+            value={filterSource}
+            onChange={e => setFilterSource(e.target.value)}
+            style={{
+              height: 32, padding: '0 10px', background: 'var(--bg-card)',
+              border: `1px solid ${filterSource ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
+              borderRadius: 'var(--radius-md)',
+              color: filterSource ? 'var(--accent)' : 'var(--text-muted)',
+              fontSize: 12, cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
+            }}
+          >
+            <option value="">Все источники</option>
+            {LEAD_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <button onClick={() => void handleExport()} className="btn btn-secondary" style={{ gap: 6 }}>
+            <Download size={14} />Excel
+          </button>
+          {canManage && (
+            <button onClick={() => setCreateCol('new')} className="btn btn-primary" style={{ gap: 6 }}>
+              <Plus size={15} strokeWidth={2.5} />Новый лид
             </button>
-            {canManage && (
-              <button onClick={() => setCreateCol('new')} className="btn btn-primary" style={{ gap: 6 }}>
-                <Plus size={15} strokeWidth={2.5} />Новый лид
-              </button>
-            )}
-          </div>
-        </div>
-        <PeriodFilter
-          period={period}
-          customFrom={customFrom}
-          customTo={customTo}
-          remember={remember}
-          onChange={setPeriod}
-          onRememberChange={setRemember}
-        />
-      </div>
+          )}
+        </>}
+      />
 
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: 'var(--color-danger)', flexShrink: 0 }}>

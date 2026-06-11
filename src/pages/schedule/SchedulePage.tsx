@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, Calendar, Trash2, Layers, Lock, Unlock, Eye, Zap, CalendarDays, RefreshCw, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { scheduleSlotsApi, bookingsV2Api, type BookingV2Error, type BookingInfo, type PendingBooking } from '../../api/schedule-slots.api'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
 import { devicesApi } from '../../api/devices.api'
 import { clientsApi } from '../../api/clients.api'
@@ -1243,25 +1244,23 @@ export default function SchedulePage() {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
-        <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Расписание</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, textTransform: 'capitalize' }}>{dateLabel}</p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <PageHeader
+        title="Расписание"
+        subtitle={dateLabel}
+        actions={<>
           {canManageSlots && (
             <button
               onClick={() => setShowQuickCreate(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', borderRadius: 8, color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'background 150ms ease-out, border-color 150ms ease-out' }}
+              className="btn btn-secondary"
+              style={{ gap: 6 }}
             >
               <Zap size={14} strokeWidth={2} />Быстрое создание
             </button>
           )}
           <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            style={{ height: 36, padding: '0 13px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, cursor: 'pointer', outline: 'none' }} />
-        </div>
-      </div>
+            style={{ height: 32, padding: '0 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--text)', fontSize: 13, cursor: 'pointer', outline: 'none' }} />
+        </>}
+      />
 
       {/* Date navigation */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 13px' }}>

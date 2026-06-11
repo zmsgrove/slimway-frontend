@@ -11,6 +11,7 @@ import { api } from '../../lib/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import { subscriptionsApi } from '../../api/subscriptions.api'
 import { ContextMenu, type ContextMenuEntry } from '../../components/ContextMenu'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { useAuth } from '../../hooks/useAuth'
 import type { Client, ClientDetail, ClientBooking, Subscription, AuditLogEntry, SubscriptionRenewal } from '../../types'
 
@@ -1329,81 +1330,54 @@ export default function ClientsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 3, letterSpacing: '-0.02em' }}>Клиенты</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>
-            {filtered.length} из {clients.length} клиентов
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+      <PageHeader
+        title="Клиенты"
+        subtitle={`${filtered.length} из ${clients.length} клиентов`}
+        search={{ value: search, onChange: handleSearch, placeholder: 'Поиск по имени, телефону или email...' }}
+        filters={<>
+          <select
+            value={filterSource}
+            onChange={e => setFilterSource(e.target.value)}
+            style={{
+              height: 30, padding: '0 8px', background: 'var(--bg-card)',
+              border: `1px solid ${filterSource ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
+              borderRadius: 8,
+              color: filterSource ? 'var(--accent)' : 'var(--text-muted)',
+              fontSize: 12, cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
+            }}
+          >
+            <option value="">Все источники</option>
+            {CLIENT_SOURCES.filter(s => s.value).map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          {PRESET_TAGS.map(t => (
+            <button key={t} onClick={() => toggleFilterTag(t)}
+              style={{
+                height: 30, padding: '0 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer',
+                border: `1px solid ${filterTags.includes(t) ? tagBorder(t, 40) : 'var(--border)'}`,
+                background: filterTags.includes(t) ? tagBg(t, 10) : 'transparent',
+                color: filterTags.includes(t) ? tagColor(t) : 'var(--text-muted)',
+                display: 'flex', alignItems: 'center', gap: 4,
+                transition: 'background 150ms ease-out, border-color 150ms ease-out',
+              }}>
+              <Tag size={10} />{t}
+            </button>
+          ))}
+          {hasFilters && (
+            <button onClick={() => { setFilterSource(''); setFilterTags([]) }}
+              style={{ height: 30, padding: '0 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <X size={10} />Сбросить
+            </button>
+          )}
+        </>}
+        actions={<>
           <button onClick={() => void handleExport()} className="btn btn-secondary" style={{ gap: 6 }}>
             <Download size={14} />Excel
           </button>
           <button onClick={() => { setEditTarget(null); setShowModal(true) }} className="btn btn-primary" style={{ gap: 6 }}>
             <Plus size={15} strokeWidth={2.5} />Добавить клиента
           </button>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, height: 38,
-        padding: '0 12px', background: 'var(--bg-card)',
-        border: '1px solid var(--border)', borderRadius: 8, marginBottom: 8,
-        transition: 'border-color 150ms ease-out',
-      }}>
-        <Search size={14} strokeWidth={1.75} color="var(--text-muted)" />
-        <input
-          style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
-          placeholder="Поиск по имени, телефону или email..."
-          value={search}
-          onChange={e => handleSearch(e.target.value)}
-        />
-        {search && (
-          <button onClick={() => handleSearch('')} className="icon-btn" style={{ width: 20, height: 20 }}>
-            <X size={12} />
-          </button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-        <select
-          value={filterSource}
-          onChange={e => setFilterSource(e.target.value)}
-          style={{
-            height: 30, padding: '0 8px', background: 'transparent',
-            border: `1px solid ${filterSource ? 'color-mix(in srgb, var(--accent) 50%, transparent)' : 'var(--border)'}`,
-            borderRadius: 8,
-            color: filterSource ? 'var(--accent)' : 'var(--text-secondary)',
-            fontSize: 12, cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
-          }}
-        >
-          <option value="">Все источники</option>
-          {CLIENT_SOURCES.filter(s => s.value).map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        {PRESET_TAGS.map(t => (
-          <button key={t} onClick={() => toggleFilterTag(t)}
-            style={{
-              height: 30, padding: '0 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer',
-              border: `1px solid ${filterTags.includes(t) ? tagBorder(t, 40) : 'var(--border)'}`,
-              background: filterTags.includes(t) ? tagBg(t, 10) : 'transparent',
-              color: filterTags.includes(t) ? tagColor(t) : 'var(--text-muted)',
-              display: 'flex', alignItems: 'center', gap: 4,
-              transition: 'background 150ms ease-out, border-color 150ms ease-out',
-            }}>
-            <Tag size={10} />{t}
-          </button>
-        ))}
-        {hasFilters && (
-          <button onClick={() => { setFilterSource(''); setFilterTags([]) }}
-            style={{ height: 30, padding: '0 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <X size={10} />Сбросить
-          </button>
-        )}
-      </div>
+        </>}
+      />
 
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: 'var(--color-danger)' }}>

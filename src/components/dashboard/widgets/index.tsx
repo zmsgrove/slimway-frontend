@@ -217,7 +217,7 @@ export function WidgetChartVisits({ editMode, onRemove, badges, loading }: Widge
   return (
     <Widget id="chart_visits" title="Посещения (7 дней)" icon={<AreaChart size={14} />}
       editMode={editMode} onRemove={onRemove} loading={loading}>
-      {loading ? <Skeleton className="h-full w-full rounded-lg" /> : (
+      {loading ? <Skeleton className="h-full w-full rounded-lg" /> : data.some(d => d.v > 0) ? (
         <ResponsiveContainer width="100%" height={300}>
           <RAreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
@@ -234,7 +234,7 @@ export function WidgetChartVisits({ editMode, onRemove, badges, loading }: Widge
               name="Посещений" isAnimationActive={!prefersReducedMotion} animationDuration={300} />
           </RAreaChart>
         </ResponsiveContainer>
-      )}
+      ) : <EmptyChart />}
     </Widget>
   )
 }

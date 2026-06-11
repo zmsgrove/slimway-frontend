@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { X, AlertTriangle, Package, ArrowDown, ArrowUp, Trash2, Edit2, Plus, Download, Truck, ShoppingCart } from 'lucide-react'
 import { PeriodFilter } from '../../components/ui/PeriodFilter'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { usePeriodFilter } from '../../hooks/usePeriodFilter'
 import { warehouseApi } from '../../api/warehouse.api'
 import { catalogApi } from '../../api/catalog.api'
@@ -830,13 +831,10 @@ export default function WarehousePage() {
         />
       )}
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13 }}>
-        <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Склад</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>Учёт товаров и расходников</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <PageHeader
+        title="Склад"
+        subtitle="Учёт товаров и расходников"
+        actions={<>
           <PeriodFilter
             period={period}
             customFrom={customFrom}
@@ -846,27 +844,24 @@ export default function WarehousePage() {
             onRememberChange={setRemember}
           />
           {lowStockCount > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8 }}>
               <AlertTriangle size={13} color="var(--color-danger)" />
               <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600 }}>{lowStockCount} мало</span>
             </div>
           )}
-          <button
-            onClick={() => void handleExport()}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 13px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}
-          >
+          <button onClick={() => void handleExport()} className="btn btn-secondary" style={{ gap: 6 }}>
             <Download size={14} />Excel
           </button>
           {canIntake && (
             <button
               onClick={() => setShowBulk(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 8, color: 'var(--color-success)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 14px', background: 'var(--color-success-muted)', border: '1px solid color-mix(in srgb, var(--color-success) 25%, transparent)', borderRadius: 'var(--radius-md)', color: 'var(--color-success)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               <ArrowDown size={15} />Приход на склад
             </button>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', borderRadius: 10, padding: 4, marginBottom: 13, width: 'fit-content' }}>

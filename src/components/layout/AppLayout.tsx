@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Calendar, Settings, LogOut,
   CreditCard, ShoppingCart, CheckSquare, MessageSquare,
   UserCheck, CalendarClock, ChevronDown, Package,
-  Wrench, Shield, X, DollarSign, ChevronLeft, ChevronRight,
+  Wrench, Shield, X, DollarSign, ChevronLeft, Server,
   TrendingUp, ClipboardList, Search, User, Sparkles,
 } from 'lucide-react'
 import { NotificationBell } from '../ui/NotificationBell'
@@ -76,7 +76,7 @@ async function fetchWeather(city: string): Promise<WeatherCache | null> {
 
 type ServerStatus = 'ok' | 'slow' | 'error' | 'unknown'
 
-function ServerStatusDot({ status, latency }: { status: ServerStatus; latency: number | null }) {
+function ServerStatusDot({ status, latency, onClick }: { status: ServerStatus; latency: number | null; onClick?: () => void }) {
   const color = status === 'ok' ? 'var(--color-success)' : status === 'slow' ? 'var(--color-warning)' : status === 'error' ? 'var(--color-danger)' : 'var(--text-muted)'
   const label = status === 'ok'
     ? `Сервер работает${latency !== null ? ` (${latency}ms)` : ''}`
@@ -89,10 +89,13 @@ function ServerStatusDot({ status, latency }: { status: ServerStatus; latency: n
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 20, height: 20, cursor: 'default', flexShrink: 0,
-        }}>
+        <div
+          onClick={onClick}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 20, height: 20, cursor: onClick ? 'pointer' : 'default', flexShrink: 0,
+          }}
+        >
           <div style={{
             width: 7, height: 7, borderRadius: '50%', background: color,
             animation: status === 'error' ? 'pulse 1.5s ease-in-out infinite' : undefined,
@@ -101,7 +104,7 @@ function ServerStatusDot({ status, latency }: { status: ServerStatus; latency: n
           }} />
         </div>
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>{label}{onClick ? ' · детали' : ''}</TooltipContent>
     </Tooltip>
   )
 }
@@ -162,6 +165,80 @@ function WeatherTimeBlock({ city, timezone }: { city: string | null; timezone: s
         </>
       )}
       <span style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{timeStr}</span>
+    </div>
+  )
+}
+
+// ─── Server info helpers ──────────────────────────────────────────────────────
+
+function formatUptime(seconds: number): string {
+  if (seconds < 60) return `${seconds}с`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}м ${seconds % 60}с`
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (h < 24) return `${h}ч ${m}м`
+  const d = Math.floor(h / 24)
+  return `${d}д ${h % 24}ч`
+}
+
+interface ServerInfo { version?: string; uptime?: number }
+
+function ServerInfoDialog({
+  open, onClose, status, latency, info,
+}: {
+  open: boolean; onClose: () => void; status: ServerStatus; latency: number | null; info: ServerInfo
+}) {
+  if (!open) return null
+  const statusColor = status === 'ok' ? 'var(--color-success)' : status === 'slow' ? 'var(--color-warning)' : status === 'error' ? 'var(--color-danger)' : 'var(--text-muted)'
+  const statusLabel = status === 'ok' ? 'Работает' : status === 'slow' ? 'Высокая задержка' : status === 'error' ? 'Недоступен' : 'Проверяется...'
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={onClose}
+    >
+      <div
+        className="modal-animate"
+        onClick={e => e.stopPropagation()}
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: 380, boxShadow: '0 24px 64px rgba(0,0,0,0.35)', overflow: 'hidden' }}
+      >
+        <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <Server size={15} strokeWidth={1.75} style={{ color: 'var(--text-muted)' }} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Статус сервера</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}><X size={15} /></button>
+        </div>
+        <div style={{ padding: '18px 22px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
+            padding: '10px 14px',
+            background: `color-mix(in srgb, ${statusColor} 8%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${statusColor} 25%, transparent)`,
+            borderRadius: 'var(--radius-md)',
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 500, color: statusColor }}>{statusLabel}</span>
+            {latency !== null && (
+              <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', fontFamily: 'ui-monospace, monospace' }}>{latency}ms</span>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {info.version && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                <span style={{ color: 'var(--text-muted)' }}>Версия</span>
+                <span style={{ color: 'var(--text)', fontFamily: 'ui-monospace, monospace', fontWeight: 500 }}>v{info.version}</span>
+              </div>
+            )}
+            {info.uptime !== undefined && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                <span style={{ color: 'var(--text-muted)' }}>Аптайм</span>
+                <span style={{ color: 'var(--text)', fontFamily: 'ui-monospace, monospace', fontWeight: 500 }}>{formatUptime(info.uptime)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -454,14 +531,22 @@ function SidebarContent({
         )}
 
         {collapsed && (
-          <div style={{
-            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-            background: 'var(--accent)', color: 'var(--accent-fg)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, fontWeight: 700, letterSpacing: -0.5,
-          }}>
+          <button
+            onClick={onToggle}
+            title="Развернуть меню"
+            style={{
+              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+              background: 'var(--accent)', color: 'var(--accent-fg)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 700, letterSpacing: -0.5,
+              border: 'none', cursor: 'pointer',
+              transition: 'opacity 150ms ease-out',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.85' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
             S
-          </div>
+          </button>
         )}
 
         {onToggle && !collapsed && (
@@ -472,17 +557,6 @@ function SidebarContent({
             style={{ flexShrink: 0 }}
           >
             <ChevronLeft size={13} strokeWidth={2} />
-          </button>
-        )}
-
-        {onToggle && collapsed && (
-          <button
-            onClick={onToggle}
-            className="sidebar-toggle"
-            title="Развернуть меню"
-            style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)' }}
-          >
-            <ChevronRight size={13} strokeWidth={2} />
           </button>
         )}
       </div>
@@ -649,7 +723,7 @@ function SummaryModal({ user, badges, branchCity }: { user: ReturnType<typeof us
           height: 32, padding: '0 12px',
           background: 'var(--bg-card)',
           border: '1px solid var(--border)',
-          borderRadius: 9999,
+          borderRadius: 'var(--radius-md)',
           color: 'var(--text)',
           fontSize: 12, fontWeight: 500,
           cursor: 'pointer',
@@ -775,6 +849,9 @@ function AppLayoutInner() {
   const [serverStatus, setServerStatus] = useState<ServerStatus>('unknown')
   const [serverLatency, setServerLatency] = useState<number | null>(null)
   const [serverErrorToastShown, setServerErrorToastShown] = useState(false)
+  const [serverInfo, setServerInfo] = useState<ServerInfo>({})
+  const [showServerDialog, setShowServerDialog] = useState(false)
+  const failureCount = useRef(0)
 
   // Sidebar state
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -835,19 +912,30 @@ function AppLayoutInner() {
       try {
         const start = Date.now()
         const BASE_URL = API_URL.replace(/\/api\/v1\/?$/, '')
-        const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(5000) })
+        const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(10000) })
         const latency = Date.now() - start
         setServerLatency(latency)
-        if (!res.ok) { setServerStatus('error') }
-        else if (latency > 2000) { setServerStatus('slow') }
-        else { setServerStatus('ok'); setServerErrorToastShown(false) }
+        failureCount.current = 0
+        if (!res.ok) {
+          setServerStatus('error')
+        } else {
+          try {
+            const body = await res.json() as { version?: string; uptime?: number }
+            setServerInfo({ version: body.version, uptime: body.uptime })
+          } catch { /* ignore */ }
+          if (latency > 2000) { setServerStatus('slow') }
+          else { setServerStatus('ok'); setServerErrorToastShown(false) }
+        }
       } catch {
-        setServerStatus('error')
-        setServerLatency(null)
+        failureCount.current++
+        if (failureCount.current >= 2) {
+          setServerStatus('error')
+          setServerLatency(null)
+        }
       }
     }
     void checkHealth()
-    const id = setInterval(() => void checkHealth(), 30_000)
+    const id = setInterval(() => void checkHealth(), 60_000)
     return () => clearInterval(id)
   }, [])
 
@@ -949,23 +1037,8 @@ function AppLayoutInner() {
           zIndex: 'var(--z-header)' as unknown as number,
           transition: 'left 200ms var(--ease-out)',
         }}>
-          {/* Left: page title */}
-          <div style={{ flex: '0 0 auto', minWidth: 0 }}>
-            <h1 style={{
-              margin: 0,
-              fontSize: 15,
-              fontWeight: 600,
-              color: 'var(--text)',
-              letterSpacing: '-0.01em',
-              lineHeight: 1,
-              whiteSpace: 'nowrap',
-            }}>
-              {PAGE_TITLES[location.pathname] ?? ''}
-            </h1>
-          </div>
-
-          {/* Center: search bar */}
-          <div style={{ flex: 1, maxWidth: 380, margin: '0 auto' }}>
+          {/* Left: search */}
+          <div style={{ flex: '0 1 300px', minWidth: 180 }}>
             <button
               onClick={() => {
                 window.dispatchEvent(new KeyboardEvent('keydown', {
@@ -976,16 +1049,16 @@ function AppLayoutInner() {
                 display: 'flex', alignItems: 'center', gap: 8,
                 width: '100%', height: 32,
                 padding: '0 12px',
-                background: 'var(--bg)',
+                background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
-                borderRadius: 99,
+                borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
                 color: 'var(--text-muted)',
                 fontSize: 12,
                 transition: 'border-color 150ms ease-out, background 150ms ease-out',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--text-muted)'
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'color-mix(in srgb, var(--accent) 50%, transparent)'
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'
@@ -995,7 +1068,7 @@ function AppLayoutInner() {
               <span style={{ flex: 1, textAlign: 'left' }}>Поиск...</span>
               <span style={{
                 fontSize: 10, fontWeight: 500,
-                background: 'var(--bg-card)',
+                background: 'var(--bg)',
                 border: '1px solid var(--border)',
                 borderRadius: 4, padding: '1px 5px',
                 color: 'var(--text-muted)',
@@ -1014,7 +1087,11 @@ function AppLayoutInner() {
 
             <WeatherTimeBlock city={branchCity} timezone={branchTimezone} />
 
-            <ServerStatusDot status={serverStatus} latency={serverLatency} />
+            <ServerStatusDot
+              status={serverStatus}
+              latency={serverLatency}
+              onClick={user?.role === 'developer' ? () => setShowServerDialog(true) : undefined}
+            />
 
             {/* Theme toggle */}
             <Tooltip>
@@ -1022,7 +1099,9 @@ function AppLayoutInner() {
                 <button
                   onClick={handleThemeToggle}
                   className="icon-btn"
-                  style={{ border: '1px solid var(--border)', width: 32, height: 32 }}
+                  style={{ border: '1px solid var(--border)', width: 32, height: 32, background: 'var(--bg-card)', borderRadius: 'var(--radius-md)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'color-mix(in srgb, var(--accent) 50%, transparent)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)' }}
                 >
                   {isDark
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -1035,9 +1114,10 @@ function AppLayoutInner() {
 
             {user?.role === 'developer' && (
               <span style={{
-                background: 'rgba(38,60,217,0.12)', color: '#263CD9',
-                border: '1px solid rgba(38,60,217,0.3)',
-                fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
+                background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                color: 'var(--accent)',
+                border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
+                fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 'var(--radius-sm)',
                 letterSpacing: '0.05em', flexShrink: 0,
               }}>
                 DEV
@@ -1168,6 +1248,13 @@ function AppLayoutInner() {
 
       <HotkeyHelp />
       <GlobalSearch />
+      <ServerInfoDialog
+        open={showServerDialog}
+        onClose={() => setShowServerDialog(false)}
+        status={serverStatus}
+        latency={serverLatency}
+        info={serverInfo}
+      />
     </div>
   )
 }

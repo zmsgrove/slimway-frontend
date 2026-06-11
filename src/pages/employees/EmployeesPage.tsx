@@ -5,6 +5,7 @@ import {
   User, Lock, Building2,
 } from 'lucide-react'
 import { employeesApi } from '../../api/employees.api'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { shiftsApi } from '../../api/shifts.api'
 import { useAuth } from '../../hooks/useAuth'
 import { usePermissions } from '../../hooks/usePermissions'
@@ -602,27 +603,15 @@ export default function EmployeesPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 21, gap: 13 }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Сотрудники</h1>
-            {!loading && (
-              <span style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
-                {employees.length}
-              </span>
-            )}
-          </div>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-            Управление персоналом · {onDutyIds.size > 0 ? `${onDutyIds.size} на смене сейчас` : 'нет активных смен'}
-          </p>
-        </div>
-        {canCreateEmployee('staff') && (
-          <button onClick={() => setShowAdd(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+      <PageHeader
+        title="Сотрудники"
+        subtitle={`${loading ? '' : `${employees.length} чел. · `}Управление персоналом${onDutyIds.size > 0 ? ` · ${onDutyIds.size} на смене` : ''}`}
+        actions={canCreateEmployee('staff') ? (
+          <button onClick={() => setShowAdd(true)} className="btn btn-primary" style={{ gap: 6 }}>
             <Plus size={15} />Добавить сотрудника
           </button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'color-mix(in srgb, var(--color-danger) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 20%, transparent)', borderRadius: 8, marginBottom: 21, fontSize: 12, color: 'var(--color-danger)' }}>

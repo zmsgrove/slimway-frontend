@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { PageHeader } from '../../components/layout/PageHeader'
 import {
   ShoppingCart, Search, X, AlertCircle, Check, Calendar,
   Plus, Minus, User, ArrowLeft, Trash2, Tag, CreditCard, Banknote,
@@ -799,19 +800,18 @@ export default function SalePage() {
         )
       })()}
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h1 style={{ fontSize: 21, fontWeight: 600, color: 'var(--text)', margin: 0, marginBottom: 4 }}>Продажа</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Добавьте товары в корзину</p>
-        </div>
-        <button
-          onClick={() => { if (cart.length > 0) setStage('cart') }}
-          style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 18px', background: cartCount > 0 ? 'var(--accent)' : 'var(--bg-card)', border: `1px solid ${cartCount > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 13, color: cartCount > 0 ? 'var(--accent-fg)' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: cartCount > 0 ? 'pointer' : 'default', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
-          <ShoppingCart size={18} strokeWidth={2} />
-          {cartCount > 0 ? `Корзина · ${cartCount}` : 'Корзина пуста'}
-        </button>
-      </div>
+      <PageHeader
+        title="Продажа"
+        subtitle="Добавьте товары в корзину"
+        actions={
+          <button
+            onClick={() => { if (cart.length > 0) setStage('cart') }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 32, padding: '0 16px', background: cartCount > 0 ? 'var(--accent)' : 'var(--bg-card)', border: `1px solid ${cartCount > 0 ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', color: cartCount > 0 ? 'var(--accent-fg)' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: cartCount > 0 ? 'pointer' : 'default', transition: 'background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out' }}>
+            <ShoppingCart size={15} strokeWidth={2} />
+            {cartCount > 0 ? `Корзина · ${cartCount}` : 'Корзина пуста'}
+          </button>
+        }
+      />
 
       {loading ? (
         <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '34px 0' }}>Загрузка каталога...</div>
