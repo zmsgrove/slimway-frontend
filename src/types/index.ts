@@ -300,7 +300,7 @@ export interface AuditLogEntry {
 }
 
 // ── v1.5.0 ───────────────────────────────────────────────────
-export type TaskStatus   = 'new' | 'today' | 'week' | 'long' | 'done' | 'closed' | 'pending_close'
+export type TaskStatus   = 'new' | 'today' | 'week' | 'long' | 'done' | 'closed' | 'pending_close' | 'in_progress' | 'waiting' | 'review' | 'cancelled'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 
 export interface TaskChecklistGroup {
@@ -341,13 +341,76 @@ export interface Task {
   created_by: string | null
   deadline: string | null
   created_at: string
+  updated_at?: string
   related_type?: string | null
   related_id?: string | null
   recur_rule?: 'daily' | 'weekly' | 'monthly' | null
   is_auto?: boolean
+  project_id?: string | null
   task_checklist_items?: TaskChecklistItem[]
   task_checklist_groups?: TaskChecklistGroup[]
   task_comments?: TaskComment[]
+}
+
+// ── v1.8.0 Kanban v2 ────────────────────────────────────────
+export interface TaskProject {
+  id: string
+  branch_id: string
+  name: string
+  color: string
+  created_by: string | null
+  created_at: string
+}
+
+export interface TaskCustomColumn {
+  id: string
+  branch_id: string
+  profile_id: string
+  name: string
+  color: string
+  position: number
+  created_at: string
+}
+
+export interface TaskColumnAssignment {
+  id: string
+  task_id: string
+  profile_id: string
+  branch_id: string
+  column_id: string | null
+  position: number
+  created_at: string
+}
+
+export interface TaskObserver {
+  id: string
+  task_id: string
+  profile_id: string
+  branch_id: string
+  created_at: string
+}
+
+export interface TaskActivity {
+  id: string
+  task_id: string
+  branch_id: string
+  profile_id: string | null
+  action: string
+  meta: Record<string, unknown> | null
+  created_at: string
+  profiles?: { full_name: string } | null
+}
+
+export interface TaskAttachment {
+  id: string
+  task_id: string
+  branch_id: string
+  name: string
+  url: string | null
+  size: number | null
+  mime_type: string | null
+  uploaded_by: string | null
+  created_at: string
 }
 
 export type WarehouseCategory = 'merch' | 'nutrition' | 'equipment' | 'other'

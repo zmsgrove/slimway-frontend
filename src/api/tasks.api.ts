@@ -1,5 +1,5 @@
 import { api } from '../lib/api'
-import type { Task, TaskChecklistItem, TaskChecklistGroup, TaskComment, TaskStatus, TaskPriority } from '../types'
+import type { Task, TaskChecklistItem, TaskChecklistGroup, TaskComment, TaskStatus, TaskPriority, TaskActivity, TaskAttachment } from '../types'
 
 export interface CreateTaskPayload {
   title: string
@@ -9,6 +9,7 @@ export interface CreateTaskPayload {
   assigned_to?: string | null
   observer_ids?: string[]
   deadline?: string | null
+  project_id?: string | null
 }
 
 export const tasksApi = {
@@ -73,5 +74,44 @@ export const tasksApi = {
   addComment: async (taskId: string, text: string): Promise<TaskComment> => {
     const { data } = await api.post(`/tasks/${taskId}/comments`, { text })
     return data
+  },
+
+  deleteComment: async (taskId: string, commentId: string): Promise<void> => {
+    await api.delete(`/tasks/${taskId}/comments/${commentId}`)
+  },
+
+  deleteChecklistItem: async (taskId: string, itemId: string): Promise<void> => {
+    await api.delete(`/tasks/${taskId}/checklists/${itemId}`)
+  },
+
+  addObserver: async (taskId: string, profileId: string): Promise<void> => {
+    await api.post(`/tasks/${taskId}/observers`, { profile_id: profileId })
+  },
+
+  removeObserver: async (taskId: string, profileId: string): Promise<void> => {
+    await api.delete(`/tasks/${taskId}/observers/${profileId}`)
+  },
+
+  moveToColumn: async (taskId: string, columnId: string | null, position?: number): Promise<void> => {
+    await api.patch(`/tasks/${taskId}/column`, { column_id: columnId, position: position ?? 0 })
+  },
+
+  getActivity: async (taskId: string): Promise<TaskActivity[]> => {
+    const { data } = await api.get(`/tasks/${taskId}/activity`)
+    return data
+  },
+
+  getAttachments: async (taskId: string): Promise<TaskAttachment[]> => {
+    const { data } = await api.get(`/tasks/${taskId}/attachments`)
+    return data
+  },
+
+  addAttachment: async (taskId: string, payload: { name: string; url?: string | null; size?: number | null; mime_type?: string | null }): Promise<TaskAttachment> => {
+    const { data } = await api.post(`/tasks/${taskId}/attachments`, payload)
+    return data
+  },
+
+  deleteAttachment: async (taskId: string, attachmentId: string): Promise<void> => {
+    await api.delete(`/tasks/${taskId}/attachments/${attachmentId}`)
   },
 }
